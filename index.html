@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+    <title>よるのうんどうかい - Midnight Meowathon</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Kosugi+Maru&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div id="game-container"></div>
+
+    <!-- Core Systems -->
+    <script src="js/sound.js"></script>
+    <script src="js/textures.js"></script>
+    <script src="js/effects.js"></script>
+    <script src="js/mobile.js"></script>
+    <script src="js/roguelite.js"></script>
+    <script src="js/gathering.js"></script>
+    <script src="js/stages.js"></script>
+
+    <!-- Scenes -->
+    <script src="js/scenes/TitleScene.js"></script>
+    <script src="js/scenes/PowerUpScene.js"></script>
+    <script src="js/scenes/GameScene.js"></script>
+    <script src="js/scenes/GatheringScene.js"></script>
+
+    <!-- Validation (must load after all classes) -->
+    <script src="js/validate.js"></script>
+
+    <!-- Game Initialization -->
+    <script>
+        window.addEventListener('load', function () {
+            const gameSize = DeviceDetector.getOptimalSize();
+
+            new Phaser.Game({
+                type: Phaser.AUTO,
+                width: gameSize.width,
+                height: gameSize.height,
+                parent: 'game-container',
+                backgroundColor: 0x08080f,
+                physics: {
+                    default: 'arcade',
+                    arcade: {
+                        gravity: { y: 1100 },
+                        debug: false
+                    }
+                },
+                scale: {
+                    mode: Phaser.Scale.FIT,
+                    autoCenter: Phaser.Scale.CENTER_BOTH
+                },
+                render: {
+                    pixelArt: false,
+                    antialias: true,
+                    resolution: window.devicePixelRatio || 1
+                },
+                scene: [TitleScene, PowerUpScene, GameScene, GatheringScene]
+            });
+        });
+    </script>
+</body>
+
+</html>

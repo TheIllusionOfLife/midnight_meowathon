@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>よるのうんどうかい - Midnight Meowathon</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#05050a;display:flex;justify-content:center;align-items:center;min-height:100vh;overflow:hidden}
+        #game-container{border-radius:8px;overflow:hidden;box-shadow:0 0 40px rgba(60,60,150,0.5)}
+    </style>
+</head>
+<body>
+<div id="game-container"></div>
+<script>
+const W = 800, H = 550;
+
+// テクスチャ生成関数
+function createAllTextures(scene) {
+    let g;
+    
+    // 猫（通常）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xff9933);
+    g.fillEllipse(8, 28, 24, 10); // しっぽ
+    g.fillEllipse(32, 30, 36, 24); // 体
+    g.fillStyle(0xffaa44);
+    g.fillEllipse(32, 32, 32, 20);
+    g.fillStyle(0xff8822);
+    g.fillEllipse(20, 40, 10, 8); // 足
+    g.fillEllipse(44, 40, 10, 8);
+    g.fillStyle(0xff9933);
+    g.fillCircle(48, 22, 14); // 頭
+    g.fillStyle(0xffaa44);
+    g.fillCircle(48, 22, 12);
+    g.fillStyle(0xff9933);
+    g.fillTriangle(38, 8, 42, 18, 34, 16); // 耳
+    g.fillTriangle(58, 8, 54, 18, 62, 16);
+    g.fillStyle(0xffccaa);
+    g.fillTriangle(39, 10, 41, 16, 36, 15);
+    g.fillTriangle(57, 10, 55, 16, 60, 15);
+    g.fillStyle(0xffffcc);
+    g.fillEllipse(43, 20, 8, 10); // 目
+    g.fillEllipse(53, 20, 8, 10);
+    g.fillStyle(0x222222);
+    g.fillEllipse(43, 21, 3, 6);
+    g.fillEllipse(53, 21, 3, 6);
+    g.fillStyle(0xffffff);
+    g.fillCircle(42, 19, 2);
+    g.fillCircle(52, 19, 2);
+    g.fillStyle(0xff6677);
+    g.fillTriangle(48, 26, 46, 24, 50, 24); // 鼻
+    g.lineStyle(1, 0xffffff, 0.7);
+    g.lineBetween(36, 24, 26, 22); // ひげ
+    g.lineBetween(36, 26, 26, 26);
+    g.lineBetween(60, 24, 70, 22);
+    g.lineBetween(60, 26, 70, 26);
+    g.generateTexture('cat', 72, 52);
+    g.destroy();
+    
+    // 猫（ジャンプ）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xff9933);
+    g.fillEllipse(6, 20, 20, 10);
+    g.fillEllipse(30, 26, 32, 28);
+    g.fillStyle(0xffaa44);
+    g.fillEllipse(30, 26, 28, 24);
+    g.fillStyle(0xff8822);
+    g.fillEllipse(16, 44, 8, 10);
+    g.fillEllipse(44, 44, 8, 10);
+    g.fillStyle(0xff9933);
+    g.fillCircle(44, 14, 14);
+    g.fillStyle(0xffaa44);
+    g.fillCircle(44, 14, 12);
+    g.fillStyle(0xff9933);
+    g.fillTriangle(34, 2, 38, 12, 30, 10);
+    g.fillTriangle(54, 2, 50, 12, 58, 10);
+    g.fillStyle(0xffffcc);
+    g.fillEllipse(39, 12, 8, 11);
+    g.fillEllipse(49, 12, 8, 11);
+    g.fillStyle(0x222222);
+    g.fillEllipse(39, 13, 3, 7);
+    g.fillEllipse(49, 13, 3, 7);
+    g.fillStyle(0xff6677);
+    g.fillTriangle(44, 20, 42, 18, 46, 18);
+    g.generateTexture('catJump', 72, 56);
+    g.destroy();
+    
+    // 猫（壁）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xff9933);
+    g.fillEllipse(24, 30, 24, 32);
+    g.fillStyle(0xffaa44);
+    g.fillEllipse(24, 30, 20, 28);
+    g.fillStyle(0xff8822);
+    g.fillEllipse(12, 48, 10, 8);
+    g.fillEllipse(36, 48, 10, 8);
+    g.fillEllipse(10, 24, 8, 8);
+    g.fillEllipse(38, 24, 8, 8);
+    g.fillStyle(0xff9933);
+    g.fillCircle(24, 10, 12);
+    g.fillStyle(0xffaa44);
+    g.fillCircle(24, 10, 10);
+    g.fillStyle(0xff9933);
+    g.fillTriangle(14, 0, 18, 8, 10, 6);
+    g.fillTriangle(34, 0, 30, 8, 38, 6);
+    g.fillStyle(0xffffcc);
+    g.fillEllipse(19, 8, 6, 8);
+    g.fillEllipse(29, 8, 6, 8);
+    g.fillStyle(0x222222);
+    g.fillEllipse(19, 9, 2, 5);
+    g.fillEllipse(29, 9, 2, 5);
+    g.fillStyle(0xff6677);
+    g.fillTriangle(24, 14, 22, 12, 26, 12);
+    g.generateTexture('catWall', 48, 58);
+    g.destroy();
+    
+    // 花瓶
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0x5bc0de);
+    g.fillRoundedRect(8, 24, 16, 20, 4);
+    g.fillEllipse(16, 12, 8, 6);
+    g.fillStyle(0x8ed5e8);
+    g.fillRoundedRect(10, 26, 6, 16, 2);
+    g.generateTexture('vase', 32, 48);
+    g.destroy();
+    
+    // 本
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0x8b4513);
+    g.fillRoundedRect(2, 4, 32, 22, 2);
+    g.fillStyle(0xa0522d);
+    g.fillRect(5, 6, 26, 18);
+    g.fillStyle(0x6b3510);
+    g.fillRect(5, 6, 4, 18);
+    g.lineStyle(1, 0xdaa520);
+    g.lineBetween(10, 10, 28, 10);
+    g.generateTexture('book', 36, 30);
+    g.destroy();
+    
+    // 時計
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xdaa520);
+    g.fillCircle(20, 20, 18);
+    g.fillStyle(0xfffef0);
+    g.fillCircle(20, 20, 15);
+    g.fillStyle(0x333333);
+    g.fillCircle(20, 20, 2);
+    g.lineStyle(2, 0x333333);
+    g.lineBetween(20, 20, 20, 8);
+    g.lineBetween(20, 20, 28, 20);
+    g.generateTexture('clock', 40, 40);
+    g.destroy();
+    
+    // 植物
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xc2692d);
+    g.fillTriangle(10, 50, 14, 32, 26, 32);
+    g.fillTriangle(30, 50, 26, 32, 14, 32);
+    g.fillStyle(0x228b22);
+    g.fillEllipse(20, 26, 14, 12);
+    g.fillStyle(0x32cd32);
+    g.fillEllipse(14, 18, 8, 14);
+    g.fillEllipse(26, 18, 8, 14);
+    g.fillEllipse(20, 10, 6, 16);
+    g.generateTexture('plant', 40, 54);
+    g.destroy();
+    
+    // ランプ
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0x555555);
+    g.fillEllipse(18, 50, 16, 6);
+    g.fillStyle(0x888888);
+    g.fillRect(16, 28, 4, 22);
+    g.fillStyle(0xfff8dc);
+    g.fillTriangle(6, 28, 18, 4, 30, 28);
+    g.fillStyle(0xe8dcc0);
+    g.fillEllipse(18, 28, 12, 4);
+    g.generateTexture('lamp', 36, 56);
+    g.destroy();
+    
+    // マグカップ
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xf5f5dc);
+    g.fillRoundedRect(4, 4, 20, 24, 4);
+    g.fillStyle(0x6b4423);
+    g.fillRect(6, 6, 16, 8);
+    g.lineStyle(4, 0xf5f5dc);
+    g.beginPath();
+    g.arc(24, 16, 8, -1.2, 1.2);
+    g.strokePath();
+    g.generateTexture('mug', 36, 32);
+    g.destroy();
+    
+    // 額縁
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0x8b7355);
+    g.fillRect(2, 2, 40, 32);
+    g.fillStyle(0x4a6670);
+    g.fillRect(6, 6, 32, 24);
+    g.fillStyle(0x7a9ca8);
+    g.fillCircle(16, 16, 5);
+    g.fillStyle(0x5a7a5a);
+    g.fillTriangle(6, 30, 20, 18, 28, 24);
+    g.fillTriangle(28, 24, 38, 14, 38, 30);
+    g.generateTexture('frame', 44, 36);
+    g.destroy();
+    
+    // リモコン
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0x2a2a2a);
+    g.fillRoundedRect(2, 2, 12, 36, 3);
+    g.fillStyle(0x3a3a3a);
+    g.fillRoundedRect(3, 3, 10, 34, 2);
+    g.fillStyle(0xaa3333);
+    g.fillCircle(8, 10, 3);
+    g.fillStyle(0x555555);
+    g.fillRect(5, 16, 3, 3);
+    g.fillRect(9, 16, 3, 3);
+    g.fillRect(5, 21, 3, 3);
+    g.fillRect(9, 21, 3, 3);
+    g.generateTexture('remote', 16, 40);
+    g.destroy();
+    
+    // ペン
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0x2255aa);
+    g.fillRect(2, 2, 6, 26);
+    g.fillStyle(0x1144aa);
+    g.fillRect(2, 2, 6, 4);
+    g.fillStyle(0x333333);
+    g.fillTriangle(5, 36, 2, 28, 8, 28);
+    g.fillStyle(0xaaaaaa);
+    g.fillRect(3, 24, 4, 4);
+    g.generateTexture('pen', 10, 38);
+    g.destroy();
+    
+    // 月
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffffd8);
+    g.fillCircle(30, 30, 28);
+    g.fillStyle(0xe8dca0);
+    g.fillCircle(20, 22, 6);
+    g.fillCircle(38, 38, 8);
+    g.fillCircle(42, 18, 4);
+    g.generateTexture('moon', 60, 60);
+    g.destroy();
+    
+    // 星エフェクト
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffffff);
+    const cx = 16, cy = 16, spikes = 5, outerR = 14, innerR = 6;
+    g.beginPath();
+    for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? outerR : innerR;
+        const angle = (i * Math.PI / spikes) - Math.PI / 2;
+        const x = cx + Math.cos(angle) * r;
+        const y = cy + Math.sin(angle) * r;
+        if (i === 0) g.moveTo(x, y);
+        else g.lineTo(x, y);
+    }
+    g.closePath();
+    g.fillPath();
+    g.generateTexture('star', 32, 32);
+    g.destroy();
+    
+    // 飼い主の顔（寝ている）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffddaa);
+    g.fillCircle(24, 24, 22);
+    g.fillStyle(0x333333);
+    g.lineStyle(3, 0x333333);
+    g.lineBetween(12, 20, 20, 20); // 閉じた目（左）
+    g.lineBetween(28, 20, 36, 20); // 閉じた目（右）
+    g.lineStyle(2, 0xcc8866);
+    g.lineBetween(20, 32, 28, 32); // 口
+    g.generateTexture('ownerSleep', 48, 48);
+    g.destroy();
+    
+    // 飼い主の顔（浅い眠り）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffddaa);
+    g.fillCircle(24, 24, 22);
+    g.fillStyle(0x333333);
+    g.lineStyle(3, 0x333333);
+    g.lineBetween(12, 20, 20, 22);
+    g.lineBetween(28, 22, 36, 20);
+    g.lineStyle(2, 0xcc8866);
+    g.beginPath();
+    g.arc(24, 30, 6, 0, Math.PI);
+    g.strokePath();
+    g.generateTexture('ownerLight', 48, 48);
+    g.destroy();
+    
+    // 飼い主の顔（起きそう）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffddaa);
+    g.fillCircle(24, 24, 22);
+    g.fillStyle(0xffffff);
+    g.fillEllipse(16, 18, 8, 6);
+    g.fillEllipse(32, 18, 8, 6);
+    g.fillStyle(0x333333);
+    g.fillCircle(16, 19, 2);
+    g.fillCircle(32, 19, 2);
+    g.lineStyle(2, 0xcc8866);
+    g.beginPath();
+    g.arc(24, 32, 5, 0.2, Math.PI - 0.2);
+    g.strokePath();
+    g.lineStyle(2, 0x333333);
+    g.lineBetween(10, 12, 18, 15); // 眉（怒り）
+    g.lineBetween(38, 12, 30, 15);
+    g.generateTexture('ownerStir', 48, 48);
+    g.destroy();
+    
+    // 飼い主の顔（怒り）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffccaa);
+    g.fillCircle(24, 24, 22);
+    g.fillStyle(0xffffff);
+    g.fillEllipse(16, 18, 10, 8);
+    g.fillEllipse(32, 18, 10, 8);
+    g.fillStyle(0x333333);
+    g.fillCircle(16, 18, 3);
+    g.fillCircle(32, 18, 3);
+    g.fillStyle(0xcc4444);
+    g.beginPath();
+    g.arc(24, 34, 8, 0, Math.PI);
+    g.fillPath();
+    g.lineStyle(3, 0x333333);
+    g.lineBetween(8, 10, 20, 14);
+    g.lineBetween(40, 10, 28, 14);
+    g.generateTexture('ownerAngry', 48, 48);
+    g.destroy();
+    
+    // Zzz
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xaabbff);
+    g.lineStyle(3, 0xaabbff);
+    g.lineBetween(4, 8, 20, 8);
+    g.lineBetween(20, 8, 4, 24);
+    g.lineBetween(4, 24, 20, 24);
+    g.lineBetween(24, 18, 36, 18);
+    g.lineBetween(36, 18, 24, 30);
+    g.lineBetween(24, 30, 36, 30);
+    g.generateTexture('zzz', 40, 36);
+    g.destroy();
+    
+    // 肉球マーク
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffaa88);
+    g.fillEllipse(20, 28, 16, 12); // 中央パッド
+    g.fillCircle(10, 16, 6); // 上の小パッド
+    g.fillCircle(20, 12, 6);
+    g.fillCircle(30, 16, 6);
+    g.fillCircle(14, 38, 5);
+    g.fillCircle(26, 38, 5);
+    g.generateTexture('pawprint', 40, 48);
+    g.destroy();
+    
+    // 紙吹雪/お祝い
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffdd44);
+    g.fillTriangle(24, 4, 4, 44, 44, 44);
+    g.fillStyle(0xff6644);
+    g.fillRect(18, 20, 12, 4);
+    g.fillRect(18, 28, 12, 4);
+    g.fillRect(18, 36, 12, 4);
+    g.fillStyle(0x44ddff);
+    g.fillCircle(8, 12, 5);
+    g.fillCircle(40, 12, 5);
+    g.fillCircle(6, 28, 4);
+    g.fillCircle(42, 28, 4);
+    g.generateTexture('celebrate', 48, 48);
+    g.destroy();
+    
+    // ショックマーク
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffff44);
+    g.beginPath();
+    g.moveTo(24, 0);
+    g.lineTo(28, 18);
+    g.lineTo(40, 12);
+    g.lineTo(30, 26);
+    g.lineTo(44, 32);
+    g.lineTo(24, 32);
+    g.lineTo(28, 48);
+    g.lineTo(20, 32);
+    g.lineTo(4, 32);
+    g.lineTo(18, 26);
+    g.lineTo(8, 12);
+    g.lineTo(20, 18);
+    g.closePath();
+    g.fillPath();
+    g.generateTexture('shock', 48, 48);
+    g.destroy();
+    
+    // 再生アイコン
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0x88ff88);
+    g.fillTriangle(12, 6, 12, 34, 38, 20);
+    g.generateTexture('iconRetry', 44, 40);
+    g.destroy();
+    
+    // ホームアイコン
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0x88aaff);
+    g.fillTriangle(20, 4, 4, 20, 36, 20);
+    g.fillRect(8, 20, 24, 18);
+    g.fillStyle(0x05050a);
+    g.fillRect(14, 26, 12, 12);
+    g.generateTexture('iconHome', 40, 40);
+    g.destroy();
+    
+    // 再生ボタン（スタート）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0xffffff);
+    g.fillTriangle(8, 4, 8, 28, 28, 16);
+    g.generateTexture('iconPlay', 32, 32);
+    g.destroy();
+}
+
+// サウンドエンジン
+class SoundEngine {
+    constructor() { this.ctx = null; this.master = null; }
+    
+    init() {
+        if (this.ctx) return;
+        try {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.master = this.ctx.createGain();
+            this.master.connect(this.ctx.destination);
+            this.master.gain.value = 0.35;
+        } catch (e) {}
+    }
+    
+    tone(freq, dur, type = 'sine', vol = 0.3) {
+        if (!this.ctx) return;
+        try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.connect(gain);
+            gain.connect(this.master);
+            osc.type = type;
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+            osc.start();
+            osc.stop(this.ctx.currentTime + dur);
+        } catch (e) {}
+    }
+    
+    jump() { this.tone(320, 0.08); setTimeout(() => this.tone(480, 0.1), 30); }
+    wallKick() {
+        this.tone(150, 0.04, 'square', 0.2);
+        setTimeout(() => this.tone(300, 0.06), 20);
+        setTimeout(() => this.tone(500, 0.08), 40);
+        setTimeout(() => this.tone(700, 0.06), 60);
+    }
+    land() { this.tone(100, 0.08, 'sine', 0.25); this.tone(60, 0.12, 'triangle', 0.15); }
+    hit(intensity) {
+        for (let i = 0; i < 3 + intensity; i++) {
+            setTimeout(() => this.tone(80 + Math.random() * 150, 0.08, 'sawtooth', 0.1), i * 20);
+        }
+        this.tone(50, 0.2, 'sine', 0.2 + intensity * 0.05);
+    }
+    combo(c) {
+        const f = 400 + c * 60;
+        this.tone(f, 0.08);
+        setTimeout(() => this.tone(f * 1.25, 0.08), 60);
+        setTimeout(() => this.tone(f * 1.5, 0.1), 120);
+    }
+    danger() { this.tone(120, 0.4, 'sawtooth', 0.12); }
+    gameOver() { [400, 320, 260, 200].forEach((f, i) => setTimeout(() => this.tone(f, 0.25), i * 120)); }
+    clear() { [523, 659, 784, 880, 1047].forEach((f, i) => setTimeout(() => this.tone(f, 0.15), i * 80)); }
+    meow() { this.tone(700, 0.08); setTimeout(() => this.tone(900, 0.1), 60); setTimeout(() => this.tone(600, 0.15), 140); }
+}
+
+const sound = new SoundEngine();
+
+// タイトルシーン
+class TitleScene extends Phaser.Scene {
+    constructor() { super('Title'); }
+    
+    create() {
+        createAllTextures(this);
+        
+        // 背景
+        const gfx = this.add.graphics();
+        gfx.fillGradientStyle(0x0a0a18, 0x0a0a18, 0x12122a, 0x12122a);
+        gfx.fillRect(0, 0, W, H);
+        
+        // 星
+        for (let i = 0; i < 60; i++) {
+            const star = this.add.circle(
+                Math.random() * W,
+                Math.random() * H * 0.7,
+                Math.random() * 1.5 + 0.5,
+                0xffffff,
+                Math.random() * 0.6 + 0.2
+            );
+            this.tweens.add({
+                targets: star, alpha: 0.1,
+                duration: 800 + Math.random() * 1500,
+                yoyo: true, repeat: -1
+            });
+        }
+        
+        // 月
+        this.add.image(620, 100, 'moon').setScale(1.0);
+        
+        // 窓
+        const wfx = this.add.graphics();
+        wfx.fillStyle(0x1a1a2a);
+        wfx.fillRect(540, 30, 160, 220);
+        wfx.fillStyle(0x0a0a1a);
+        wfx.fillRect(550, 40, 65, 95);
+        wfx.fillRect(625, 40, 65, 95);
+        wfx.fillRect(550, 145, 65, 95);
+        wfx.fillRect(625, 145, 65, 95);
+        wfx.lineStyle(4, 0x2a2a4a);
+        wfx.strokeRect(540, 30, 160, 220);
+        
+        // 猫シルエット
+        const cat = this.add.image(610, 200, 'cat').setScale(2.2).setTint(0x000000).setAlpha(0.9);
+        this.tweens.add({
+            targets: cat, y: 205,
+            duration: 2000, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        });
+        
+        // 猫の目（光る）
+        const eyeL = this.add.circle(590, 186, 5, 0xffff66);
+        const eyeR = this.add.circle(614, 186, 5, 0xffff66);
+        this.tweens.add({
+            targets: [eyeL, eyeR], alpha: 0.2,
+            duration: 100, yoyo: true, repeat: -1, repeatDelay: 3000
+        });
+        
+        // 月アイコン
+        this.add.image(W / 2, 55, 'moon').setScale(0.6);
+        
+        // タイトル
+        const title = this.add.text(W / 2, 130, 'よるのうんどうかい', {
+            fontSize: '44px', fontFamily: 'sans-serif', color: '#ffffff',
+            stroke: '#2a2a5a', strokeThickness: 8
+        }).setOrigin(0.5);
+        this.tweens.add({
+            targets: title, y: 135,
+            duration: 2500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut'
+        });
+        
+        this.add.text(W / 2, 180, 'Midnight Meowathon', {
+            fontSize: '20px', color: '#7777aa'
+        }).setOrigin(0.5);
+        
+        this.add.text(W / 2, 255, '深夜、突然スイッチが入った猫になって\n飼い主が起きる前に家中で大暴れ！', {
+            fontSize: '16px', color: '#9999bb', align: 'center', lineSpacing: 8
+        }).setOrigin(0.5);
+        
+        // スタートボタン
+        const btnBg = this.add.rectangle(W / 2, 350, 220, 60, 0x4a4a8a).setStrokeStyle(3, 0x7a7aba).setInteractive({ useHandCursor: true });
+        this.add.image(W / 2 - 70, 350, 'iconPlay').setScale(0.7);
+        const btnText = this.add.text(W / 2 + 10, 350, 'はじめる', {
+            fontSize: '26px', color: '#ffffff', fontFamily: 'sans-serif'
+        }).setOrigin(0.5);
+        
+        btnBg.on('pointerover', () => {
+            btnBg.setFillStyle(0x6a6aaa);
+            this.tweens.add({ targets: btnBg, scale: 1.05, duration: 100 });
+        });
+        btnBg.on('pointerout', () => {
+            btnBg.setFillStyle(0x4a4a8a);
+            this.tweens.add({ targets: btnBg, scale: 1, duration: 100 });
+        });
+        btnBg.on('pointerdown', () => {
+            sound.init();
+            sound.tone(440, 0.1);
+            sound.tone(660, 0.1);
+            this.cameras.main.fadeOut(400);
+            this.time.delayedCall(400, () => this.scene.start('Game'));
+        });
+        
+        // 操作説明
+        this.add.text(W / 2, 430, '← → 移動　　↑/Space ジャンプ　　壁+ジャンプ 壁キック', {
+            fontSize: '14px', color: '#666688'
+        }).setOrigin(0.5);
+        this.add.text(W / 2, 460, '物を落として破壊！騒音に注意しながらハイスコアを目指せ', {
+            fontSize: '13px', color: '#555577'
+        }).setOrigin(0.5);
+        this.add.text(W / 2, 530, '© 2025 Midnight Meowathon', {
+            fontSize: '11px', color: '#333355'
+        }).setOrigin(0.5);
+        
+        this.cameras.main.fadeIn(500);
+    }
+}
+
+// ゲームシーン
+class GameScene extends Phaser.Scene {
+    constructor() { super('Game'); }
+    
+    create() {
+        this.score = 0;
+        this.noise = 0;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.comboTimer = 0;
+        this.timeLeft = 90;
+        this.gameEnded = false;
+        this.slowMoTimer = 0;
+        this.shakeIntensity = 0;
+        this.brokenCount = 0;
+        this.catState = { onGround: true, onWallL: false, onWallR: false, canWallKick: true, facing: 1 };
+        
+        this.platforms = this.physics.add.staticGroup();
+        this.walls = this.physics.add.staticGroup();
+        this.breakables = this.physics.add.group({ allowGravity: false });
+        
+        this.createBackground();
+        this.createRoom();
+        this.createCat();
+        this.createUI();
+        this.setupInput();
+        this.setupCollisions();
+        this.startGameTimer();
+        
+        this.cameras.main.fadeIn(300);
+    }
+    
+    createBackground() {
+        const gfx = this.add.graphics();
+        gfx.fillGradientStyle(0x10101a, 0x10101a, 0x1a1a2a, 0x1a1a2a);
+        gfx.fillRect(0, 0, W, H);
+        
+        for (let x = 0; x < W; x += 50) {
+            for (let y = 0; y < H - 70; y += 50) {
+                this.add.rectangle(x + 25, y + 25, 48, 48, 0x16162a, 0.4);
+            }
+        }
+        
+        // 窓
+        this.add.rectangle(680, 120, 100, 150, 0x1a1a30).setStrokeStyle(6, 0x3a3a5a);
+        this.add.rectangle(680, 120, 85, 135, 0x080818);
+        this.add.image(700, 95, 'moon').setScale(0.5);
+        for (let i = 0; i < 5; i++) {
+            this.add.circle(650 + Math.random() * 60, 80 + Math.random() * 80, 1, 0xffffff, 0.5);
+        }
+        this.add.rectangle(680, 120, 4, 135, 0x3a3a5a);
+        this.add.rectangle(680, 120, 85, 4, 0x3a3a5a);
+        this.add.rectangle(620, 120, 20, 155, 0x5a3a6a, 0.7);
+        this.add.rectangle(740, 120, 20, 155, 0x5a3a6a, 0.7);
+        
+        // 飼い主ドア
+        this.add.rectangle(55, 420, 70, 140, 0x5a4030).setStrokeStyle(4, 0x6a5040);
+        this.add.circle(80, 420, 6, 0xc0a060);
+        this.doorLight = this.add.rectangle(55, 488, 60, 6, 0xffff80, 0);
+        this.ownerFace = this.add.image(55, 340, 'ownerSleep').setScale(0.8);
+        this.zzzIcon = this.add.image(95, 315, 'zzz').setScale(0.6);
+        this.tweens.add({ targets: this.zzzIcon, y: 305, alpha: 0.4, duration: 1500, yoyo: true, repeat: -1 });
+        
+        // 床
+        this.add.rectangle(W / 2, H - 30, W, 60, 0x2a2520);
+        for (let x = 0; x < W; x += 80) {
+            this.add.rectangle(x + 40, H - 30, 78, 58, 0x352a20, 0.5);
+        }
+    }
+    
+    createRoom() {
+        this.addWall(8, H / 2, 16, H);
+        this.addWall(W - 8, H / 2, 16, H);
+        this.addPlatform(W / 2, H - 5, W - 20, 10, 0x3a3530);
+        
+        // 本棚
+        this.add.rectangle(130, 300, 100, 200, 0x5a4535).setStrokeStyle(2, 0x4a3525);
+        this.addPlatform(130, 205, 95, 12, 0x6a5545);
+        this.addPlatform(130, 280, 95, 12, 0x6a5545);
+        this.addPlatform(130, 355, 95, 12, 0x6a5545);
+        this.addPlatform(130, 400, 100, 15, 0x5a4535);
+        
+        // テーブル
+        this.add.rectangle(360, 445, 160, 50, 0x6b5344).setStrokeStyle(2, 0x5b4334);
+        this.add.rectangle(300, 455, 8, 40, 0x5b4334);
+        this.add.rectangle(420, 455, 8, 40, 0x5b4334);
+        this.addPlatform(360, 420, 155, 12, 0x7b6354);
+        
+        // ソファ
+        this.add.rectangle(540, 455, 100, 50, 0x6a4030).setStrokeStyle(2, 0x5a3020);
+        this.add.rectangle(540, 430, 100, 25, 0x7a5040);
+        const sofa = this.addPlatform(540, 432, 95, 10, 0x8a6050);
+        sofa.setData('isBouncy', true);
+        
+        // TV台
+        this.add.rectangle(700, 455, 80, 50, 0x4a4a5a).setStrokeStyle(2, 0x3a3a4a);
+        this.addPlatform(700, 430, 75, 10, 0x5a5a6a);
+        this.add.rectangle(700, 385, 70, 55, 0x1a1a2a).setStrokeStyle(3, 0x3a3a4a);
+        this.add.rectangle(700, 385, 60, 45, 0x2a3a5a);
+        
+        // 棚
+        this.addPlatform(250, 180, 90, 12, 0x5a5040);
+        this.addPlatform(450, 260, 110, 12, 0x5a5040);
+        this.addPlatform(600, 180, 80, 12, 0x5a5040);
+        
+        // エアコン
+        this.add.rectangle(350, 70, 130, 40, 0xf0f0f0).setStrokeStyle(2, 0xd0d0d0);
+        this.addPlatform(350, 52, 125, 8, 0xe0e0e0);
+        
+        // 落とし物（騒音を半減）
+        this.spawnBreakable(110, 180, 'vase', 0.7);
+        this.spawnBreakable(150, 180, 'book', 1.0);
+        this.spawnBreakable(115, 255, 'frame', 0.75);
+        this.spawnBreakable(150, 330, 'plant', 0.6);
+        this.spawnBreakable(320, 395, 'mug', 0.8);
+        this.spawnBreakable(370, 395, 'book', 0.9);
+        this.spawnBreakable(410, 395, 'remote', 1.2);
+        this.spawnBreakable(700, 405, 'lamp', 0.55);
+        this.spawnBreakable(230, 155, 'clock', 0.7);
+        this.spawnBreakable(270, 155, 'pen', 1.0);
+        this.spawnBreakable(420, 235, 'vase', 0.65);
+        this.spawnBreakable(480, 235, 'plant', 0.55);
+        this.spawnBreakable(580, 155, 'frame', 0.7);
+        this.spawnBreakable(620, 155, 'lamp', 0.5);
+        this.spawnBreakable(330, 27, 'pen', 1.1);
+        this.spawnBreakable(370, 27, 'book', 0.85);
+        
+        this.totalBreakables = this.breakables.getChildren().length;
+    }
+    
+    addPlatform(x, y, w, h, color) {
+        const p = this.add.rectangle(x, y, w, h, color);
+        this.physics.add.existing(p, true);
+        this.platforms.add(p);
+        return p;
+    }
+    
+    addWall(x, y, w, h) {
+        const wall = this.add.rectangle(x, y, w, h, 0x101015, 0);
+        this.physics.add.existing(wall, true);
+        this.walls.add(wall);
+    }
+    
+    spawnBreakable(x, y, type, scale) {
+        // 騒音値を半減
+        const scores = { vase: 200, book: 50, clock: 300, plant: 150, lamp: 180, mug: 80, frame: 120, remote: 30, pen: 10 };
+        const noises = { vase: 18, book: 6, clock: 22, plant: 12, lamp: 15, mug: 9, frame: 11, remote: 5, pen: 3 };
+        
+        const sprite = this.physics.add.sprite(x, y, type).setScale(scale);
+        sprite.body.setAllowGravity(false);
+        sprite.body.setImmovable(true);
+        sprite.setData('type', type);
+        sprite.setData('scoreValue', scores[type] || 50);
+        sprite.setData('noiseValue', noises[type] || 8);
+        sprite.setData('isFalling', false);
+        sprite.setData('isBroken', false);
+        this.breakables.add(sprite);
+    }
+    
+    createCat() {
+        this.cat = this.add.container(650, 380);
+        this.catSprite = this.add.image(0, 0, 'cat').setScale(1.0);
+        this.cat.add(this.catSprite);
+        
+        this.physics.world.enable(this.cat);
+        this.cat.body.setSize(40, 30);
+        this.cat.body.setOffset(-20, -15);
+        this.cat.body.setCollideWorldBounds(true);
+        this.cat.body.setMaxVelocity(600, 900);
+        this.cat.body.setDragX(50);
+    }
+    
+    createUI() {
+        this.add.rectangle(W / 2, 24, W - 20, 40, 0x000000, 0.6).setStrokeStyle(1, 0x333355).setDepth(100);
+        
+        this.add.rectangle(24, 24, 24, 24, 0x333344).setStrokeStyle(1, 0x555566).setDepth(100);
+        const speakerIcon = this.add.graphics().setDepth(100);
+        speakerIcon.fillStyle(0xaaaaaa);
+        speakerIcon.fillRect(14, 20, 6, 8);
+        speakerIcon.fillTriangle(20, 16, 20, 32, 30, 24);
+        
+        this.add.rectangle(130, 24, 180, 22, 0x222233).setStrokeStyle(1, 0x444466).setDepth(100);
+        this.noiseBar = this.add.rectangle(42, 24, 0, 18, 0x44dd44).setOrigin(0, 0.5).setDepth(100);
+        this.noiseText = this.add.text(130, 24, '', { fontSize: '11px', color: '#aaaaaa' }).setOrigin(0.5).setDepth(100);
+        
+        this.scoreText = this.add.text(W - 20, 12, '0', {
+            fontSize: '28px', color: '#ffd700', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3
+        }).setOrigin(1, 0).setDepth(100);
+        this.add.text(W - 20, 42, 'SCORE', { fontSize: '10px', color: '#aa8800' }).setOrigin(1, 0).setDepth(100);
+        
+        this.timerText = this.add.text(W / 2, 8, '1:30', {
+            fontSize: '30px', color: '#ffffff', fontStyle: 'bold', stroke: '#222244', strokeThickness: 4
+        }).setOrigin(0.5, 0).setDepth(100);
+        
+        this.comboContainer = this.add.container(W / 2, 80).setDepth(100).setAlpha(0);
+        const comboBg = this.add.rectangle(0, 0, 160, 45, 0xff6600, 0.9).setStrokeStyle(2, 0xffaa00);
+        this.comboText = this.add.text(0, 0, '', { fontSize: '26px', color: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+        this.comboContainer.add([comboBg, this.comboText]);
+        
+        this.progressText = this.add.text(W - 20, H - 15, '', { fontSize: '14px', color: '#888899' }).setOrigin(1, 1).setDepth(100);
+    }
+    
+    setupInput() {
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
+    }
+    
+    setupCollisions() {
+        this.physics.add.collider(this.cat, this.platforms, this.handleCatLand, null, this);
+        this.physics.add.collider(this.cat, this.walls);
+        this.physics.add.overlap(this.cat, this.breakables, this.handleCatTouchItem, null, this);
+        this.physics.add.collider(this.breakables, this.platforms, this.handleItemHitGround, null, this);
+    }
+    
+    handleCatLand(cat, platform) {
+        if (!this.catState.onGround && cat.body.velocity.y >= 0 && cat.body.blocked.down) {
+            const fallSpeed = Math.abs(cat.body.velocity.y);
+            // 騒音を半減
+            this.addNoise(fallSpeed > 400 ? 4 : 2);
+            sound.land();
+            this.createDustBurst(cat.x, cat.y + 15, 6);
+            this.tweens.add({ targets: this.catSprite, scaleY: 0.8, scaleX: 1.2, duration: 50, yoyo: true });
+            if (platform.getData('isBouncy')) {
+                cat.body.setVelocityY(-450);
+                sound.jump();
+            }
+        }
+    }
+    
+    handleCatTouchItem(cat, item) {
+        if (!item || !item.body) return;
+        if (item.getData('isFalling') || item.getData('isBroken')) return;
+        item.setData('isFalling', true);
+        
+        this.tweens.add({
+            targets: item, angle: { from: -12, to: 12 },
+            duration: 60, yoyo: true, repeat: 2,
+            onComplete: () => {
+                if (!item || !item.body || item.getData('isBroken')) return;
+                item.body.setAllowGravity(true);
+                item.body.setImmovable(false);
+                item.body.setVelocity(this.catState.facing * Phaser.Math.Between(20, 60), -60);
+                item.body.setAngularVelocity(Phaser.Math.Between(-300, 300));
+                if (item.getData('scoreValue') >= 100) this.triggerSlowMotion();
+            }
+        });
+    }
+    
+    handleItemHitGround(item, platform) {
+        if (!item || !item.body) return;
+        if (!item.getData('isFalling') || item.getData('isBroken')) return;
+        item.setData('isBroken', true);
+        
+        const scoreValue = item.getData('scoreValue');
+        const noiseValue = item.getData('noiseValue');
+        const itemType = item.getData('type');
+        
+        this.combo++;
+        this.comboTimer = 80;
+        if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+        
+        const multiplier = 1 + this.combo * 0.15;
+        const finalScore = Math.floor(scoreValue * multiplier);
+        this.score += finalScore;
+        this.scoreText.setText(this.score.toString());
+        this.tweens.add({ targets: this.scoreText, scale: 1.3, duration: 80, yoyo: true });
+        
+        this.addNoise(noiseValue);
+        this.createBreakEffect(item.x, item.y, itemType, scoreValue);
+        this.shakeIntensity = Math.min(12, 3 + scoreValue / 30);
+        sound.hit(scoreValue / 80);
+        
+        if (this.combo >= 2) this.showComboDisplay();
+        
+        this.brokenCount++;
+        this.progressText.setText(`${this.brokenCount}/${this.totalBreakables}`);
+        
+        item.destroy();
+        
+        if (this.breakables.getChildren().filter(b => !b.getData('isBroken')).length === 0) {
+            this.time.delayedCall(500, () => this.triggerVictory());
+        }
+    }
+    
+    createBreakEffect(x, y, type, score) {
+        const colors = { vase: 0x5bc0de, book: 0x8b4513, clock: 0xffd700, plant: 0x228b22, lamp: 0xfffacd, mug: 0xf5f5dc, frame: 0xdaa520, remote: 0x3a3a3a, pen: 0x2255aa };
+        const color = colors[type] || 0xffffff;
+        const shardCount = Math.min(14, 5 + Math.floor(score / 40));
+        
+        for (let i = 0; i < shardCount; i++) {
+            const shard = this.add.rectangle(x, y, Phaser.Math.Between(4, 10), Phaser.Math.Between(4, 10), color);
+            this.physics.add.existing(shard);
+            shard.body.setVelocity(Phaser.Math.Between(-250, 250), Phaser.Math.Between(-350, -100));
+            shard.body.setAngularVelocity(Phaser.Math.Between(-500, 500));
+            this.tweens.add({ targets: shard, alpha: 0, duration: 500 + Math.random() * 300, onComplete: () => shard.destroy() });
+        }
+        
+        const wave = this.add.image(x, y, 'star').setScale(0.3).setTint(color).setAlpha(0.7);
+        this.tweens.add({ targets: wave, scale: 1.5, alpha: 0, duration: 250, onComplete: () => wave.destroy() });
+        
+        const popup = this.add.text(x, y, `+${Math.floor(score * (1 + this.combo * 0.15))}`, {
+            fontSize: '24px', color: '#ffd700', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0.5).setDepth(50);
+        this.tweens.add({ targets: popup, y: y - 60, alpha: 0, scale: 1.3, duration: 700, onComplete: () => popup.destroy() });
+        
+        if (score >= 150) this.cameras.main.flash(60, 255, 255, 255);
+    }
+    
+    showComboDisplay() {
+        this.comboText.setText(`${this.combo} COMBO!`);
+        this.comboContainer.setAlpha(1).setScale(0.5);
+        this.tweens.add({ targets: this.comboContainer, scale: 1, duration: 120, ease: 'Back.easeOut' });
+        sound.combo(this.combo);
+        
+        if (this.combo % 5 === 0) {
+            const bonus = this.combo * 25;
+            this.score += bonus;
+            this.scoreText.setText(this.score.toString());
+            
+            const bonusContainer = this.add.container(W / 2, 120).setDepth(60);
+            bonusContainer.add(this.add.image(-80, 0, 'celebrate').setScale(0.5));
+            bonusContainer.add(this.add.text(0, 0, `${this.combo} COMBO BONUS +${bonus}`, {
+                fontSize: '20px', color: '#ff66ff', fontStyle: 'bold'
+            }).setOrigin(0.5));
+            this.tweens.add({ targets: bonusContainer, y: 90, alpha: 0, scale: 1.4, duration: 900, onComplete: () => bonusContainer.destroy() });
+        }
+    }
+    
+    triggerSlowMotion() {
+        this.slowMoTimer = 25;
+        this.physics.world.timeScale = 2.5;
+        this.cameras.main.zoomTo(1.08, 100);
+    }
+    
+    createDustBurst(x, y, count) {
+        for (let i = 0; i < count; i++) {
+            const dust = this.add.circle(x, y, 3 + Math.random() * 3, 0xaaaaaa, 0.6);
+            this.tweens.add({
+                targets: dust,
+                x: x + Phaser.Math.Between(-40, 40),
+                y: y + Phaser.Math.Between(-30, 10),
+                alpha: 0, scale: 0.2, duration: 300,
+                onComplete: () => dust.destroy()
+            });
+        }
+    }
+    
+    addNoise(amount) {
+        this.noise = Math.min(100, this.noise + amount);
+        if (this.noise >= 100 && !this.gameEnded) this.triggerGameOver();
+    }
+    
+    startGameTimer() {
+        this.time.addEvent({
+            delay: 1000, loop: true,
+            callback: () => {
+                if (this.gameEnded) return;
+                this.timeLeft--;
+                const m = Math.floor(this.timeLeft / 60), s = this.timeLeft % 60;
+                this.timerText.setText(`${m}:${s.toString().padStart(2, '0')}`);
+                if (this.timeLeft <= 20) this.timerText.setColor('#ff6666');
+                if (this.timeLeft <= 10) this.tweens.add({ targets: this.timerText, scale: 1.15, duration: 80, yoyo: true });
+                if (this.timeLeft <= 0) this.triggerVictory();
+            }
+        });
+    }
+    
+    update(time, delta) {
+        if (this.gameEnded) return;
+        
+        if (this.slowMoTimer > 0) {
+            this.slowMoTimer--;
+            if (this.slowMoTimer === 0) {
+                this.physics.world.timeScale = 1;
+                this.cameras.main.zoomTo(1, 150);
+            }
+        }
+        
+        if (this.shakeIntensity > 0) {
+            this.cameras.main.setScroll(
+                Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity),
+                Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity)
+            );
+            this.shakeIntensity *= 0.85;
+            if (this.shakeIntensity < 0.5) { this.shakeIntensity = 0; this.cameras.main.setScroll(0, 0); }
+        }
+        
+        this.handlePlayerInput();
+        this.updateCatVisuals(time);
+        this.updateNoiseSystem(delta);
+        this.updateOwnerState();
+        this.updateComboSystem(delta);
+    }
+    
+    handlePlayerInput() {
+        const body = this.cat.body;
+        const onGround = body.blocked.down;
+        const onWallL = body.blocked.left && !onGround;
+        const onWallR = body.blocked.right && !onGround;
+        
+        if ((onWallL || onWallR) && body.velocity.y > 0) body.setVelocityY(Math.min(body.velocity.y, 100));
+        
+        const moveL = this.cursors.left.isDown || this.keys.A.isDown;
+        const moveR = this.cursors.right.isDown || this.keys.D.isDown;
+        
+        // 騒音を半減
+        if (moveL) { body.setVelocityX(-280); this.catState.facing = -1; if (onGround) this.addNoise(0.004); }
+        else if (moveR) { body.setVelocityX(280); this.catState.facing = 1; if (onGround) this.addNoise(0.004); }
+        else { body.setVelocityX(body.velocity.x * 0.85); }
+        
+        const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
+                            Phaser.Input.Keyboard.JustDown(this.keys.W) ||
+                            Phaser.Input.Keyboard.JustDown(this.keys.SPACE);
+        
+        if (jumpPressed) {
+            if (onGround) {
+                body.setVelocityY(-500);
+                this.addNoise(1.5); // 半減
+                sound.jump();
+                this.createDustBurst(this.cat.x, this.cat.y + 15, 5);
+            } else if (onWallL && this.catState.canWallKick) {
+                body.setVelocity(400, -480);
+                this.catState.facing = 1;
+                this.executeWallKick(-1);
+            } else if (onWallR && this.catState.canWallKick) {
+                body.setVelocity(-400, -480);
+                this.catState.facing = -1;
+                this.executeWallKick(1);
+            }
+        }
+        
+        this.catState.onGround = onGround;
+        this.catState.onWallL = onWallL;
+        this.catState.onWallR = onWallR;
+    }
+    
+    executeWallKick(dir) {
+        this.catState.canWallKick = false;
+        this.time.delayedCall(120, () => { this.catState.canWallKick = true; });
+        this.addNoise(1); // 半減
+        sound.wallKick();
+        this.createDustBurst(this.cat.x + dir * 18, this.cat.y, 5);
+        
+        const kickContainer = this.add.container(this.cat.x, this.cat.y - 40).setDepth(50);
+        kickContainer.add(this.add.image(-40, 0, 'pawprint').setScale(0.4));
+        kickContainer.add(this.add.text(10, 0, 'Wall Kick!', {
+            fontSize: '18px', color: '#ffff66', fontStyle: 'bold', stroke: '#000000', strokeThickness: 3
+        }).setOrigin(0, 0.5));
+        this.tweens.add({ targets: kickContainer, y: kickContainer.y - 50, alpha: 0, scale: 1.3, duration: 500, onComplete: () => kickContainer.destroy() });
+        
+        this.shakeIntensity = 4;
+    }
+    
+    updateCatVisuals(time) {
+        this.catSprite.setFlipX(this.catState.facing < 0);
+        
+        if (this.catState.onGround && Math.abs(this.cat.body.velocity.x) < 30) {
+            this.catSprite.setTexture('cat');
+        } else if (!this.catState.onGround && (this.catState.onWallL || this.catState.onWallR)) {
+            this.catSprite.setTexture('catWall');
+        } else if (!this.catState.onGround) {
+            this.catSprite.setTexture('catJump');
+        } else {
+            this.catSprite.setTexture('cat');
+        }
+        
+        if (this.catState.onGround) this.catSprite.setAngle(Math.sin(time / 120) * 3);
+        else this.catSprite.setAngle(0);
+    }
+    
+    updateNoiseSystem(delta) {
+        this.noise = Math.max(0, this.noise - 3 * delta / 1000);
+        const percent = this.noise / 100;
+        this.noiseBar.width = percent * 176;
+        
+        if (percent < 0.5) { this.noiseBar.setFillStyle(0x44dd44); this.noiseText.setText(''); }
+        else if (percent < 0.75) { this.noiseBar.setFillStyle(0xdddd44); this.noiseText.setText('ちゅうい'); }
+        else { this.noiseBar.setFillStyle(0xdd4444); this.noiseText.setText('きけん!'); this.noiseBar.setAlpha(0.7 + Math.sin(Date.now() / 60) * 0.3); }
+    }
+    
+    updateOwnerState() {
+        const p = this.noise / 100;
+        if (p >= 0.8) {
+            this.ownerFace.setTexture('ownerStir');
+            this.doorLight.setAlpha(0.5 + Math.sin(Date.now() / 60) * 0.3);
+            this.zzzIcon.setAlpha(0);
+        } else if (p >= 0.5) {
+            this.ownerFace.setTexture('ownerLight');
+            this.doorLight.setAlpha(0.15);
+            this.zzzIcon.setAlpha(0.4);
+        } else {
+            this.ownerFace.setTexture('ownerSleep');
+            this.doorLight.setAlpha(0);
+            this.zzzIcon.setAlpha(1);
+        }
+    }
+    
+    updateComboSystem(delta) {
+        if (this.comboTimer > 0) this.comboTimer -= delta / 16;
+        else if (this.combo > 0) {
+            this.combo = 0;
+            this.tweens.add({ targets: this.comboContainer, alpha: 0, duration: 200 });
+        }
+    }
+    
+    triggerGameOver() {
+        if (this.gameEnded) return;
+        this.gameEnded = true;
+        sound.gameOver();
+        this.ownerFace.setTexture('ownerAngry');
+        this.doorLight.setAlpha(1);
+        this.zzzIcon.setVisible(false);
+        sound.meow();
+        this.cat.body.setVelocity(0, -350);
+        this.shakeIntensity = 15;
+        this.cameras.main.flash(250, 255, 100, 100);
+        this.time.delayedCall(700, () => this.showResultScreen(false));
+    }
+    
+    triggerVictory() {
+        if (this.gameEnded) return;
+        this.gameEnded = true;
+        sound.clear();
+        this.cameras.main.flash(300, 255, 255, 200);
+        this.time.delayedCall(500, () => this.showResultScreen(true));
+    }
+    
+    showResultScreen(isVictory) {
+        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0).setDepth(200);
+        this.tweens.add({ targets: overlay, fillAlpha: 0.85, duration: 400 });
+        
+        this.time.delayedCall(300, () => {
+            const c = this.add.container(W / 2, H / 2).setDepth(210).setAlpha(0);
+            
+            if (isVictory) {
+                c.add(this.add.image(0, -130, 'celebrate').setScale(1.2));
+                c.add(this.add.text(0, -70, 'ミッションコンプリート！', {
+                    fontSize: '32px', color: '#44ff44', fontStyle: 'bold', stroke: '#000', strokeThickness: 4
+                }).setOrigin(0.5));
+                
+                const tb = this.timeLeft * 10, sb = 500, cb = this.maxCombo * 50;
+                const total = this.score + tb + sb + cb;
+                
+                c.add(this.add.text(-90, -20, 'スコア:', { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
+                c.add(this.add.text(90, -20, this.score.toString(), { fontSize: '18px', color: '#ffd700' }).setOrigin(1, 0.5));
+                c.add(this.add.text(-90, 8, 'タイムボーナス:', { fontSize: '15px', color: '#aaa' }).setOrigin(0, 0.5));
+                c.add(this.add.text(90, 8, `+${tb}`, { fontSize: '15px', color: '#88ff88' }).setOrigin(1, 0.5));
+                c.add(this.add.text(-90, 32, '生還ボーナス:', { fontSize: '15px', color: '#aaa' }).setOrigin(0, 0.5));
+                c.add(this.add.text(90, 32, `+${sb}`, { fontSize: '15px', color: '#88ff88' }).setOrigin(1, 0.5));
+                c.add(this.add.text(-90, 56, 'コンボボーナス:', { fontSize: '15px', color: '#aaa' }).setOrigin(0, 0.5));
+                c.add(this.add.text(90, 56, `+${cb}`, { fontSize: '15px', color: '#88ff88' }).setOrigin(1, 0.5));
+                c.add(this.add.rectangle(0, 80, 200, 2, 0x666666));
+                c.add(this.add.text(0, 105, `TOTAL: ${total}`, { fontSize: '28px', color: '#ffd700', fontStyle: 'bold' }).setOrigin(0.5));
+            } else {
+                c.add(this.add.image(0, -100, 'shock').setScale(1.3));
+                c.add(this.add.text(0, -30, 'みつかった！', {
+                    fontSize: '42px', color: '#ff5555', fontStyle: 'bold', stroke: '#000', strokeThickness: 4
+                }).setOrigin(0.5));
+                c.add(this.add.text(0, 30, `スコア: ${this.score}`, { fontSize: '28px', color: '#ffd700' }).setOrigin(0.5));
+                c.add(this.add.text(0, 70, `最大コンボ: ${this.maxCombo}`, { fontSize: '18px', color: '#aaa' }).setOrigin(0.5));
+            }
+            
+            const makeBtn = (y, iconKey, txt, cb) => {
+                const bg = this.add.rectangle(0, y, 200, 45, 0x4a4a8a).setStrokeStyle(2, 0x7a7aba).setInteractive({ useHandCursor: true });
+                const icon = this.add.image(-70, y, iconKey).setScale(0.6);
+                const tx = this.add.text(10, y, txt, { fontSize: '18px', color: '#fff' }).setOrigin(0, 0.5);
+                bg.on('pointerover', () => bg.setFillStyle(0x6a6aaa));
+                bg.on('pointerout', () => bg.setFillStyle(0x4a4a8a));
+                bg.on('pointerdown', () => { sound.tone(440, 0.1); cb(); });
+                return [bg, icon, tx];
+            };
+            
+            c.add(makeBtn(isVictory ? 160 : 130, 'iconRetry', 'もういちど', () => this.scene.restart()));
+            c.add(makeBtn(isVictory ? 210 : 180, 'iconHome', 'タイトルへ', () => this.scene.start('Title')));
+            
+            this.tweens.add({ targets: c, alpha: 1, y: H / 2 - 10, duration: 350, ease: 'Back.easeOut' });
+        });
+    }
+}
+
+// ゲーム起動
+new Phaser.Game({
+    type: Phaser.AUTO,
+    width: W, height: H,
+    parent: 'game-container',
+    backgroundColor: 0x08080f,
+    physics: { default: 'arcade', arcade: { gravity: { y: 1100 }, debug: false } },
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    scene: [TitleScene, GameScene]
+});
+</script>
+</body>
+</html>

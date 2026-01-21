@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Midnight Meowathon - Automated Tests</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2a;
+            color: #00ff00;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #ffdd00;
+            text-align: center;
+        }
+
+        .test-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #0a0a15;
+            padding: 20px;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+        }
+
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #12122a;
+            border-left: 4px solid #00ff00;
+        }
+
+        .test-section.failed {
+            border-left-color: #ff0000;
+        }
+
+        .test-section.running {
+            border-left-color: #ffdd00;
+        }
+
+        .test-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .test-result {
+            margin: 5px 0;
+            padding: 5px;
+        }
+
+        .pass {
+            color: #00ff00;
+        }
+
+        .fail {
+            color: #ff0000;
+        }
+
+        .info {
+            color: #aaaacc;
+        }
+
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: #2a2a4a;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 20px;
+        }
+
+        button {
+            background: #4a4a8a;
+            color: white;
+            border: 2px solid #7a7aba;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 10px;
+        }
+
+        button:hover {
+            background: #6a6aaa;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🐱 Midnight Meowathon - 自動テストスイート</h1>
+
+    <div class="test-container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button onclick="runAllTests()">全テスト実行</button>
+            <button onclick="clearResults()">結果クリア</button>
+        </div>
+
+        <div id="test-results"></div>
+
+        <div id="summary" class="summary" style="display: none;"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
+    <script src="js/sound.js"></script>
+    <script src="js/textures.js"></script>
+    <script src="js/effects.js"></script>
+    <script src="js/mobile.js"></script>
+    <script src="js/roguelite.js"></script>
+    <script src="js/gathering.js"></script>
+    <script src="js/stages.js"></script>
+    <script src="js/validate.js"></script>
+
+    <script>
+        const W = 800, H = 550;
+        let testResults = [];
+
+        function log(testName, message, type = 'info') {
+            const section = document.getElementById(`test-${testName.replace(/\s/g, '-')}`);
+            if (section) {
+                const result = document.createElement('div');
+                result.className = `test-result ${type}`;
+                result.textContent = `${type === 'pass' ? '✓' : type === 'fail' ? '✗' : '•'} ${message}`;
+                section.appendChild(result);
+            }
+        }
+
+        function createTestSection(testName) {
+            const container = document.getElementById('test-results');
+            const section = document.createElement('div');
+            section.className = 'test-section running';
+            section.id = `test-${testName.replace(/\s/g, '-')}`;
+
+            const name = document.createElement('div');
+            name.className = 'test-name';
+            name.textContent = testName;
+            section.appendChild(name);
+
+            container.appendChild(section);
+            return section;
+        }
+
+        function markTestComplete(testName, passed) {
+            const section = document.getElementById(`test-${testName.replace(/\s/g, '-')}`);
+            if (section) {
+                section.className = `test-section ${passed ? '' : 'failed'}`;
+            }
+            testResults.push({ name: testName, passed });
+        }
+
+        // テスト1: 設定検証
+        async function testConfigurationValidation() {
+            const testName = '設定検証';
+            createTestSection(testName);
+            let passed = true;
+
+            try {
+                // STAGE_LAYOUTS と GATHERING_STAGE_LAYOUTS の分離確認
+                if (typeof STAGE_LAYOUTS !== 'undefined' && typeof GATHERING_STAGE_LAYOUTS !== 'undefined') {
+                    log(testName, 'STAGE_LAYOUTS と GATHERING_STAGE_LAYOUTS が正しく分離されている', 'pass');
+
+                    // STAGE_LAYOUTS のキー確認
+                    const stageKeys = Object.keys(STAGE_LAYOUTS);
+                    if (stageKeys.length === 5) {
+                        log(testName, `STAGE_LAYOUTS: ${stageKeys.length}ステージ定義`, 'pass');
+                    } else {
+                        log(testName, `STAGE_LAYOUTS: ${stageKeys.length}ステージ (期待値: 5)`, 'fail');
+                        passed = false;
+                    }
+
+                    // GATHERING_STAGE_LAYOUTS のキー確認
+                    const gatheringKeys = Object.keys(GATHERING_STAGE_LAYOUTS);
+                    if (gatheringKeys.length === 4) {
+                        log(testName, `GATHERING_STAGE_LAYOUTS: ${gatheringKeys.length}ステージ定義`, 'pass');
+                    } else {
+                        log(testName, `GATHERING_STAGE_LAYOUTS: ${gatheringKeys.length}ステージ (期待値: 4)`, 'fail');
+                        passed = false;
+                    }
+                } else {
+                    log(testName, 'ステージレイアウトの定義に問題あり', 'fail');
+                    passed = false;
+                }
+
+                // validateGameConfiguration を実行
+                const originalConsoleLog = console.log;
+                const originalConsoleError = console.error;
+                const originalConsoleWarn = console.warn;
+
+                let errorMessages = [];
+                console.error = (...args) => { errorMessages.push(args.join(' ')); };
+                console.warn = () => { };
+                console.log = () => { };
+
+                const isValid = validateGameConfiguration();
+
+                console.log = originalConsoleLog;
+                console.error = originalConsoleError;
+                console.warn = originalConsoleWarn;
+
+                if (isValid) {
+                    log(testName, '全体設定検証に合格', 'pass');
+                } else {
+                    log(testName, `設定検証に失敗`, 'fail');
+                    errorMessages.forEach(msg => log(testName, msg, 'fail'));
+                    passed = false;
+                }
+
+            } catch (error) {
+                log(testName, `エラー: ${error.message}`, 'fail');
+                passed = false;
+            }
+
+            markTestComplete(testName, passed);
+        }
+
+        // テスト2: ローグライトシステム
+        async function testRogueliteSystem() {
+            const testName = 'ローグライトシステム';
+            createTestSection(testName);
+            let passed = true;
+
+            try {
+                const manager = new PowerUpManager();
+                log(testName, 'PowerUpManagerインスタンス作成成功', 'pass');
+
+                const added = manager.addPowerUp('catnip');
+                if (added) {
+                    log(testName, 'パワーアップ追加成功', 'pass');
+                } else {
+                    log(testName, 'パワーアップ追加失敗', 'fail');
+                    passed = false;
+                }
+
+                const speedMult = manager.getMultiplier('speedMultiplier');
+                if (speedMult === 1.5) {
+                    log(testName, `速度倍率正常: ${speedMult}x`, 'pass');
+                } else {
+                    log(testName, `速度倍率異常: ${speedMult}x`, 'fail');
+                    passed = false;
+                }
+
+                for (let i = 0; i < 6; i++) {
+                    manager.addPowerUp('bell');
+                }
+                if (manager.activePowerUps.length === 5) {
+                    log(testName, '最大数制限正常: 5個', 'pass');
+                } else {
+                    log(testName, `最大数制限異常: ${manager.activePowerUps.length}個`, 'fail');
+                    passed = false;
+                }
+
+                const progress = new StoryProgress();
+                progress.completeStage(1000);
+                if (progress.isGatheringUnlocked()) {
+                    log(testName, '猫の集会解禁条件正常', 'pass');
+                } else {
+                    log(testName, '猫の集会解禁条件異常', 'fail');
+                    passed = false;
+                }
+
+            } catch (error) {
+                log(testName, `エラー: ${error.message}`, 'fail');
+                passed = false;
+            }
+
+            markTestComplete(testName, passed);
+        }
+
+        // テスト3: 猫の集会システム
+        async function testGatheringSystem() {
+            const testName = '猫の集会システム';
+            createTestSection(testName);
+            let passed = true;
+
+            try {
+                if (BOSS_CATS && BOSS_CATS.length === 4) {
+                    log(testName, `ボス猫定義正常: ${BOSS_CATS.length}体`, 'pass');
+                } else {
+                    log(testName, 'ボス猫定義異常', 'fail');
+                    passed = false;
+                }
+
+                const layouts = ['kuro', 'shiro', 'mike', 'boss'];
+                for (const id of layouts) {
+                    if (GATHERING_STAGE_LAYOUTS[id]) {
+                        const layout = GATHERING_STAGE_LAYOUTS[id];
+                        log(testName, `${id}ステージ: ${layout.items.length}アイテム`, 'pass');
+                    } else {
+                        log(testName, `${id}ステージ定義なし`, 'fail');
+                        passed = false;
+                    }
+                }
+
+                const rules = new TimeAttackRules('kuro');
+                if (rules.targetTime === 45) {
+                    log(testName, 'クロの目標タイム正常: 45秒', 'pass');
+                } else {
+                    log(testName, `クロの目標タイム異常: ${rules.targetTime}秒`, 'fail');
+                    passed = false;
+                }
+
+                if (rules.checkWin(40) && !rules.checkWin(50)) {
+                    log(testName, '勝敗判定正常', 'pass');
+                } else {
+                    log(testName, '勝敗判定異常', 'fail');
+                    passed = false;
+                }
+
+                const rankS = rules.getRank(30);
+                const rankD = rules.getRank(52);
+                if (rankS === 'S' && rankD === 'D') {
+                    log(testName, 'ランクシステム正常', 'pass');
+                } else {
+                    log(testName, `ランクシステム異常: S=${rankS}, D=${rankD}`, 'fail');
+                    passed = false;
+                }
+
+            } catch (error) {
+                log(testName, `エラー: ${error.message}`, 'fail');
+                passed = false;
+            }
+
+            markTestComplete(testName, passed);
+        }
+
+        async function runAllTests() {
+            clearResults();
+
+            await testConfigurationValidation();
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            await testRogueliteSystem();
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            await testGatheringSystem();
+
+            showSummary();
+        }
+
+        function showSummary() {
+            const summary = document.getElementById('summary');
+            const passed = testResults.filter(t => t.passed).length;
+            const total = testResults.length;
+            const percentage = Math.round((passed / total) * 100);
+
+            summary.innerHTML = `
+                <div style="font-size: 24px; margin-bottom: 10px;">
+                    ${passed === total ? '✓ すべてのテストに合格しました！' : '⚠ 一部のテストが失敗しました'}
+                </div>
+                <div>
+                    合格: ${passed} / ${total} (${percentage}%)
+                </div>
+            `;
+            summary.style.display = 'block';
+            summary.style.background = passed === total ? '#2a4a2a' : '#4a2a2a';
+        }
+
+        function clearResults() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('summary').style.display = 'none';
+            testResults = [];
+        }
+
+        // ページロード時に自動実行
+        window.addEventListener('load', () => {
+            setTimeout(runAllTests, 500);
+        });
+    </script>
+</body>
+
+</html>
