@@ -903,4 +903,141 @@ function createAllTextures(scene) {
     g.fillRect(50, 38, 40, 4);
     g.generateTexture('bed', 100, 60);
     g.destroy();
+
+    // === 新UI: 飼い主モニター ===
+
+    // モニター枠
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    g.fillStyle(0x222233);
+    g.fillRoundedRect(0, 0, 100, 100, 12);
+    g.lineStyle(4, 0x444455);
+    g.strokeRoundedRect(2, 2, 96, 96, 10);
+    g.generateTexture('ui_monitor_frame', 100, 100);
+    g.destroy();
+
+    // 飼い主の顔（共通ヘルパー）
+    const drawOwnerFace = (g, state) => {
+        // 顔のベース
+        g.fillStyle(0xffdbac); // 肌色
+        g.fillCircle(40, 40, 32);
+
+        // 髪
+        g.fillStyle(0x5a4030); // 茶髪
+        g.beginPath();
+        g.arc(40, 38, 35, Math.PI, 0); // 頭頂部
+        g.lineTo(75, 65); // 右もみあげ
+        g.lineTo(65, 65);
+        g.lineTo(65, 32); // 右前髪
+        g.quadraticBezierTo(40, 28, 15, 32); // 前髪カーブ
+        g.lineTo(15, 65); // 左前髪
+        g.lineTo(5, 65); // 左もみあげ
+        g.closePath();
+        g.fillPath();
+
+        // 表情
+        if (state === 'sleep') {
+            // 寝顔
+            g.lineStyle(3, 0x554433);
+            g.beginPath();
+            g.arc(28, 42, 6, 0.8, 2.3); // 左目（閉じ）
+            g.strokePath();
+            g.beginPath();
+            g.arc(52, 42, 6, 0.8, 2.3); // 右目（閉じ）
+            g.strokePath();
+
+            // 口（すやすや）
+            g.lineStyle(2, 0xcc8888);
+            g.fillCircle(40, 56, 3);
+
+            // 鼻提灯（アニメ用）
+            // g.fillStyle(0xaaccff, 0.5);
+            // g.fillCircle(48, 52, 8);
+        } else if (state === 'wake') {
+            // 起きかけ（不機嫌）
+            g.fillStyle(0xffffff);
+            g.fillEllipse(28, 40, 10, 6); // 左白目
+            g.fillEllipse(52, 40, 10, 6); // 右白目
+
+            g.fillStyle(0x332211);
+            g.fillCircle(28, 40, 2); // 左黒目（小さい）
+            g.fillCircle(52, 40, 2); // 右黒目
+
+            // 眉（ひそめ）
+            g.lineStyle(3, 0x554433);
+            g.lineBetween(20, 32, 34, 36);
+            g.lineBetween(60, 32, 46, 36);
+
+            // 口（への字）
+            g.beginPath();
+            g.arc(40, 58, 6, Math.PI + 0.5, -0.5);
+            g.strokePath();
+
+            // 漫符（イライラ）
+            g.lineStyle(2, 0xff0000);
+            g.lineBetween(60, 20, 70, 10);
+            g.lineBetween(65, 25, 75, 15);
+        } else if (state === 'angry') {
+            // 激怒
+            g.fillStyle(0xffffff);
+            g.fillCircle(28, 40, 8); // 左白目（カッ）
+            g.fillCircle(52, 40, 8); // 右白目
+
+            g.fillStyle(0xff0000); // 充血
+            g.fillCircle(28, 40, 3);
+            g.fillCircle(52, 40, 3);
+
+            // 眉（激怒）
+            g.lineStyle(4, 0x000000);
+            g.lineBetween(18, 30, 36, 42);
+            g.lineBetween(62, 30, 44, 42);
+
+            // 口（咆哮）
+            g.fillStyle(0x660000);
+            g.fillEllipse(40, 60, 12, 16);
+            g.fillStyle(0xffffff); // 歯
+            g.fillTriangle(34, 54, 46, 54, 40, 64);
+
+            // 背景効果（赤）
+            // g.lineStyle(2, 0xff0000);
+            // wobblyLine(g, 10, 10, 70, 70, 5, 2);
+        }
+    };
+
+    // 睡眠（通常）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    drawOwnerFace(g, 'sleep');
+    g.generateTexture('ui_owner_sleep', 80, 80);
+    g.destroy();
+
+    // 起きかけ（黄色ゾーン）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    drawOwnerFace(g, 'wake');
+    g.generateTexture('ui_owner_wake', 80, 80);
+    g.destroy();
+
+    // 激怒（赤ゾーン）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    drawOwnerFace(g, 'angry');
+    g.generateTexture('ui_owner_angry', 80, 80);
+    g.destroy();
+
+    // ノイズゲージ（円形）
+    // 実際にはGameScene側でGraphicsを使って動的に描画するか、
+    // ここでベースを作ってマスクするか。
+    // 今回は「スピーカーアイコン」等の装飾をここで作る
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    // スピーカー
+    g.fillStyle(0xcccccc);
+    g.fillRect(10, 20, 10, 20);
+    g.beginPath();
+    g.moveTo(20, 20); g.lineTo(40, 10); g.lineTo(40, 50); g.lineTo(20, 40);
+    g.closePath();
+    g.fillPath();
+    // 音波
+    g.lineStyle(3, 0xffffff);
+    g.beginPath(); g.arc(40, 30, 10, -0.5, 0.5); g.strokePath();
+    g.beginPath(); g.arc(40, 30, 16, -0.5, 0.5); g.strokePath();
+
+    g.generateTexture('iconSpeaker', 60, 60);
+    g.destroy();
 }
