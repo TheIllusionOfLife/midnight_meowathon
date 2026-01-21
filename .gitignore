@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+package-lock.json
+# (Ideally check in package-lock.json for consistency, but if user explicitly wants only source, sometimes it is ignored. 
+# Standard practice is to KEEP package-lock.json. I will NOT ignore package-lock.json unless requested.
+# But I WILL ignore node_modules)
+
+# System Files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Build output
+dist/
+build/
+
+# Temp
+tmp/
