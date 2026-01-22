@@ -15,12 +15,14 @@
     <div id="game-container"></div>
 
     <!-- Core Systems -->
+    <script src="js/responsive.js"></script>
     <script src="js/sound.js"></script>
     <script src="js/textures.js"></script>
     <script src="js/effects.js"></script>
     <script src="js/mobile.js"></script>
     <script src="js/roguelite.js"></script>
     <script src="js/gathering.js"></script>
+    <script src="js/items.js"></script>
     <script src="js/stages.js"></script>
 
     <!-- Scenes -->
@@ -28,6 +30,7 @@
     <script src="js/scenes/PowerUpScene.js"></script>
     <script src="js/scenes/GameScene.js"></script>
     <script src="js/scenes/GatheringScene.js"></script>
+    <script src="js/scenes/HUDScene.js"></script>
 
     <!-- Validation (must load after all classes) -->
     <script src="js/validate.js"></script>
@@ -35,12 +38,19 @@
     <!-- Game Initialization -->
     <script>
         window.addEventListener('load', function () {
-            const gameSize = DeviceDetector.getOptimalSize();
+            // Run validation first
+            if (typeof validateGameConfiguration === 'function') {
+                const isValid = validateGameConfiguration();
+                if (!isValid) {
+                    document.body.innerHTML = '<h1 style="color:red;text-align:center;margin-top:50px;">Game configuration error. Check console.</h1>';
+                    return;
+                }
+            }
 
-            new Phaser.Game({
+            const game = new Phaser.Game({
                 type: Phaser.AUTO,
-                width: gameSize.width,
-                height: gameSize.height,
+                width: window.innerWidth,
+                height: window.innerHeight,
                 parent: 'game-container',
                 backgroundColor: 0x08080f,
                 physics: {
@@ -51,15 +61,28 @@
                     }
                 },
                 scale: {
-                    mode: Phaser.Scale.FIT,
-                    autoCenter: Phaser.Scale.CENTER_BOTH
+                    mode: Phaser.Scale.RESIZE,
+                    autoCenter: Phaser.Scale.CENTER_BOTH,
+                    width: window.innerWidth,
+                    height: window.innerHeight
                 },
                 render: {
                     pixelArt: false,
                     antialias: true,
                     resolution: window.devicePixelRatio || 1
                 },
-                scene: [TitleScene, PowerUpScene, GameScene, GatheringScene]
+                scene: [TitleScene, PowerUpScene, GameScene, GatheringScene, HUDScene]
+            });
+
+            // Handle window resize and orientation changes
+            window.addEventListener('resize', function () {
+                game.scale.resize(window.innerWidth, window.innerHeight);
+            });
+
+            window.addEventListener('orientationchange', function () {
+                setTimeout(function () {
+                    game.scale.resize(window.innerWidth, window.innerHeight);
+                }, 100);
             });
         });
     </script>

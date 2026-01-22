@@ -85,6 +85,19 @@ function drawBezier(graphics, x1, y1, cp1x, cp1y, cp2x, cp2y, x2, y2, segments =
     }
 }
 
+// 2次ベジエ曲線のヘルパー
+function drawQuadratic(graphics, x1, y1, cpx, cpy, x2, y2, segments = 20) {
+    const curve = new Phaser.Curves.QuadraticBezier(
+        new Phaser.Math.Vector2(x1, y1),
+        new Phaser.Math.Vector2(cpx, cpy),
+        new Phaser.Math.Vector2(x2, y2)
+    );
+    const points = curve.getPoints(segments);
+    for (let i = 0; i < points.length; i++) {
+        graphics.lineTo(points[i].x, points[i].y);
+    }
+}
+
 // テクスチャ生成関数
 function createAllTextures(scene) {
     let g;
@@ -928,7 +941,7 @@ function createAllTextures(scene) {
         g.lineTo(75, 65); // 右もみあげ
         g.lineTo(65, 65);
         g.lineTo(65, 32); // 右前髪
-        g.quadraticBezierTo(40, 28, 15, 32); // 前髪カーブ
+        drawQuadratic(g, 65, 32, 40, 28, 15, 32); // 前髪カーブ
         g.lineTo(15, 65); // 左前髪
         g.lineTo(5, 65); // 左もみあげ
         g.closePath();

@@ -1,10 +1,28 @@
 // メインゲームシーン（ローグライト要素統合版）
+
+// Game constants (module-level for broader browser compatibility)
+const GAME_CONSTANTS = {
+    WORLD_WIDTH: 800,
+    WORLD_HEIGHT: 550,
+    PLAYER_DRAG: 50,
+    PLAYER_JUMP_FORCE: 500,
+    PLAYER_BASE_SPEED: 280,
+    WALL_SLIDE_SPEED: 100,
+    MAX_NOISE: 100,
+    BASE_COMBO_TIMER: 80,
+    SLOW_MO_DURATION: 25,
+    SLOW_MO_TIME_SCALE: 2.5
+};
+
 class GameScene extends Phaser.Scene {
     constructor() {
         super('GameScene');
     }
 
     create() {
+        // Initialize responsive layout
+        GameLayout.init(this);
+
         // ゲーム状態初期化
         this.score = 0;
         this.noise = 0;
@@ -38,36 +56,82 @@ class GameScene extends Phaser.Scene {
         // シーン構築
         this.createBackground();
         this.createRoom();
-        this.createAtmosphere(); // Add Atmosphere
+        this.createAtmosphere();
         this.createCat();
-        this.createUI();
+
+        // Launch HUD Scene & remove local UI
+        this.scene.launch('HUDScene', { mainScene: this });
+        this.hud = this.scene.get('HUDScene');
+
         this.setupInput();
         this.setupCollisions();
         this.startGameTimer();
 
-        // モバイル対応
-        if (DeviceDetector.isMobile() || DeviceDetector.isTouchDevice()) {
-            this.joystick = new VirtualJoystick(this, 80, H - 80);
-            this.jumpBtn = new JumpButton(this, W - 60, H - 60);
-            this.joystick.base.setVisible(true);
-            this.joystick.stick.setVisible(true);
-            this.jumpBtn.show();
-        }
+        // Listen for resize to update camera
+        this.scale.on('resize', this.handleResize, this);
+
+        // Apply initial camera zoom/centering
+        this.handleResize(this.scale.gameSize);
 
         this.cameras.main.fadeIn(300);
     }
 
-    createBackground() {
-        // Tiled Background Pattern (Wallpaper)
-        this.add.tileSprite(W / 2, H / 2, W, H, 'bg_pattern')
-            .setScrollFactor(0)
-            .setTint(0x8888aa); // Slight cool tint
+    handleResize(gameSize) {
+        const screenW = gameSize.width;
+        const screenH = gameSize.height;
 
-        // Gradients (Vignette for depth)
-        const gfx = this.add.graphics();
-        gfx.fillGradientStyle(0x000000, 0x000000, 0x1a1a2e, 0x1a1a2e, 0.8, 0.8, 0, 0);
-        gfx.fillRect(0, 0, W, H);
-        gfx.setScrollFactor(0);
+        // Fixed game world dimensions
+        const worldW = GAME_CONSTANTS.WORLD_WIDTH;
+        const worldH = GAME_CONSTANTS.WORLD_HEIGHT;
+
+        // Calculate zoom to fit the game world in the screen (FIT mode)
+        const zoomX = screenW / worldW;
+        const zoomY = screenH / worldH;
+        const zoom = Math.min(zoomX, zoomY);
+
+        this.cameras.main.setZoom(zoom);
+
+        // Remove bounds to allow viewing "void" space (filled by background)
+        this.cameras.main.removeBounds();
+
+        // Calculate scroll position to center the game world on screen
+        // The visible area in world coordinates is (screenW/zoom) x (screenH/zoom)
+        // We want the center of this visible area to be at (worldW/2, worldH/2)
+        const visibleW = screenW / zoom;
+        const visibleH = screenH / zoom;
+
+        // Vertical Alignment Strategy
+        // scrollX/scrollY is the top-left corner of the view in world coords
+        const scrollX = (worldW / 2) - (visibleW / 2);
+
+        let scrollY;
+        if (screenH > screenW) {
+            // Portrait: Align bottom logic
+            // We want floor (Y=550) to be visible near bottom, leaving space for HUD controls.
+            // Leave 150px screen margin (converted to world units).
+            const marginBottom = 150 / zoom;
+            scrollY = (worldH + marginBottom) - visibleH;
+        } else {
+            // Landscape: Center Vertically
+            scrollY = (worldH / 2) - (visibleH / 2);
+        }
+
+        this.cameras.main.setScroll(scrollX, scrollY);
+    }
+
+    createBackground() {
+        // Huge Background to cover all aspect ratios/zooms
+        // Center at world center, but make it massive
+        const bgW = 4000;
+        const bgH = 4000;
+
+        // Tiled Background Pattern (Wallpaper)
+        this.add.tileSprite(W / 2, H / 2, bgW, bgH, 'bg_pattern')
+            .setScrollFactor(0.2) // Parallax effect
+            .setTint(0x8888aa);
+
+        // Gradients removed - was causing dark artifact on mobile
+        // Vignette effect will be recreated in createAtmosphere instead
 
         // パララックス背景（3層）
         // 遠景 - 建物シルエット
@@ -119,23 +183,6 @@ class GameScene extends Phaser.Scene {
         this.add.rectangle(620, 120, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
         this.add.rectangle(740, 120, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
 
-        // 飼い主のベッド（左側）
-        this.add.image(90, 450, 'bed').setScale(0.9).setAngle(-90);
-        // 布団（上に重ねる）
-        this.add.rectangle(90, 450, 70, 45, 0x6688aa, 0.85);
-        // 飼い主の顔（ベッドの枕位置）
-        this.ownerFace = this.add.image(55, 438, 'ownerSleep').setScale(0.65);
-        this.doorLight = this.add.rectangle(90, 450, 100, 70, 0xffff80, 0);
-        this.zzzIcon = this.add.image(75, 405, 'zzz').setScale(0.5);
-        this.tweens.add({
-            targets: this.zzzIcon,
-            y: 305,
-            alpha: 0.4,
-            duration: 1500,
-            yoyo: true,
-            repeat: -1
-        });
-
         // 床
         this.add.rectangle(W / 2, H - 30, W, 60, 0x2a2520);
         for (let x = 0; x < W; x += 80) {
@@ -184,20 +231,32 @@ class GameScene extends Phaser.Scene {
         emitter.setScrollFactor(0);
         emitter.setDepth(150); // Overlay on top
 
-        // Vignette Overlay (Cinematic look)
-        const vignette = this.add.graphics();
-        vignette.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.8, 0.8, 0, 0);
-        vignette.fillRect(0, 0, W, 150); // Top fade
-        vignette.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.8, 0.8);
-        vignette.fillRect(0, H - 150, W, 150); // Bottom fade 
-        vignette.setDepth(200);
-        vignette.setScrollFactor(0);
+        // Vignette Overlay removed - was potentially obscuring floor area on mobile
+        // const vignette = this.add.graphics();
+        // vignette.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0.8, 0.8, 0, 0);
+        // vignette.fillRect(0, 0, W, 150); // Top fade
+        // vignette.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.8, 0.8);
+        // vignette.fillRect(0, H - 150, W, 150); // Bottom fade 
+        // vignette.setDepth(200);
+        // vignette.setScrollFactor(0);
+    }
+
+    getCurrentStageLayout() {
+        const stageNum = storyProgress.getCurrentStage();
+        let layout = STAGE_LAYOUTS[stageNum];
+
+        if (!layout) {
+            console.error(`Stage ${stageNum} not found, falling back to stage 1`);
+            layout = STAGE_LAYOUTS[1];
+            if (!layout) {
+                throw new Error('No stage layouts available');
+            }
+        }
+        return layout;
     }
 
     createRoom() {
-        // 現在のステージ取得
-        const stageNum = storyProgress.getCurrentStage();
-        const layout = STAGE_LAYOUTS[stageNum];
+        const layout = this.getCurrentStageLayout();
 
         // 壁と床
         this.addWall(8, H / 2, 16, H);
@@ -252,23 +311,21 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnBreakable(x, y, type, scale) {
-        const scores = { vase: 200, book: 50, clock: 300, plant: 150, lamp: 180, mug: 80, frame: 120, remote: 30, pen: 10 };
-        const noises = { vase: 18, book: 6, clock: 22, plant: 12, lamp: 15, mug: 9, frame: 11, remote: 5, pen: 3 };
+        const itemProps = ITEM_PROPERTIES[type] || { score: 50, noise: 8 };
 
         const sprite = this.physics.add.sprite(x, y, type).setScale(scale);
         sprite.body.setAllowGravity(false);
         sprite.body.setImmovable(true);
         sprite.setData('type', type);
-        sprite.setData('scoreValue', scores[type] || 50);
-        sprite.setData('noiseValue', noises[type] || 8);
+        sprite.setData('scoreValue', itemProps.score);
+        sprite.setData('noiseValue', itemProps.noise);
         sprite.setData('isFalling', false);
         sprite.setData('isBroken', false);
         this.breakables.add(sprite);
     }
 
     createCat() {
-        const stageNum = storyProgress.getCurrentStage();
-        const layout = STAGE_LAYOUTS[stageNum];
+        const layout = this.getCurrentStageLayout();
 
         this.cat = this.add.container(layout.catStart.x, layout.catStart.y);
         this.catSprite = this.add.sprite(0, 0, 'cat').setScale(1.0);
@@ -306,114 +363,9 @@ class GameScene extends Phaser.Scene {
         }
     }
 
-    createUI() {
-        this.add.rectangle(W / 2, 24, W - 20, 40, 0x000000, 0.6)
-            .setStrokeStyle(1, 0x333355)
-            .setDepth(100)
-            .setScrollFactor(0);
-
-        // 騒音バー
-        this.add.rectangle(24, 24, 24, 24, 0x333344)
-            .setStrokeStyle(1, 0x555566)
-            .setDepth(100)
-            .setScrollFactor(0);
-        const speakerIcon = this.add.graphics().setDepth(100).setScrollFactor(0);
-        speakerIcon.fillStyle(0xaaaaaa);
-        speakerIcon.fillRect(14, 20, 6, 8);
-        speakerIcon.fillTriangle(20, 16, 20, 32, 30, 24);
-
-        this.add.rectangle(130, 24, 180, 22, 0x222233)
-            .setStrokeStyle(1, 0x444466)
-            .setDepth(100)
-            .setScrollFactor(0);
-        this.noiseBar = this.add.rectangle(42, 24, 0, 18, 0x44dd44)
-            .setOrigin(0, 0.5)
-            .setDepth(100)
-            .setScrollFactor(0);
-        this.noiseText = this.add.text(130, 24, '', {
-            fontSize: '11px',
-            fontFamily: 'Kosugi Maru',
-            color: '#ffffff'
-        }).setOrigin(0.5).setDepth(100).setScrollFactor(0);
-
-        // スコア
-        // スコア (Brightened & Shadowed)
-        this.scoreText = this.add.text(W - 20, 12, '0', {
-            fontSize: '32px',
-            fontFamily: 'Fredoka One',
-            color: '#fff0aa', // Lighter Gold
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 4,
-            shadow: { color: '#ff4400', blur: 10, fill: true, offsetX: 2, offsetY: 2 }
-        }).setOrigin(1, 0).setDepth(100).setScrollFactor(0);
-
-        this.add.text(W - 20, 48, 'SCORE', {
-            fontSize: '12px',
-            fontFamily: 'Fredoka One',
-            color: '#ffeecc',
-            shadow: { color: '#000000', blur: 2, fill: true }
-        }).setOrigin(1, 0).setDepth(100).setScrollFactor(0);
-
-        // タイマー
-        // タイマー (Brightened)
-        this.timerText = this.add.text(W / 2, 8, '1:30', {
-            fontSize: '36px',
-            fontFamily: 'Fredoka One',
-            color: '#ffffff',
-            fontStyle: 'bold',
-            stroke: '#000000',
-            strokeThickness: 5,
-            shadow: { color: '#000000', blur: 4, fill: true, offsetX: 2, offsetY: 2 }
-        }).setOrigin(0.5, 0).setDepth(100).setScrollFactor(0);
-
-        // コンボ表示
-        this.comboContainer = this.add.container(W / 2, 80)
-            .setDepth(100)
-            .setAlpha(0)
-            .setScrollFactor(0);
-        const comboBg = this.add.rectangle(0, 0, 160, 45, 0xff6600, 0.9)
-            .setStrokeStyle(2, 0xffaa00);
-        this.comboText = this.add.text(0, 0, '', {
-            fontSize: '26px',
-            fontFamily: 'Fredoka One',
-            color: '#ffffff',
-            fontStyle: 'bold'
-        }).setOrigin(0.5);
-        this.comboContainer.add([comboBg, this.comboText]);
-
-
-        // 進捗 (Moved to Top Right, below Score)
-        this.progressText = this.add.text(W - 25, 65, '', {
-            fontSize: '16px',
-            fontFamily: 'Fredoka One',
-            color: '#ddeeff',
-            stroke: '#000000',
-            strokeThickness: 3
-        }).setOrigin(1, 0).setDepth(100).setScrollFactor(0);
-
-        // パワーアップ表示 (Moved to Top Left, below Noise Bar)
-        // Noise Bar is at y=24, height ~20. So y=60 is safe.
-        if (powerUpManager.activePowerUps.length > 0) {
-            powerUpManager.activePowerUps.forEach((id, index) => {
-                this.add.image(40 + index * 40, 75, POWERUPS[id].icon)
-                    .setScale(0.8)
-                    .setOrigin(0.5, 0.5)
-                    .setDepth(100)
-                    .setScrollFactor(0);
-            });
-        }
-
-        // 雷のクールダウン表示 (Moved to Top Left, next to Powerups)
-        if (powerUpManager.hasPowerUp('thunder')) {
-            this.thunderUI = this.add.text(40 + (powerUpManager.activePowerUps.length * 40) + 20, 75, '', {
-                fontSize: '14px',
-                fontFamily: 'Fredoka One',
-                color: '#ffff00',
-                stroke: '#000000',
-                strokeThickness: 3
-            }).setOrigin(0, 0.5).setDepth(100).setScrollFactor(0);
-        }
+    updateOwnerMonitor() {
+        // Emit event to HUDScene
+        this.events.emit('updateNoise', this.noise);
     }
 
     updateCatVisuals(time) {
@@ -425,11 +377,7 @@ class GameScene extends Phaser.Scene {
         const speedY = body.velocity.y;
 
         // 向きの更新
-        if (this.catState.facing === 1) {
-            this.catSprite.setFlipX(false);
-        } else {
-            this.catSprite.setFlipX(true);
-        }
+        this.catSprite.setFlipX(this.catState.facing < 0);
 
         // 表情が指定されている場合はそれを優先
         if (this.catExpression && this.catExpression !== 'cat') {
@@ -441,31 +389,32 @@ class GameScene extends Phaser.Scene {
         // 状態によるアニメーション
         if (!onGround) {
             // 空中
-            if (speedY < -50) {
+            if (this.catState.onWallL || this.catState.onWallR) {
+                this.catSprite.setTexture('catWall');
+            } else if (speedY < -50) {
                 // 上昇中
                 this.catSprite.setTexture('catJump');
-                this.catSprite.stop();
-            } else if (speedY > 50) {
-                // 下降中
-                if (speedY > 300) {
-                    this.catSprite.setTexture('catLand'); // 着地準備で少し潰れる
-                } else {
-                    this.catSprite.setTexture('cat'); // 通常落下
-                }
-                this.catSprite.stop();
+            } else if (speedY > 300) {
+                this.catSprite.setTexture('catLand'); // 着地準備で少し潰れる
+            } else {
+                this.catSprite.setTexture('cat'); // 通常落下
             }
+            this.catSprite.stop();
+            this.catSprite.setAngle(0);
         } else {
             // 地上
-            if (speedX > 10) {
+            if (speedX > 30) {
                 // 移動中
                 if (!this.catSprite.anims.isPlaying || this.catSprite.anims.currentAnim.key !== 'catWalk') {
                     this.catSprite.play('catWalk');
                 }
             } else {
-                // 停止中
+                // 停止中（呼吸アニメーション付き）
                 this.catSprite.setTexture('cat');
                 this.catSprite.stop();
             }
+            // 地上での呼吸アニメーション
+            this.catSprite.setAngle(Math.sin(time / 120) * 3);
         }
     }
 
@@ -553,7 +502,7 @@ class GameScene extends Phaser.Scene {
         const itemType = item.getData('type');
 
         this.combo++;
-        this.comboTimer = 80 * powerUpManager.getMultiplier('comboTimeMultiplier');
+        this.comboTimer = GAME_CONSTANTS.BASE_COMBO_TIMER * powerUpManager.getMultiplier('comboTimeMultiplier');
         if (this.combo > this.maxCombo) this.maxCombo = this.combo;
 
         // ローグライト: スコア倍率
@@ -562,13 +511,7 @@ class GameScene extends Phaser.Scene {
         const finalScore = Math.floor(scoreValue * scoreMult * comboMult);
 
         this.score += finalScore;
-        this.scoreText.setText(this.score.toString());
-        this.tweens.add({
-            targets: this.scoreText,
-            scale: 1.3,
-            duration: 80,
-            yoyo: true
-        });
+        this.events.emit('updateScore', this.score);
 
         // ローグライト: 焼き魚効果
         if (powerUpManager.hasPowerUp('fish')) {
@@ -591,7 +534,7 @@ class GameScene extends Phaser.Scene {
         this.time.delayedCall(500, () => this.changeCatExpression('cat'));
 
         this.brokenCount++;
-        this.progressText.setText(`${this.brokenCount}/${this.totalBreakables}`);
+        // this.progressText.setText(`${this.brokenCount}/${this.totalBreakables}`);
 
         item.destroy();
 
@@ -635,43 +578,21 @@ class GameScene extends Phaser.Scene {
     }
 
     showComboDisplay() {
-        this.comboText.setText(`${this.combo} COMBO!`);
-        this.comboContainer.setAlpha(1).setScale(0.5);
-        this.tweens.add({
-            targets: this.comboContainer,
-            scale: 1,
-            duration: 120,
-            ease: 'Back.easeOut'
-        });
+        // Combo display moved to HUD (TODO)
+        // this.comboText.setText(`${this.combo} COMBO!`); 
+
         sound.combo(this.combo);
 
         if (this.combo % 5 === 0) {
             const bonus = this.combo * 25;
             this.score += bonus;
-            this.scoreText.setText(this.score.toString());
-
-            const bonusContainer = this.add.container(W / 2, 120).setDepth(60).setScrollFactor(0);
-            bonusContainer.add(this.add.image(-80, 0, 'celebrate').setScale(0.5));
-            bonusContainer.add(this.add.text(0, 0, `${this.combo} COMBO BONUS +${bonus}`, {
-                fontSize: '20px',
-                color: '#ff66ff',
-                fontStyle: 'bold'
-            }).setOrigin(0.5));
-
-            this.tweens.add({
-                targets: bonusContainer,
-                y: 90,
-                alpha: 0,
-                scale: 1.4,
-                duration: 900,
-                onComplete: () => bonusContainer.destroy()
-            });
+            this.events.emit('updateScore', this.score);
         }
     }
 
     triggerSlowMotion() {
-        this.slowMoTimer = 25;
-        this.physics.world.timeScale = 2.5;
+        this.slowMoTimer = GAME_CONSTANTS.SLOW_MO_DURATION;
+        this.physics.world.timeScale = GAME_CONSTANTS.SLOW_MO_TIME_SCALE;
         this.cameras.main.zoomTo(1.08, 100);
     }
 
@@ -685,6 +606,7 @@ class GameScene extends Phaser.Scene {
         }
 
         this.noise = Math.min(100, this.noise + amount * noiseMult);
+        this.updateOwnerMonitor();
         if (this.noise >= 100 && !this.gameEnded) this.triggerGameOver();
     }
 
@@ -697,16 +619,12 @@ class GameScene extends Phaser.Scene {
                 this.timeLeft--;
                 const m = Math.floor(this.timeLeft / 60);
                 const s = this.timeLeft % 60;
-                this.timerText.setText(`${m}:${s.toString().padStart(2, '0')}`);
-                if (this.timeLeft <= 20) this.timerText.setColor('#ff6666');
+                this.events.emit('updateTimer', `${m}:${s.toString().padStart(2, '0')}`);
+                // if (this.timeLeft <= 20) this.timerText.setColor('#ff6666');
                 if (this.timeLeft <= 10) {
-                    this.tweens.add({
-                        targets: this.timerText,
-                        scale: 1.15,
-                        duration: 80,
-                        yoyo: true
-                    });
+                    // Timer warning effect
                 }
+
                 if (this.timeLeft <= 0) this.triggerVictory();
             }
         });
@@ -757,8 +675,8 @@ class GameScene extends Phaser.Scene {
 
         this.handlePlayerInput();
         this.updateCatVisuals(time);
-        this.updateNoiseSystem(delta);
-        this.updateOwnerState();
+        this.decayNoise(delta);
+        this.updateOwnerMonitor(); // アニメーション更新（点滅など）
         this.updateComboSystem(delta);
     }
 
@@ -775,9 +693,9 @@ class GameScene extends Phaser.Scene {
         let moveL = this.cursors.left.isDown || this.keys.A.isDown;
         let moveR = this.cursors.right.isDown || this.keys.D.isDown;
 
-        // モバイル入力
-        if (this.joystick) {
-            const dir = this.joystick.getDirection();
+        // モバイル入力 (Uses HUD Joystick)
+        if (this.hud && this.hud.joystick) {
+            const dir = this.hud.joystick.getDirection();
             if (dir.x < -0.3) moveL = true;
             if (dir.x > 0.3) moveR = true;
         }
@@ -802,11 +720,11 @@ class GameScene extends Phaser.Scene {
             Phaser.Input.Keyboard.JustDown(this.keys.W) ||
             Phaser.Input.Keyboard.JustDown(this.keys.SPACE);
 
-        // モバイルジャンプ
-        if (this.jumpBtn && this.jumpBtn.isPressed() && !this.lastJumpPressed) {
+        // モバイルジャンプ (Uses HUD Button)
+        if (this.hud && this.hud.jumpBtn && this.hud.jumpBtn.isPressed() && !this.lastJumpPressed) {
             jumpPressed = true;
         }
-        this.lastJumpPressed = this.jumpBtn ? this.jumpBtn.isPressed() : false;
+        this.lastJumpPressed = (this.hud && this.hud.jumpBtn) ? this.hud.jumpBtn.isPressed() : false;
 
         // ローグライト: ジャンプ倍率
         const jumpMult = powerUpManager.getMultiplier('jumpMultiplier');
@@ -882,58 +800,9 @@ class GameScene extends Phaser.Scene {
         this.catSprite.setTexture(texture);
     }
 
-    updateCatVisuals(time) {
-        this.catSprite.setFlipX(this.catState.facing < 0);
 
-        if (this.catState.onGround && Math.abs(this.cat.body.velocity.x) < 30) {
-            if (this.catExpression !== 'cat') this.catSprite.setTexture('cat');
-        } else if (!this.catState.onGround && (this.catState.onWallL || this.catState.onWallR)) {
-            this.catSprite.setTexture('catWall');
-        } else if (!this.catState.onGround) {
-            if (this.catExpression === 'cat') this.catSprite.setTexture('catJump');
-        }
-
-        if (this.catState.onGround) {
-            this.catSprite.setAngle(Math.sin(time / 120) * 3);
-        } else {
-            this.catSprite.setAngle(0);
-        }
-    }
-
-    updateNoiseSystem(delta) {
+    decayNoise(delta) {
         this.noise = Math.max(0, this.noise - 3 * delta / 1000);
-        const percent = this.noise / 100;
-        this.noiseBar.width = percent * 176;
-
-        if (percent < 0.5) {
-            this.noiseBar.setFillStyle(0x44dd44);
-            this.noiseText.setText('');
-        } else if (percent < 0.75) {
-            this.noiseBar.setFillStyle(0xdddd44);
-            this.noiseText.setText('ちゅうい');
-        } else {
-            this.noiseBar.setFillStyle(0xdd4444);
-            this.noiseText.setText('きけん!');
-            this.noiseBar.setAlpha(0.7 + Math.sin(Date.now() / 60) * 0.3);
-        }
-    }
-
-    updateOwnerState() {
-        const p = this.noise / 100;
-        if (p >= 0.8) {
-            this.ownerFace.setTexture('ownerStir');
-            this.doorLight.setAlpha(0.5 + Math.sin(Date.now() / 60) * 0.3);
-            this.zzzIcon.setAlpha(0);
-            // 吹き出しは削除（スパム防止）
-        } else if (p >= 0.5) {
-            this.ownerFace.setTexture('ownerLight');
-            this.doorLight.setAlpha(0.15);
-            this.zzzIcon.setAlpha(0.4);
-        } else {
-            this.ownerFace.setTexture('ownerSleep');
-            this.doorLight.setAlpha(0);
-            this.zzzIcon.setAlpha(1);
-        }
     }
 
     updateComboSystem(delta) {
@@ -953,9 +822,14 @@ class GameScene extends Phaser.Scene {
         if (this.gameEnded) return;
         this.gameEnded = true;
         sound.gameOver();
-        this.ownerFace.setTexture('ownerAngry');
-        this.doorLight.setAlpha(1);
-        this.zzzIcon.setVisible(false);
+
+        // モニター更新（激怒）
+        this.updateOwnerMonitor();
+
+        // this.ownerFace.setTexture('ownerAngry'); // 廃止
+        // this.doorLight.setAlpha(1); // 廃止
+        // this.zzzIcon.setVisible(false); // 廃止
+
         sound.hiss();
         this.cat.body.setVelocity(0, -350);
         this.shakeIntensity = 15;
@@ -1089,5 +963,13 @@ class GameScene extends Phaser.Scene {
                 ease: 'Back.easeOut'
             });
         });
+    }
+
+    shutdown() {
+        // Remove resize listener
+        this.scale.off('resize', this.handleResize, this);
+
+        // Stop HUD scene to prevent memory leaks
+        this.scene.stop('HUDScene');
     }
 }

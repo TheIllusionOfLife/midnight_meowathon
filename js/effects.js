@@ -73,6 +73,15 @@ function showCatDialogue(scene, x, y, category) {
     const now = Date.now();
     const cooldownKey = `${category}_${Math.floor(x)}_${Math.floor(y)}`;
 
+    // Cleanup old entries periodically (older than 10 seconds)
+    if (Object.keys(speechCooldowns).length > 100) {
+        Object.keys(speechCooldowns).forEach(key => {
+            if (now - speechCooldowns[key] > 10000) {
+                delete speechCooldowns[key];
+            }
+        });
+    }
+
     // クールダウンチェック（カテゴリごとに2秒）
     if (speechCooldowns[cooldownKey] && now - speechCooldowns[cooldownKey] < 2000) {
         return null;

@@ -1,6 +1,3 @@
-// 共通定数
-const W = 800, H = 550;
-
 // タイトルシーン
 class TitleScene extends Phaser.Scene {
     constructor() {
@@ -8,8 +5,30 @@ class TitleScene extends Phaser.Scene {
     }
 
     create() {
+        // Initialize responsive layout
+        GameLayout.init(this);
+
         createAllTextures(this);
         storyProgress.load();
+
+        // Listen for resize events
+        this.scale.on('resize', this.handleResize, this);
+
+        this.createUI();
+        this.cameras.main.fadeIn(500);
+    }
+
+    handleResize(gameSize) {
+        // Kill active tweens before destroying their targets
+        this.tweens.killAll();
+        // Recreate UI on resize (destroy children to prevent leaks)
+        this.children.removeAll(true);
+        this.createUI();
+    }
+
+    createUI() {
+        const W = GameLayout.W;
+        const H = GameLayout.H;
 
         // 背景
         const gfx = this.add.graphics();
@@ -38,26 +57,42 @@ class TitleScene extends Phaser.Scene {
             }
         }
 
-        // 月
-        this.add.image(620, 100, 'moon').setScale(1.0).setDepth(1);
+        // 月 - responsive positioning
+        const moonX = GameLayout.isPortrait ? W * 0.5 : W * 0.78;
+        const moonY = GameLayout.pctY(0.15);
+        this.add.image(moonX, moonY, 'moon').setScale(GameLayout.scale(1.0)).setDepth(1);
 
-        // 窓
+        // 窓 - responsive sizing
+        const windowScale = GameLayout.scale(1.0);
+        const windowX = GameLayout.isPortrait ? W * 0.5 : W * 0.75;
+        const windowY = GameLayout.pctY(0.25);
+        const windowW = 160 * windowScale;
+        const windowH = 220 * windowScale;
+
         const wfx = this.add.graphics().setDepth(2);
         wfx.fillStyle(0x1a1a2a);
-        wfx.fillRect(540, 30, 160, 220);
+        wfx.fillRect(windowX - windowW / 2, windowY - windowH / 2, windowW, windowH);
         wfx.fillStyle(0x0a0a1a);
-        wfx.fillRect(550, 40, 65, 95);
-        wfx.fillRect(625, 40, 65, 95);
-        wfx.fillRect(550, 145, 65, 95);
-        wfx.fillRect(625, 145, 65, 95);
+        const paneW = 65 * windowScale;
+        const paneH = 95 * windowScale;
+        const paneGap = 10 * windowScale;
+        wfx.fillRect(windowX - windowW / 2 + paneGap, windowY - windowH / 2 + paneGap, paneW, paneH);
+        wfx.fillRect(windowX - windowW / 2 + paneGap + paneW + paneGap, windowY - windowH / 2 + paneGap, paneW, paneH);
+        wfx.fillRect(windowX - windowW / 2 + paneGap, windowY - windowH / 2 + paneGap + paneH + paneGap, paneW, paneH);
+        wfx.fillRect(windowX - windowW / 2 + paneGap + paneW + paneGap, windowY - windowH / 2 + paneGap + paneH + paneGap, paneW, paneH);
         wfx.lineStyle(4, 0x2a2a4a);
-        wfx.strokeRect(540, 30, 160, 220);
+        wfx.strokeRect(windowX - windowW / 2, windowY - windowH / 2, windowW, windowH);
 
         // 猫シルエット
-        const cat = this.add.image(610, 200, 'cat').setScale(2.2).setTint(0x000000).setAlpha(0.9).setDepth(3);
+        const catScale = GameLayout.scale(2.2);
+        const cat = this.add.image(windowX, windowY + 80 * windowScale, 'cat')
+            .setScale(catScale)
+            .setTint(0x000000)
+            .setAlpha(0.9)
+            .setDepth(3);
         this.tweens.add({
             targets: cat,
-            y: 205,
+            y: windowY + 85 * windowScale,
             duration: 2000,
             yoyo: true,
             repeat: -1,
@@ -65,8 +100,9 @@ class TitleScene extends Phaser.Scene {
         });
 
         // 猫の目（光る）
-        const eyeL = this.add.circle(590, 186, 5, 0xffff66).setDepth(4);
-        const eyeR = this.add.circle(614, 186, 5, 0xffff66).setDepth(4);
+        const eyeSize = GameLayout.scale(5);
+        const eyeL = this.add.circle(windowX - 20 * catScale, windowY + 66 * windowScale, eyeSize, 0xffff66).setDepth(4);
+        const eyeR = this.add.circle(windowX + 24 * catScale, windowY + 66 * windowScale, eyeSize, 0xffff66).setDepth(4);
         this.tweens.add({
             targets: [eyeL, eyeR],
             alpha: 0.2,
@@ -77,39 +113,42 @@ class TitleScene extends Phaser.Scene {
         });
 
         // 月アイコン
-        this.add.image(W / 2, 55, 'moon').setScale(0.6).setDepth(10);
+        this.add.image(W / 2, GameLayout.pctY(0.08), 'moon').setScale(GameLayout.scale(0.6)).setDepth(10);
 
-        // タイトル
-        const title = this.add.text(W / 2, 130, 'よるのうんどうかい', {
-            fontSize: '44px',
+        // タイトル - responsive font size
+        const titleY = GameLayout.isPortrait ? GameLayout.pctY(0.20) : GameLayout.pctY(0.24);
+        const title = this.add.text(W / 2, titleY, 'よるのうんどうかい', {
+            fontSize: GameLayout.fontSize(44) + 'px',
             fontFamily: 'Fredoka One',
             color: '#ffffff',
             stroke: '#2a2a5a',
-            strokeThickness: 8
+            strokeThickness: GameLayout.scale(8)
         }).setOrigin(0.5).setDepth(10);
         this.tweens.add({
             targets: title,
-            y: 135,
+            y: titleY + GameLayout.scale(5),
             duration: 2500,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut'
         });
 
-        this.add.text(W / 2, 180, 'Midnight Meowathon', {
-            fontSize: '20px',
+        this.add.text(W / 2, titleY + GameLayout.scale(50), 'Midnight Meowathon', {
+            fontSize: GameLayout.fontSize(20) + 'px',
             color: '#7777aa'
         }).setOrigin(0.5).setDepth(10);
 
-        this.add.text(W / 2, 255, '深夜、突然スイッチが入った猫になって\n飼い主が起きる前に家中で大暴れ！', {
-            fontSize: '16px',
+        const descY = GameLayout.isPortrait ? GameLayout.pctY(0.38) : GameLayout.pctY(0.46);
+        this.add.text(W / 2, descY, '深夜、突然スイッチが入った猫になって\n飼い主が起きる前に家中で大暴れ！', {
+            fontSize: GameLayout.fontSize(16) + 'px',
             color: '#9999bb',
             align: 'center',
-            lineSpacing: 8
+            lineSpacing: GameLayout.scale(8)
         }).setOrigin(0.5).setDepth(10);
 
-        // ストーリーモードボタン
-        this.createButton(W / 2, 330, 'ストーリーモード', () => {
+        // ストーリーモードボタン - responsive positioning
+        const buttonY1 = GameLayout.isPortrait ? GameLayout.pctY(0.52) : GameLayout.pctY(0.60);
+        this.createButton(W / 2, buttonY1, 'ストーリーモード', () => {
             sound.init();
             sound.meowShort();
             this.cameras.main.fadeOut(400);
@@ -118,7 +157,8 @@ class TitleScene extends Phaser.Scene {
 
         // 猫の集会ボタン（解禁条件）
         if (storyProgress.isGatheringUnlocked()) {
-            this.createButton(W / 2, 400, '猫の集会', () => {
+            const buttonY2 = GameLayout.isPortrait ? GameLayout.pctY(0.62) : GameLayout.pctY(0.73);
+            this.createButton(W / 2, buttonY2, '猫の集会', () => {
                 sound.init();
                 sound.meowShort();
                 this.cameras.main.fadeOut(400);
@@ -127,46 +167,51 @@ class TitleScene extends Phaser.Scene {
         }
 
         // 操作説明
+        const controlY = GameLayout.isPortrait ? GameLayout.pctY(0.85) : GameLayout.pctY(0.87);
         const controlText = DeviceDetector.isMobile()
             ? 'タッチ操作対応'
             : '← → 移動　　↑/Space ジャンプ　　壁+ジャンプ 壁キック';
-        this.add.text(W / 2, 480, controlText, {
-            fontSize: '14px',
+        this.add.text(W / 2, controlY, controlText, {
+            fontSize: GameLayout.fontSize(14) + 'px',
             color: '#666688'
         }).setOrigin(0.5).setDepth(10);
 
-        this.add.text(W / 2, 530, '© 2025 Midnight Meowathon', {
-            fontSize: '11px',
+        this.add.text(W / 2, GameLayout.pctY(0.96), '© 2025 Midnight Meowathon', {
+            fontSize: GameLayout.fontSize(11) + 'px',
             color: '#333355'
         }).setOrigin(0.5).setDepth(10);
 
         // デバッグボタン（右下隅）
-        this.createDebugButton(W - 120, H - 60, '進捗リセット', () => {
+        const debugX = W - GameLayout.scale(120);
+        const debugY1 = H - GameLayout.scale(60);
+        const debugY2 = H - GameLayout.scale(25);
+
+        this.createDebugButton(debugX, debugY1, '進捗リセット', () => {
             storyProgress.reset();
             storyProgress.save();
             sound.tone(300, 0.1);
             this.scene.restart();
         });
 
-        this.createDebugButton(W - 120, H - 25, 'Stage1クリア', () => {
+        this.createDebugButton(debugX, debugY2, 'Stage1クリア', () => {
             storyProgress.reset();
             storyProgress.completeStage(1000);
             storyProgress.save();
             sound.tone(500, 0.1);
             this.scene.restart();
         });
-
-        this.cameras.main.fadeIn(500);
     }
 
     createButton(x, y, text, callback, color = 0x4a4a8a) {
-        const btnBg = this.add.rectangle(x, y, 240, 50, color)
+        const btnW = GameLayout.scale(240);
+        const btnH = GameLayout.scale(50);
+        const btnBg = this.add.rectangle(x, y, btnW, btnH, color)
             .setStrokeStyle(3, color + 0x303030)
             .setInteractive({ useHandCursor: true })
             .setDepth(10);
 
         const btnText = this.add.text(x, y, text, {
-            fontSize: '22px',
+            fontSize: GameLayout.fontSize(22) + 'px',
             color: '#ffffff',
             fontFamily: 'Kosugi Maru'
         }).setOrigin(0.5).setDepth(11);
@@ -185,13 +230,15 @@ class TitleScene extends Phaser.Scene {
     }
 
     createDebugButton(x, y, text, callback) {
-        const btnBg = this.add.rectangle(x, y, 110, 25, 0x3a3a5a, 0.8)
+        const btnW = GameLayout.scale(110);
+        const btnH = GameLayout.scale(25);
+        const btnBg = this.add.rectangle(x, y, btnW, btnH, 0x3a3a5a, 0.8)
             .setStrokeStyle(1, 0x5a5a7a)
             .setInteractive({ useHandCursor: true })
             .setDepth(10);
 
         const btnText = this.add.text(x, y, text, {
-            fontSize: '11px',
+            fontSize: GameLayout.fontSize(11) + 'px',
             color: '#ffffff',
             fontFamily: 'Kosugi Maru'
         }).setOrigin(0.5).setDepth(11);
@@ -205,5 +252,9 @@ class TitleScene extends Phaser.Scene {
         btnBg.on('pointerdown', callback);
 
         return { bg: btnBg, text: btnText };
+    }
+
+    shutdown() {
+        this.scale.off('resize', this.handleResize, this);
     }
 }

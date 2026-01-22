@@ -100,10 +100,14 @@ class PowerUpManager {
 
         this.activePowerUps.forEach(id => {
             const powerUp = POWERUPS[id];
-            if (powerUp.effect[type]) {
+            if (!powerUp) {
+                console.warn(`Unknown power-up ID: ${id}`);
+                return;
+            }
+            if (powerUp.effect && powerUp.effect[type]) {
                 multiplier *= powerUp.effect[type];
             }
-            if (powerUp.sideEffect[type]) {
+            if (powerUp.sideEffect && powerUp.sideEffect[type]) {
                 multiplier *= powerUp.sideEffect[type];
             }
         });
@@ -114,17 +118,20 @@ class PowerUpManager {
     hasEffect(effectName) {
         return this.activePowerUps.some(id => {
             const powerUp = POWERUPS[id];
-            return powerUp.effect[effectName] || powerUp.sideEffect[effectName];
+            if (!powerUp) return false;
+            return (powerUp.effect && powerUp.effect[effectName]) ||
+                   (powerUp.sideEffect && powerUp.sideEffect[effectName]);
         });
     }
 
     getEffectValue(effectName) {
         for (let id of this.activePowerUps) {
             const powerUp = POWERUPS[id];
-            if (powerUp.effect[effectName] !== undefined) {
+            if (!powerUp) continue;
+            if (powerUp.effect && powerUp.effect[effectName] !== undefined) {
                 return powerUp.effect[effectName];
             }
-            if (powerUp.sideEffect[effectName] !== undefined) {
+            if (powerUp.sideEffect && powerUp.sideEffect[effectName] !== undefined) {
                 return powerUp.sideEffect[effectName];
             }
         }

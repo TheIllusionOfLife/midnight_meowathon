@@ -161,19 +161,19 @@ describe('Midnight Meowathon - E2E Tests', () => {
         test('TimeAttackRules が正しく動作する', () => {
             const rules = new TimeAttackRules('kuro');
 
-            expect(rules.targetTime).toBe(45);
+            expect(rules.targetTime).toBe(22.5);
             expect(rules.bossName).toBe('クロ');
 
             // 勝敗判定
-            expect(rules.checkWin(40)).toBe(true);
-            expect(rules.checkWin(50)).toBe(false);
+            expect(rules.checkWin(20)).toBe(true);   // 22.5秒未満で勝利
+            expect(rules.checkWin(25)).toBe(false);  // 22.5秒以上で敗北
 
-            // ランク判定
-            expect(rules.getRank(30)).toBe('S');  // -15秒
-            expect(rules.getRank(38)).toBe('A');  // -7秒
-            expect(rules.getRank(44)).toBe('B');  // -1秒
-            expect(rules.getRank(48)).toBe('C');  // +3秒
-            expect(rules.getRank(52)).toBe('D');  // +7秒
+            // ランク判定 (targetTime - playerTime)
+            expect(rules.getRank(12)).toBe('S');   // 22.5-12 = +10.5秒 (≥10)
+            expect(rules.getRank(17)).toBe('A');   // 22.5-17 = +5.5秒  (≥5)
+            expect(rules.getRank(22)).toBe('B');   // 22.5-22 = +0.5秒  (≥0)
+            expect(rules.getRank(25)).toBe('C');   // 22.5-25 = -2.5秒  (≥-5)
+            expect(rules.getRank(30)).toBe('D');   // 22.5-30 = -7.5秒  (<-5)
         });
     });
 
