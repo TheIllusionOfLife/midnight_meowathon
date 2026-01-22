@@ -127,14 +127,7 @@ class GameScene extends Phaser.Scene {
 
         // Tiled Background Pattern (Wallpaper)
         this.add.tileSprite(W / 2, H / 2, bgW, bgH, 'bg_pattern')
-            .setScrollFactor(1) // Moves with camera? No, we want it fixed relative to world?
-            // Actually if we want "infinite wall", scrollFactor 0.1 is better for parallax.
-            // But main wall should be 1?
-            // If we use scrollFactor 0, it doesn't zoom.
-            // If we use scrollFactor 1, it zooms.
-            // We want it to Zoom (so it shrinks), but cover the screen.
-            // 4000x4000 at Zoom 0.5 -> 2000x2000 on screen. Screen is 400x800. Covered.
-            .setScrollFactor(0.2) // Parallax the wall slightly
+            .setScrollFactor(0.2) // Parallax effect
             .setTint(0x8888aa);
 
         // Gradients removed - was causing dark artifact on mobile
@@ -248,12 +241,10 @@ class GameScene extends Phaser.Scene {
         // vignette.setScrollFactor(0);
     }
 
-    createRoom() {
-        // 現在のステージ取得
+    getCurrentStageLayout() {
         const stageNum = storyProgress.getCurrentStage();
         let layout = STAGE_LAYOUTS[stageNum];
 
-        // Validate stage layout exists
         if (!layout) {
             console.error(`Stage ${stageNum} not found, falling back to stage 1`);
             layout = STAGE_LAYOUTS[1];
@@ -261,6 +252,11 @@ class GameScene extends Phaser.Scene {
                 throw new Error('No stage layouts available');
             }
         }
+        return layout;
+    }
+
+    createRoom() {
+        const layout = this.getCurrentStageLayout();
 
         // 壁と床
         this.addWall(8, H / 2, 16, H);
@@ -329,17 +325,7 @@ class GameScene extends Phaser.Scene {
     }
 
     createCat() {
-        const stageNum = storyProgress.getCurrentStage();
-        let layout = STAGE_LAYOUTS[stageNum];
-
-        // Validate stage layout exists
-        if (!layout) {
-            console.error(`Stage ${stageNum} not found in createCat, falling back to stage 1`);
-            layout = STAGE_LAYOUTS[1];
-            if (!layout) {
-                throw new Error('No stage layouts available');
-            }
-        }
+        const layout = this.getCurrentStageLayout();
 
         this.cat = this.add.container(layout.catStart.x, layout.catStart.y);
         this.catSprite = this.add.sprite(0, 0, 'cat').setScale(1.0);

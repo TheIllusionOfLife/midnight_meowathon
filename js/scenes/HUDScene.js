@@ -155,9 +155,11 @@ class HUDScene extends Phaser.Scene {
 
     createPowerUps() {
         if (typeof powerUpManager === 'undefined' || !powerUpManager.activePowerUps) return;
+        if (typeof POWERUPS === 'undefined') return;
 
         const startY = 130;
         powerUpManager.activePowerUps.forEach((id, index) => {
+            if (!POWERUPS[id]) return;
             this.add.image(40 + index * 40, startY, POWERUPS[id].icon)
                 .setScale(0.8)
                 .setOrigin(0.5, 0.5);

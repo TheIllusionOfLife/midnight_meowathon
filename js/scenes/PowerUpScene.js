@@ -16,6 +16,7 @@ class PowerUpScene extends Phaser.Scene {
     }
 
     handleResize(gameSize) {
+        GameLayout.init(this);
         this.children.removeAll(true);
         this.createUI();
     }

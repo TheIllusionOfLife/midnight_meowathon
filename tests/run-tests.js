@@ -48,6 +48,7 @@ test('test.html が存在する', () => {
 });
 
 const requiredJsFiles = [
+    'js/responsive.js',
     'js/sound.js',
     'js/textures.js',
     'js/effects.js',

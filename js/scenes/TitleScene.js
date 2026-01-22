@@ -19,6 +19,8 @@ class TitleScene extends Phaser.Scene {
     }
 
     handleResize(gameSize) {
+        // Kill active tweens before destroying their targets
+        this.tweens.killAll();
         // Recreate UI on resize (destroy children to prevent leaks)
         this.children.removeAll(true);
         this.createUI();

@@ -5,6 +5,12 @@ class GatheringScene extends Phaser.Scene {
     }
 
     create() {
+        // Initialize responsive layout
+        GameLayout.init(this);
+
+        // Resize listener
+        this.scale.on('resize', this.handleResize, this);
+
         // テクスチャ生成（黒画面修正）
         createAllTextures(this);
 
@@ -16,15 +22,83 @@ class GatheringScene extends Phaser.Scene {
         this.showBossSelection();
     }
 
+    handleResize(gameSize) {
+        // Update GameLayout
+        GameLayout.init(this);
+
+        if (!this.selectedBoss) {
+            // In Boss Selection Screen - Rebuild UI
+            this.children.removeAll(true);
+            this.cameras.main.setZoom(1);
+            this.cameras.main.centerOn(GameLayout.W / 2, GameLayout.H / 2);
+            this.showBossSelection(); // Re-creates responsive UI
+        } else {
+            // In Gameplay - Zoom to fit 800x550 logical world
+            const screenW = gameSize.width;
+            const screenH = gameSize.height;
+            const worldW = 800;
+            const worldH = 550;
+
+            const zoomX = screenW / worldW;
+            const zoomY = screenH / worldH;
+            const zoom = Math.min(zoomX, zoomY);
+
+            this.cameras.main.setZoom(zoom);
+            this.cameras.main.setBounds(0, 0, worldW, worldH);
+
+            // Calculate scroll position to center game world
+            const visibleW = screenW / zoom;
+            const visibleH = screenH / zoom;
+            const scrollX = (worldW / 2) - (visibleW / 2);
+            const scrollY = (worldH / 2) - (visibleH / 2);
+            this.cameras.main.setScroll(scrollX, scrollY);
+
+            // Update Mobile Controls Positions to match Screen Coordinates
+            if (this.joystick) {
+                // Unproject screen coordinates to world coordinates
+                const joyScreenX = screenW * 0.15;
+                const joyScreenY = screenH * 0.82;
+                const joyWorldPoint = this.cameras.main.getWorldPoint(joyScreenX, joyScreenY);
+
+                this.joystick.baseX = joyWorldPoint.x;
+                this.joystick.baseY = joyWorldPoint.y;
+
+                // Adjust radius for zoom to keep constant screen size
+                const minDim = Math.min(screenW, screenH);
+                this.joystick.radius = (minDim * 0.08) / zoom;
+
+                this.joystick.updatePosition();
+            }
+
+            if (this.jumpBtn) {
+                const btnScreenX = screenW * 0.85;
+                const btnScreenY = screenH * 0.82;
+                const btnWorldPoint = this.cameras.main.getWorldPoint(btnScreenX, btnScreenY);
+
+                this.jumpBtn.x = btnWorldPoint.x;
+                this.jumpBtn.y = btnWorldPoint.y;
+
+                const minDim = Math.min(screenW, screenH);
+                this.jumpBtn.radius = (minDim * 0.08) / zoom;
+
+                this.jumpBtn.updatePosition();
+            }
+        }
+    }
+
     showBossSelection() {
+        const W = GameLayout.W;
+        const H = GameLayout.H;
+
         // 背景
         const gfx = this.add.graphics();
         gfx.fillGradientStyle(0x0a0a18, 0x0a0a18, 0x12122a, 0x12122a);
         gfx.fillRect(0, 0, W, H);
 
         // タイトル
-        this.add.text(W / 2, 60, '猫の集会 - タイムアタック', {
-            fontSize: '36px',
+        const titleSize = GameLayout.fontSize(36) + 'px';
+        this.add.text(W / 2, H * 0.1, '猫の集会 - タイムアタック', {
+            fontSize: titleSize,
             fontFamily: 'Kosugi Maru',
             color: '#ffffff',
             fontStyle: 'bold',
@@ -32,24 +106,42 @@ class GatheringScene extends Phaser.Scene {
             strokeThickness: 6
         }).setOrigin(0.5);
 
-        this.add.text(W / 2, 110, '対戦相手を選択', {
-            fontSize: '20px',
+        this.add.text(W / 2, H * 0.18, '対戦相手を選択', {
+            fontSize: GameLayout.fontSize(20) + 'px',
             fontFamily: 'Kosugi Maru',
             color: '#aaaacc'
         }).setOrigin(0.5);
 
-        // ボス猫カード
-        BOSS_CATS.forEach((boss, index) => {
-            this.createBossCard(boss, 120 + index * 180, 300);
-        });
+        // ボス猫カード - Responsive Layout
+        if (GameLayout.isPortrait) {
+            // 2x2 Grid or Vertical Stack
+            const startY = H * 0.25;
+            const spacer = H * 0.14;
+            BOSS_CATS.forEach((boss, index) => {
+                // 2 columns
+                const col = index % 2;
+                const row = Math.floor(index / 2);
+                const cx = W * 0.3 + col * (W * 0.4);
+                const cy = startY + row * (H * 0.25) + 60;
+                this.createBossCard(boss, cx, cy, 0.8); // Slightly smaller
+            });
+        } else {
+            // Horizontal Spread
+            const cardSpacing = Math.min(GameLayout.scale(180), W / 4.5);
+            const startX = W / 2 - (cardSpacing * 1.5);
+            BOSS_CATS.forEach((boss, index) => {
+                this.createBossCard(boss, startX + index * cardSpacing, H * 0.55);
+            });
+        }
 
         // 戻るボタン
-        const backBtn = this.add.rectangle(W / 2, 500, 200, 40, 0x666677)
+        const btnY = H * 0.9;
+        const backBtn = this.add.rectangle(W / 2, btnY, GameLayout.scale(200), GameLayout.scale(40), 0x666677)
             .setStrokeStyle(2, 0x888899)
             .setInteractive({ useHandCursor: true });
 
-        const backText = this.add.text(W / 2, 500, 'タイトルへ', {
-            fontSize: '18px',
+        const backText = this.add.text(W / 2, btnY, 'タイトルへ', {
+            fontSize: GameLayout.fontSize(18) + 'px',
             color: '#ffffff'
         }).setOrigin(0.5);
 
@@ -60,11 +152,12 @@ class GatheringScene extends Phaser.Scene {
             this.scene.start('TitleScene');
         });
 
-        this.cameras.main.fadeIn(300);
+        // Ensure resizing doesn't trigger fade again if just resizing
+        // this.cameras.main.fadeIn(300); 
     }
 
-    createBossCard(boss, x, y) {
-        const container = this.add.container(x, y);
+    createBossCard(boss, x, y, scale = 1.0) {
+        const container = this.add.container(x, y).setScale(scale);
 
         // 難易度による色
         const difficultyColors = [0x4a6a4a, 0x6a6a4a, 0x8a4a4a, 0x8a4a8a];
@@ -161,15 +254,15 @@ class GatheringScene extends Phaser.Scene {
         const layout = GATHERING_STAGE_LAYOUTS[this.selectedBoss.id];
         this.totalItems = layout.items.length;
 
-        // 背景
+        // 背景 (Cover large area for camera zoom/overscan)
         const gfx = this.add.graphics();
         gfx.fillGradientStyle(0x10101a, 0x10101a, 0x1a1a2a, 0x1a1a2a);
-        gfx.fillRect(0, 0, W, H);
+        gfx.fillRect(-1000, -1000, 2800, 2550);
 
         // ステージ名表示
-        const stageNameBg = this.add.rectangle(W / 2, 30, 300, 40, 0x000000, 0.7)
+        const stageNameBg = this.add.rectangle(400, 30, 300, 40, 0x000000, 0.7)
             .setDepth(100);
-        this.add.text(W / 2, 30, layout.name, {
+        this.add.text(400, 30, layout.name, {
             fontSize: '24px',
             color: '#ffffff',
             fontStyle: 'bold'
@@ -192,9 +285,9 @@ class GatheringScene extends Phaser.Scene {
     }
 
     createStage(layout) {
-        // 壁
-        this.addWall(8, H / 2, 16, H);
-        this.addWall(W - 8, H / 2, 16, H);
+        // 壁 (Fixed 800x550 bounds)
+        this.addWall(8, 275, 16, 550);
+        this.addWall(792, 275, 16, 550);
 
         // プラットフォーム
         layout.platforms.forEach(p => {
@@ -254,7 +347,7 @@ class GatheringScene extends Phaser.Scene {
 
     createUI() {
         // タイマー表示
-        this.timerText = this.add.text(W / 2, 70, '0.00', {
+        this.timerText = this.add.text(400, 70, '0.00', {
             fontSize: '48px',
             color: '#ffd700',
             fontStyle: 'bold',
@@ -263,17 +356,29 @@ class GatheringScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(100);
 
         // 目標タイム表示
-        this.add.text(W / 2, 110, `目標: ${this.selectedBoss.targetTime.toFixed(2)}秒`, {
+        this.add.text(400, 110, `目標: ${this.selectedBoss.targetTime.toFixed(2)}秒`, {
             fontSize: '20px',
             color: '#ff6666'
         }).setOrigin(0.5).setDepth(100);
 
         // 進捗表示
-        this.progressText = this.add.text(W - 20, H - 15, `0/${this.totalItems}`, {
+        this.progressText = this.add.text(780, 535, `0/${this.totalItems}`, {
             fontSize: '24px',
             color: '#88ff88',
             fontStyle: 'bold'
         }).setOrigin(1, 1).setDepth(100);
+
+        // Mobile Controls
+        if (DeviceDetector.isMobile()) {
+            this.joystick = new VirtualJoystick(this, {
+                x: 100, y: 450, radius: 50 // Initial placeholders, handleResize will fix
+            });
+            this.jumpBtn = new JumpButton(this, {
+                x: 700, y: 450, radius: 50
+            });
+            // Trigger resize to position them correctly immediately
+            this.handleResize(this.scale.gameSize);
+        }
     }
 
     setupInput() {
@@ -289,7 +394,7 @@ class GatheringScene extends Phaser.Scene {
     }
 
     showCountdown() {
-        const countdownText = this.add.text(W / 2, H / 2, '3', {
+        const countdownText = this.add.text(400, 275, '3', {
             fontSize: '120px',
             color: '#ffffff',
             fontStyle: 'bold',
@@ -416,8 +521,8 @@ class GatheringScene extends Phaser.Scene {
             body.setVelocityY(Math.min(body.velocity.y, 100));
         }
 
-        const moveL = this.cursors.left.isDown || this.keys.A.isDown;
-        const moveR = this.cursors.right.isDown || this.keys.D.isDown;
+        const moveL = this.cursors.left.isDown || this.keys.A.isDown || (this.joystick && this.joystick.left);
+        const moveR = this.cursors.right.isDown || this.keys.D.isDown || (this.joystick && this.joystick.right);
 
         if (moveL) {
             body.setVelocityX(-280);
@@ -431,7 +536,8 @@ class GatheringScene extends Phaser.Scene {
 
         const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
             Phaser.Input.Keyboard.JustDown(this.keys.W) ||
-            Phaser.Input.Keyboard.JustDown(this.keys.SPACE);
+            Phaser.Input.Keyboard.JustDown(this.keys.SPACE) ||
+            (this.jumpBtn && this.jumpBtn.isPressed);
 
         if (jumpPressed) {
             if (onGround) {
@@ -494,7 +600,7 @@ class GatheringScene extends Phaser.Scene {
     }
 
     showResult(isWin, rank) {
-        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0)
+        const overlay = this.add.rectangle(400, 275, 3000, 3000, 0x000000, 0)
             .setDepth(200);
         this.tweens.add({
             targets: overlay,
@@ -503,7 +609,7 @@ class GatheringScene extends Phaser.Scene {
         });
 
         this.time.delayedCall(300, () => {
-            const c = this.add.container(W / 2, H / 2)
+            const c = this.add.container(400, 275)
                 .setDepth(210)
                 .setAlpha(0);
 
@@ -582,7 +688,7 @@ class GatheringScene extends Phaser.Scene {
             this.tweens.add({
                 targets: c,
                 alpha: 1,
-                y: H / 2 - 10,
+                y: 265, // H/2 - 10 -> 275 - 10
                 duration: 350,
                 ease: 'Back.easeOut'
             });

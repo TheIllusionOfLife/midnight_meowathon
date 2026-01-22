@@ -25,6 +25,16 @@ global.Phaser = {
                 }
                 return points;
             }
+        },
+        QuadraticBezier: class {
+            constructor(p1, p2, p3) { this.p1 = p1; this.p2 = p2; this.p3 = p3; }
+            getPoints(quantity) {
+                const points = [];
+                for (let i = 0; i <= quantity; i++) {
+                    points.push({ x: 0, y: 0 });
+                }
+                return points;
+            }
         }
     }
 };
@@ -42,6 +52,7 @@ class MockGraphics {
     fillEllipse() { }
     fillRect() { }
     fillRoundedRect() { }
+    strokeRoundedRect() { }
     fillTriangle() { }
     fillTrapezoid() { } // Note: verify if this exists in Phaser 3. Actually it DOES NOT exist in standard Phaser 3 Graphics!
     // Wait, fillTrapezoid is NOT a standard Phaser 3 Graphics method either? 
