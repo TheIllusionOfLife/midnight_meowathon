@@ -54,12 +54,14 @@ const requiredJsFiles = [
     'js/mobile.js',
     'js/roguelite.js',
     'js/gathering.js',
+    'js/items.js',
     'js/stages.js',
     'js/validate.js',
     'js/scenes/TitleScene.js',
     'js/scenes/PowerUpScene.js',
     'js/scenes/GameScene.js',
-    'js/scenes/GatheringScene.js'
+    'js/scenes/GatheringScene.js',
+    'js/scenes/HUDScene.js'
 ];
 
 requiredJsFiles.forEach(file => {
@@ -113,6 +115,14 @@ test('roguelite.js にパワーアップが定義されている', () => {
     assert(content.includes('catnip:'), 'catnip が定義されていません');
     assert(content.includes('iconCatnip'), 'アイコンが画像名に更新されていません');
     assert(!content.includes('🌿'), '絵文字が残っています');
+});
+
+test('items.js に ITEM_PROPERTIES が定義されている', () => {
+    const content = fs.readFileSync('js/items.js', 'utf8');
+    assert(content.includes('const ITEM_PROPERTIES'), 'ITEM_PROPERTIES が定義されていません');
+    assert(content.includes('vase:'), 'vase が定義されていません');
+    assert(content.includes('score:'), 'score プロパティが定義されていません');
+    assert(content.includes('noise:'), 'noise プロパティが定義されていません');
 });
 
 test('index.html のスクリプト読み込み順序が正しい', () => {
