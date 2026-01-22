@@ -1,5 +1,17 @@
 // メインゲームシーン（ローグライト要素統合版）
 class GameScene extends Phaser.Scene {
+    // Game constants
+    static WORLD_WIDTH = 800;
+    static WORLD_HEIGHT = 550;
+    static PLAYER_DRAG = 50;
+    static PLAYER_JUMP_FORCE = 500;
+    static PLAYER_BASE_SPEED = 280;
+    static WALL_SLIDE_SPEED = 100;
+    static MAX_NOISE = 100;
+    static BASE_COMBO_TIMER = 80;
+    static SLOW_MO_DURATION = 25;
+    static SLOW_MO_TIME_SCALE = 2.5;
+
     constructor() {
         super('GameScene');
     }
@@ -66,8 +78,8 @@ class GameScene extends Phaser.Scene {
         const screenH = gameSize.height;
 
         // Fixed game world dimensions
-        const worldW = 800;
-        const worldH = 550;
+        const worldW = GameScene.WORLD_WIDTH;
+        const worldH = GameScene.WORLD_HEIGHT;
 
         // Calculate zoom to fit the game world in the screen (FIT mode)
         const zoomX = screenW / worldW;
@@ -300,15 +312,14 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnBreakable(x, y, type, scale) {
-        const scores = { vase: 200, book: 50, clock: 300, plant: 150, lamp: 180, mug: 80, frame: 120, remote: 30, pen: 10 };
-        const noises = { vase: 18, book: 6, clock: 22, plant: 12, lamp: 15, mug: 9, frame: 11, remote: 5, pen: 3 };
+        const itemProps = ITEM_PROPERTIES[type] || { score: 50, noise: 8 };
 
         const sprite = this.physics.add.sprite(x, y, type).setScale(scale);
         sprite.body.setAllowGravity(false);
         sprite.body.setImmovable(true);
         sprite.setData('type', type);
-        sprite.setData('scoreValue', scores[type] || 50);
-        sprite.setData('noiseValue', noises[type] || 8);
+        sprite.setData('scoreValue', itemProps.score);
+        sprite.setData('noiseValue', itemProps.noise);
         sprite.setData('isFalling', false);
         sprite.setData('isBroken', false);
         this.breakables.add(sprite);
@@ -354,17 +365,8 @@ class GameScene extends Phaser.Scene {
         }
     }
 
-    createUI() {
-        // Moved to HUDScene
-    }
-
-    createOwnerMonitor() {
-        // Moved to HUDScene
-    }
-
     updateOwnerMonitor() {
-        // Moved to HUDScene
-        // Emit event instead
+        // Emit event to HUDScene
         this.events.emit('updateNoise', this.noise);
     }
 
@@ -502,7 +504,7 @@ class GameScene extends Phaser.Scene {
         const itemType = item.getData('type');
 
         this.combo++;
-        this.comboTimer = 80 * powerUpManager.getMultiplier('comboTimeMultiplier');
+        this.comboTimer = GameScene.BASE_COMBO_TIMER * powerUpManager.getMultiplier('comboTimeMultiplier');
         if (this.combo > this.maxCombo) this.maxCombo = this.combo;
 
         // ローグライト: スコア倍率
@@ -587,32 +589,12 @@ class GameScene extends Phaser.Scene {
             const bonus = this.combo * 25;
             this.score += bonus;
             this.events.emit('updateScore', this.score);
-
-            // Bonus visual effect (Temporary disabled or TODO move to HUD)
-            /*
-            const bonusContainer = this.add.container(W / 2, 120).setDepth(60).setScrollFactor(0);
-            bonusContainer.add(this.add.image(-80, 0, 'celebrate').setScale(0.5));
-            bonusContainer.add(this.add.text(0, 0, `${this.combo} COMBO BONUS +${bonus}`, {
-                fontSize: '20px',
-                color: '#ff66ff',
-                fontStyle: 'bold'
-            }).setOrigin(0.5));
-
-            this.tweens.add({
-                targets: bonusContainer,
-                y: 90,
-                alpha: 0,
-                scale: 1.4,
-                duration: 900,
-                onComplete: () => bonusContainer.destroy()
-            });
-            */
         }
     }
 
     triggerSlowMotion() {
-        this.slowMoTimer = 25;
-        this.physics.world.timeScale = 2.5;
+        this.slowMoTimer = GameScene.SLOW_MO_DURATION;
+        this.physics.world.timeScale = GameScene.SLOW_MO_TIME_SCALE;
         this.cameras.main.zoomTo(1.08, 100);
     }
 
