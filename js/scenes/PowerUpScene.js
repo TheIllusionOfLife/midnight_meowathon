@@ -17,6 +17,8 @@ class PowerUpScene extends Phaser.Scene {
 
     handleResize(gameSize) {
         GameLayout.init(this);
+        // Kill active tweens before destroying their targets
+        this.tweens.killAll();
         this.children.removeAll(true);
         this.createUI();
     }

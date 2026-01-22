@@ -537,7 +537,7 @@ class GatheringScene extends Phaser.Scene {
         const jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
             Phaser.Input.Keyboard.JustDown(this.keys.W) ||
             Phaser.Input.Keyboard.JustDown(this.keys.SPACE) ||
-            (this.jumpBtn && this.jumpBtn.isPressed);
+            (this.jumpBtn && this.jumpBtn.isPressed());
 
         if (jumpPressed) {
             if (onGround) {
@@ -693,5 +693,20 @@ class GatheringScene extends Phaser.Scene {
                 ease: 'Back.easeOut'
             });
         });
+    }
+
+    shutdown() {
+        // Remove resize listener
+        this.scale.off('resize', this.handleResize, this);
+
+        // Destroy mobile controls if they exist
+        if (this.joystick) {
+            this.joystick.destroy();
+            this.joystick = null;
+        }
+        if (this.jumpBtn) {
+            this.jumpBtn.destroy();
+            this.jumpBtn = null;
+        }
     }
 }
