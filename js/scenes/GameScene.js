@@ -1,17 +1,20 @@
 // メインゲームシーン（ローグライト要素統合版）
-class GameScene extends Phaser.Scene {
-    // Game constants
-    static WORLD_WIDTH = 800;
-    static WORLD_HEIGHT = 550;
-    static PLAYER_DRAG = 50;
-    static PLAYER_JUMP_FORCE = 500;
-    static PLAYER_BASE_SPEED = 280;
-    static WALL_SLIDE_SPEED = 100;
-    static MAX_NOISE = 100;
-    static BASE_COMBO_TIMER = 80;
-    static SLOW_MO_DURATION = 25;
-    static SLOW_MO_TIME_SCALE = 2.5;
 
+// Game constants (module-level for broader browser compatibility)
+const GAME_CONSTANTS = {
+    WORLD_WIDTH: 800,
+    WORLD_HEIGHT: 550,
+    PLAYER_DRAG: 50,
+    PLAYER_JUMP_FORCE: 500,
+    PLAYER_BASE_SPEED: 280,
+    WALL_SLIDE_SPEED: 100,
+    MAX_NOISE: 100,
+    BASE_COMBO_TIMER: 80,
+    SLOW_MO_DURATION: 25,
+    SLOW_MO_TIME_SCALE: 2.5
+};
+
+class GameScene extends Phaser.Scene {
     constructor() {
         super('GameScene');
     }
@@ -78,8 +81,8 @@ class GameScene extends Phaser.Scene {
         const screenH = gameSize.height;
 
         // Fixed game world dimensions
-        const worldW = GameScene.WORLD_WIDTH;
-        const worldH = GameScene.WORLD_HEIGHT;
+        const worldW = GAME_CONSTANTS.WORLD_WIDTH;
+        const worldH = GAME_CONSTANTS.WORLD_HEIGHT;
 
         // Calculate zoom to fit the game world in the screen (FIT mode)
         const zoomX = screenW / worldW;
@@ -327,7 +330,16 @@ class GameScene extends Phaser.Scene {
 
     createCat() {
         const stageNum = storyProgress.getCurrentStage();
-        const layout = STAGE_LAYOUTS[stageNum];
+        let layout = STAGE_LAYOUTS[stageNum];
+
+        // Validate stage layout exists
+        if (!layout) {
+            console.error(`Stage ${stageNum} not found in createCat, falling back to stage 1`);
+            layout = STAGE_LAYOUTS[1];
+            if (!layout) {
+                throw new Error('No stage layouts available');
+            }
+        }
 
         this.cat = this.add.container(layout.catStart.x, layout.catStart.y);
         this.catSprite = this.add.sprite(0, 0, 'cat').setScale(1.0);
@@ -504,7 +516,7 @@ class GameScene extends Phaser.Scene {
         const itemType = item.getData('type');
 
         this.combo++;
-        this.comboTimer = GameScene.BASE_COMBO_TIMER * powerUpManager.getMultiplier('comboTimeMultiplier');
+        this.comboTimer = GAME_CONSTANTS.BASE_COMBO_TIMER * powerUpManager.getMultiplier('comboTimeMultiplier');
         if (this.combo > this.maxCombo) this.maxCombo = this.combo;
 
         // ローグライト: スコア倍率
@@ -593,8 +605,8 @@ class GameScene extends Phaser.Scene {
     }
 
     triggerSlowMotion() {
-        this.slowMoTimer = GameScene.SLOW_MO_DURATION;
-        this.physics.world.timeScale = GameScene.SLOW_MO_TIME_SCALE;
+        this.slowMoTimer = GAME_CONSTANTS.SLOW_MO_DURATION;
+        this.physics.world.timeScale = GAME_CONSTANTS.SLOW_MO_TIME_SCALE;
         this.cameras.main.zoomTo(1.08, 100);
     }
 

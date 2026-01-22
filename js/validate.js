@@ -26,6 +26,20 @@ function validateGameConfiguration() {
         });
     }
 
+    if (typeof ITEM_PROPERTIES === 'undefined') {
+        errors.push('ITEM_PROPERTIES が定義されていません (js/items.js が必要)');
+    } else {
+        // Validate essential item types exist
+        const requiredItems = ['vase', 'book', 'clock'];
+        requiredItems.forEach(item => {
+            if (!ITEM_PROPERTIES[item]) {
+                errors.push(`ITEM_PROPERTIES に必須アイテム ${item} がありません`);
+            } else if (typeof ITEM_PROPERTIES[item].score !== 'number' || typeof ITEM_PROPERTIES[item].noise !== 'number') {
+                errors.push(`ITEM_PROPERTIES[${item}] に score または noise が正しく設定されていません`);
+            }
+        });
+    }
+
     if (typeof STAGE_LAYOUTS === 'undefined') {
         errors.push('STAGE_LAYOUTS が定義されていません');
     } else {
