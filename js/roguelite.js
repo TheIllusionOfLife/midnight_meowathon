@@ -100,10 +100,14 @@ class PowerUpManager {
 
         this.activePowerUps.forEach(id => {
             const powerUp = POWERUPS[id];
-            if (powerUp.effect[type]) {
+            if (!powerUp) {
+                console.warn(`Unknown power-up ID: ${id}`);
+                return;
+            }
+            if (powerUp.effect && powerUp.effect[type]) {
                 multiplier *= powerUp.effect[type];
             }
-            if (powerUp.sideEffect[type]) {
+            if (powerUp.sideEffect && powerUp.sideEffect[type]) {
                 multiplier *= powerUp.sideEffect[type];
             }
         });
