@@ -1,50 +1,98 @@
 // モバイル対応 - 仮想ジョイスティック、タッチ操作、レスポンシブ
 
 class VirtualJoystick {
-    constructor(scene, x, y, radius = 60) {
+    constructor(scene, options = {}) {
         this.scene = scene;
-        this.radius = radius;
-        this.baseX = x;
-        this.baseY = y;
-        this.stickX = x;
-        this.stickY = y;
+
+        // Use percentage-based positioning
+        const {
+            xPercent = 0.12,
+            yPercent = 0.85,
+            radiusPercent = 0.08
+        } = options;
+
+        this.xPercent = xPercent;
+        this.yPercent = yPercent;
+        this.radiusPercent = radiusPercent;
+
+        // Calculate actual positions
+        this.updateDimensions();
+
+        this.stickX = this.baseX;
+        this.stickY = this.baseY;
         this.active = false;
         this.pointer = null;
 
         // ベース円
-        this.base = scene.add.circle(x, y, radius, 0x333366, 0.5).setDepth(1000);
+        this.base = scene.add.circle(this.baseX, this.baseY, this.radius, 0x333366, 0.5).setDepth(1000);
         this.base.setStrokeStyle(3, 0x6666aa, 0.8);
         this.base.setScrollFactor(0);
         this.base.setVisible(false);
 
         // スティック
-        this.stick = scene.add.circle(x, y, radius * 0.4, 0x6666aa, 0.8).setDepth(1001);
+        this.stick = scene.add.circle(this.baseX, this.baseY, this.radius * 0.4, 0x6666aa, 0.8).setDepth(1001);
         this.stick.setStrokeStyle(2, 0x9999cc, 1);
         this.stick.setScrollFactor(0);
         this.stick.setVisible(false);
 
         this.setupInput();
+
+        // Listen for resize events
+        this.scene.scale.on('resize', this.onResize, this);
+    }
+
+    updateDimensions() {
+        const width = this.scene.scale.width;
+        const height = this.scene.scale.height;
+        const minDim = Math.min(width, height);
+
+        this.baseX = width * this.xPercent;
+        this.baseY = height * this.yPercent;
+        this.radius = minDim * this.radiusPercent;
+    }
+
+    onResize(gameSize) {
+        this.updateDimensions();
+        this.updatePosition();
+    }
+
+    updatePosition() {
+        if (this.base) {
+            this.base.setPosition(this.baseX, this.baseY);
+            this.base.setRadius(this.radius);
+        }
+        if (this.stick) {
+            this.stick.setPosition(this.baseX, this.baseY);
+            this.stick.setRadius(this.radius * 0.4);
+        }
+        this.stickX = this.baseX;
+        this.stickY = this.baseY;
     }
 
     setupInput() {
-        this.scene.input.on('pointerdown', (pointer) => {
+        // Store bound handlers for cleanup
+        this.onPointerDown = (pointer) => {
             // 左半分の画面でタッチ
             if (pointer.x < this.scene.scale.width / 2) {
                 this.activate(pointer);
             }
-        });
+        };
 
-        this.scene.input.on('pointermove', (pointer) => {
+        this.onPointerMove = (pointer) => {
             if (this.active && this.pointer === pointer) {
                 this.updateStick(pointer);
             }
-        });
+        };
 
-        this.scene.input.on('pointerup', (pointer) => {
+        this.onPointerUp = (pointer) => {
             if (this.pointer === pointer) {
                 this.deactivate();
             }
-        });
+        };
+
+        this.scene.input.on('pointerdown', this.onPointerDown);
+        this.scene.input.on('pointermove', this.onPointerMove);
+        this.scene.input.on('pointerup', this.onPointerUp);
     }
 
     activate(pointer) {
@@ -100,35 +148,105 @@ class VirtualJoystick {
     }
 
     destroy() {
-        this.base.destroy();
-        this.stick.destroy();
+        // Remove resize listener
+        this.scene.scale.off('resize', this.onResize, this);
+
+        // Remove input handlers
+        this.scene.input.off('pointerdown', this.onPointerDown);
+        this.scene.input.off('pointermove', this.onPointerMove);
+        this.scene.input.off('pointerup', this.onPointerUp);
+
+        // Destroy visual elements
+        if (this.base) this.base.destroy();
+        if (this.stick) this.stick.destroy();
     }
 }
 
 class JumpButton {
-    constructor(scene, x, y, radius = 40) {
+    constructor(scene, options = {}) {
         this.scene = scene;
+
+        // Use percentage-based positioning
+        const {
+            xPercent = 0.88,
+            yPercent = 0.85,
+            radiusPercent = 0.06
+        } = options;
+
+        this.xPercent = xPercent;
+        this.yPercent = yPercent;
+        this.radiusPercent = radiusPercent;
+
+        // Calculate actual positions
+        this.updateDimensions();
+
         this.active = false;
         this.pressed = false;
 
         // ボタン背景
-        this.button = scene.add.circle(x, y, radius, 0xffaa88, 0.7).setDepth(1000);
+        this.button = scene.add.circle(this.x, this.y, this.radius, 0xffaa88, 0.7).setDepth(1000);
         this.button.setStrokeStyle(3, 0xff8866, 0.9);
         this.button.setScrollFactor(0);
         this.button.setInteractive();
         this.button.setVisible(false);
 
         // 肉球アイコン
-        const icon = scene.add.container(x, y).setDepth(1001).setScrollFactor(0);
-        const pad = scene.add.ellipse(0, 2, 12, 9, 0xff8866);
-        const toe1 = scene.add.circle(-6, -4, 4, 0xff8866);
-        const toe2 = scene.add.circle(0, -6, 4, 0xff8866);
-        const toe3 = scene.add.circle(6, -4, 4, 0xff8866);
+        const iconScale = this.radius / 40; // Scale icon based on button size
+        const icon = scene.add.container(this.x, this.y).setDepth(1001).setScrollFactor(0);
+        const pad = scene.add.ellipse(0, 2 * iconScale, 12 * iconScale, 9 * iconScale, 0xff8866);
+        const toe1 = scene.add.circle(-6 * iconScale, -4 * iconScale, 4 * iconScale, 0xff8866);
+        const toe2 = scene.add.circle(0, -6 * iconScale, 4 * iconScale, 0xff8866);
+        const toe3 = scene.add.circle(6 * iconScale, -4 * iconScale, 4 * iconScale, 0xff8866);
         icon.add([pad, toe1, toe2, toe3]);
         icon.setVisible(false);
         this.icon = icon;
 
         this.setupInput();
+
+        // Listen for resize events
+        this.scene.scale.on('resize', this.onResize, this);
+    }
+
+    updateDimensions() {
+        const width = this.scene.scale.width;
+        const height = this.scene.scale.height;
+        const minDim = Math.min(width, height);
+
+        this.x = width * this.xPercent;
+        this.y = height * this.yPercent;
+        this.radius = minDim * this.radiusPercent;
+    }
+
+    onResize(gameSize) {
+        this.updateDimensions();
+        this.updatePosition();
+    }
+
+    updatePosition() {
+        if (this.button) {
+            this.button.setPosition(this.x, this.y);
+            this.button.setRadius(this.radius);
+        }
+        if (this.icon) {
+            this.icon.setPosition(this.x, this.y);
+            // Update icon scale
+            const iconScale = this.radius / 40;
+            this.icon.list.forEach((child, index) => {
+                if (index === 0) { // pad
+                    child.setSize(12 * iconScale, 9 * iconScale);
+                    child.setPosition(0, 2 * iconScale);
+                } else if (index === 1) { // toe1
+                    child.setRadius(4 * iconScale);
+                    child.setPosition(-6 * iconScale, -4 * iconScale);
+                } else if (index === 2) { // toe2
+                    child.setRadius(4 * iconScale);
+                    child.setPosition(0, -6 * iconScale);
+                } else if (index === 3) { // toe3
+                    child.setRadius(4 * iconScale);
+                    child.setPosition(6 * iconScale, -4 * iconScale);
+                }
+            });
+        }
     }
 
     setupInput() {
@@ -166,6 +284,7 @@ class JumpButton {
     }
 
     destroy() {
+        this.scene.scale.off('resize', this.onResize, this);
         this.button.destroy();
         this.icon.destroy();
     }

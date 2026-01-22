@@ -39,7 +39,12 @@ class HUDScene extends Phaser.Scene {
 
     handleResize() {
         GameLayout.init(this); // Update context
-        this.children.removeAll();
+
+        // Destroy mobile controls before removing children
+        if (this.joystick) this.joystick.destroy();
+        if (this.jumpBtn) this.jumpBtn.destroy();
+
+        this.children.removeAll(true);
         this.createScore();
         this.createTimer();
         this.createOwnerMonitor();
