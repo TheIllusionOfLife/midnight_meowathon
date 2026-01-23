@@ -258,8 +258,8 @@ test('アイテム破壊音が快適な効果音に置き換わっている', ()
 
 test('月明かりがウィンドウ座標に同期している', () => {
     const content = fs.readFileSync('js/scenes/GameScene.js', 'utf8');
-    const start = content.indexOf('createAtmosphere()');
-    assert(start !== -1, 'createAtmosphere() が見つかりません');
+    const start = content.indexOf('createAtmosphere() {');
+    assert(start !== -1, 'createAtmosphere() { が見つかりません');
     const snippet = content.slice(start, start + 800);
     assert(snippet.includes('this.windowX'), 'createAtmosphere が windowX を使用していません');
     assert(snippet.includes('this.windowY'), 'createAtmosphere が windowY を使用していません');
