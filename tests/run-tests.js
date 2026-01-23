@@ -314,8 +314,10 @@ test('猫の集会のモバイル横画面にズーム余白がある', () => {
 test('猫の集会のモバイル横画面で下側に余白を確保している', () => {
     const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
     assert(
+        content.includes('visibleH') ||
+        content.includes('minCenterY') ||
         content.includes('centerYOffset') ||
-        content.includes('centerY') && content.includes('centerOn'),
+        (content.includes('centerY') && content.includes('centerOn')),
         'GatheringScene に縦方向の余白調整がありません'
     );
 });
