@@ -44,16 +44,8 @@ class GatheringScene extends Phaser.Scene {
             const zoom = Math.min(zoomX, zoomY);
 
             this.cameras.main.setZoom(zoom);
-            this.cameras.main.setBounds(0, 0, worldW, worldH);
-
-            // Calculate scroll position to center game world
-            const visibleW = screenW / zoom;
-            const visibleH = screenH / zoom;
-            const scrollX = (worldW / 2) - (visibleW / 2);
-            const scrollY = (worldH / 2) - (visibleH / 2);
-            this.cameras.main.setScroll(scrollX, scrollY);
-
-            updateMobileControlsForCamera(this.joystick, this.jumpBtn, this.cameras.main, screenW, screenH);
+            this.cameras.main.removeBounds();
+            this.cameras.main.centerOn(worldW / 2, worldH / 2);
         }
     }
 
