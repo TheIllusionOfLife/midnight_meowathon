@@ -192,7 +192,7 @@ class TitleScene extends Phaser.Scene {
             strokeThickness: 3
         }).setOrigin(0.5).setDepth(11);
 
-        this.add.text(W / 2, GameLayout.pctY(0.96), '© 2025 Midnight Meowathon', {
+        this.add.text(W / 2, GameLayout.pctY(0.96), '© 2025 Cat Zoomies', {
             fontSize: GameLayout.fontSize(11) + 'px',
             color: '#333355'
         }).setOrigin(0.5).setDepth(10);

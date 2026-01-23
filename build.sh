@@ -5,7 +5,7 @@
 
 cd "$(dirname "$0")"
 
-OUTPUT="midnight_meowathon.zip"
+OUTPUT="cat_zoomies.zip"
 
 # Remove old build if exists
 rm -f "$OUTPUT"

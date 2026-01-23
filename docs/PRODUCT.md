@@ -1,7 +1,7 @@
 # Product Overview
 
 ## 🎯 Purpose
-**Midnight Meowathon** is a "Cozy roguelite" experience designed to capture the mischievous joy of being a cat at night. It balances stress-relieving destruction with a relaxing, atmospheric aesthetic.
+**Cat Zoomies** is a "Cozy roguelite" experience designed to capture the mischievous joy of being a cat at night. It balances stress-relieving destruction with a relaxing, atmospheric aesthetic.
 
 ## 👥 Target Users
 - **Cozy Gamers**: Players who enjoy low-stakes, aesthetically pleasing environments (e.g., *Neko Atsume*, *Unpacking*).

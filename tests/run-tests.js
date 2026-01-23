@@ -2,7 +2,7 @@
 
 // Node.js ベースのテストランナー - ブラウザ不要
 
-console.log('🧪 Midnight Meowathon - テスト実行中...\n');
+console.log('🧪 Cat Zoomies - テスト実行中...\n');
 
 let totalTests = 0;
 let passedTests = 0;

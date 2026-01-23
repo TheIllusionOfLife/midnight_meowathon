@@ -274,7 +274,7 @@ class StoryProgress {
     save() {
         try {
             const data = this.serialize();
-            localStorage.setItem('midnight_meowathon_progress', JSON.stringify(data));
+            localStorage.setItem('cat_zoomies_progress', JSON.stringify(data));
         } catch (e) {
             console.warn('Failed to save progress:', e);
         }
@@ -283,7 +283,7 @@ class StoryProgress {
     // ローカルストレージから読み込み
     load() {
         try {
-            const data = localStorage.getItem('midnight_meowathon_progress');
+            const data = localStorage.getItem('cat_zoomies_progress');
             if (data) {
                 this.deserialize(JSON.parse(data));
                 return true;

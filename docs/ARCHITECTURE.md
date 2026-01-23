@@ -1,7 +1,7 @@
 # Architecture Documentation
 
 ## Overview
-**Midnight Meowathon** is a static web application built with **Phaser 3**. It eschews external asset dependencies (images/spritesheets) in favor of **runtime procedural generation** via the Canvas API (Phaser Graphics). This ensures a small footprint and distinct visual style.
+**Cat Zoomies** is a static web application built with **Phaser 3**. It eschews external asset dependencies (images/spritesheets) in favor of **runtime procedural generation** via the Canvas API (Phaser Graphics). This ensures a small footprint and distinct visual style.
 
 ## Technology Stack
 - **Engine**: [Phaser 3](https://phaser.io/) (v3.55+) - Physics, rendering, and scene management.

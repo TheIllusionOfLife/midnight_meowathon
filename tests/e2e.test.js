@@ -1,6 +1,6 @@
-// E2Eテストスイート - Midnight Meowathon
+// E2Eテストスイート - Cat Zoomies
 
-describe('Midnight Meowathon - E2E Tests', () => {
+describe('Cat Zoomies - E2E Tests', () => {
     let game;
 
     beforeEach(() => {

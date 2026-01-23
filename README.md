@@ -1,6 +1,6 @@
-# 🌙 Midnight Meowathon
+# 🐱 Cat Zoomies
 
-**Midnight Meowathon** is a cozy yet chaotic roguelite cat simulator. Play as a mischievous cat at midnight, breaking items to relieve stress while trying not to wake up your owner... too much.
+**Cat Zoomies** is a cozy yet chaotic roguelite cat simulator. Play as a mischievous cat at midnight, breaking items to relieve stress while trying not to wake up your owner... too much.
 
 ## 🎮 Features
 
@@ -35,7 +35,7 @@ Run the utility script to package the game for itch.io:
 ```bash
 ./build.sh
 ```
-This creates `midnight_meowathon.zip` with `index.html`, `css/`, and `js/`.
+This creates `cat_zoomies.zip` with `index.html`, `css/`, and `js/`.
 Note: Requires the `zip` command to be available on your system.
 
 ### Structure
