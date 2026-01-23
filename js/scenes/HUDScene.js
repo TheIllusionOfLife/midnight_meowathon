@@ -19,6 +19,8 @@ class HUDScene extends Phaser.Scene {
         this.thunderLabel = null;
         this.thunderBtn = null;
         this.thunderIcon = null;
+        this.stageTip = null;
+        this.stageTipBg = null;
 
         // Create UI Elements
         this.createScore();
@@ -26,6 +28,7 @@ class HUDScene extends Phaser.Scene {
         this.createOwnerMonitor();
         this.createPowerUps();
         this.createThunderIndicator();
+        this.createStageTip();
 
         // Mobile Controls
         this.createMobileControls();
@@ -50,6 +53,8 @@ class HUDScene extends Phaser.Scene {
         if (this.thunderBtn) this.thunderBtn.destroy();
         if (this.thunderIcon) this.thunderIcon.destroy();
         if (this.thunderLabel) this.thunderLabel.destroy();
+        if (this.stageTip) this.stageTip.destroy();
+        if (this.stageTipBg) this.stageTipBg.destroy();
 
         this.children.removeAll(true);
         this.createScore();
@@ -57,6 +62,7 @@ class HUDScene extends Phaser.Scene {
         this.createOwnerMonitor();
         this.createPowerUps();
         this.createThunderIndicator();
+        this.createStageTip();
         this.createMobileControls();
 
         // Restore state
@@ -243,6 +249,40 @@ class HUDScene extends Phaser.Scene {
         }).setOrigin(isMobile ? 0.5 : 1, 0.5);
     }
 
+    createStageTip() {
+        if (!storyProgress || storyProgress.getCurrentStage() !== 1) return;
+
+        const tipText = '壁に触れながらジャンプで壁キック！';
+        const x = GameLayout.W / 2;
+        const y = GameLayout.isPortrait ? GameLayout.pctY(0.13) : GameLayout.pctY(0.12);
+        const width = GameLayout.scale(280);
+        const height = GameLayout.scale(32);
+
+        this.stageTipBg = this.add.rectangle(x, y, width, height, 0x2a2a44, 0.9)
+            .setStrokeStyle(GameLayout.scale(2), 0x7777aa)
+            .setDepth(120);
+
+        this.stageTip = this.add.text(x, y, tipText, {
+            fontSize: GameLayout.fontSize(14) + 'px',
+            color: '#ffffaa',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5).setDepth(121);
+
+        this.time.delayedCall(5000, () => {
+            if (!this.stageTip || !this.stageTipBg) return;
+            this.tweens.add({
+                targets: [this.stageTip, this.stageTipBg],
+                alpha: 0,
+                duration: 400,
+                onComplete: () => {
+                    if (this.stageTip) this.stageTip.destroy();
+                    if (this.stageTipBg) this.stageTipBg.destroy();
+                }
+            });
+        });
+    }
+
     createThunderButton() {
         if (!powerUpManager || !powerUpManager.hasPowerUp('thunder')) return;
 
@@ -285,5 +325,7 @@ class HUDScene extends Phaser.Scene {
         if (this.thunderBtn) this.thunderBtn.destroy();
         if (this.thunderIcon) this.thunderIcon.destroy();
         if (this.thunderLabel) this.thunderLabel.destroy();
+        if (this.stageTip) this.stageTip.destroy();
+        if (this.stageTipBg) this.stageTipBg.destroy();
     }
 }

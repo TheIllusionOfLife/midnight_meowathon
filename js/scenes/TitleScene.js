@@ -119,7 +119,7 @@ class TitleScene extends Phaser.Scene {
 
         // タイトル - responsive font size
         const titleY = GameLayout.isPortrait ? GameLayout.pctY(0.20) : GameLayout.pctY(0.24);
-        const title = this.add.text(W / 2, titleY, 'まよなかのねこ騒動', {
+        const title = this.add.text(W / 2, titleY, 'ねこのズーミーズ', {
             fontSize: GameLayout.fontSize(44) + 'px',
             fontFamily: 'Fredoka One',
             color: '#ffffff',
@@ -135,7 +135,7 @@ class TitleScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        this.add.text(W / 2, titleY + GameLayout.scale(50), 'Midnight Meowathon', {
+        this.add.text(W / 2, titleY + GameLayout.scale(50), 'Cat Zoomies', {
             fontSize: GameLayout.fontSize(20) + 'px',
             color: '#7777aa'
         }).setOrigin(0.5).setDepth(10);

@@ -57,6 +57,7 @@ class VirtualJoystick {
     }
 
     updatePosition() {
+        if (!this.base || !this.stick) return;
         if (this.base) {
             this.base.setPosition(this.baseX, this.baseY);
             this.base.setRadius(this.radius);
@@ -161,6 +162,9 @@ class VirtualJoystick {
         // Destroy visual elements
         if (this.base) this.base.destroy();
         if (this.stick) this.stick.destroy();
+
+        this.base = null;
+        this.stick = null;
     }
 }
 
@@ -397,4 +401,29 @@ function createMobileControls(scene, options = {}) {
     jumpBtn.show();
 
     return { joystick, jumpBtn };
+}
+
+function updateMobileControlsForCamera(joystick, jumpBtn, camera, screenW, screenH) {
+    if (!joystick || !jumpBtn || !camera) return;
+
+    const minDim = Math.min(screenW, screenH);
+    const zoom = camera.zoom || 1;
+
+    const joyScreenX = screenW * 0.15;
+    const joyScreenY = screenH * 0.82;
+    const joyWorldPoint = camera.getWorldPoint(joyScreenX, joyScreenY);
+
+    joystick.baseX = joyWorldPoint.x;
+    joystick.baseY = joyWorldPoint.y;
+    joystick.radius = (minDim * 0.08) / zoom;
+    joystick.updatePosition();
+
+    const btnScreenX = screenW * 0.85;
+    const btnScreenY = screenH * 0.82;
+    const btnWorldPoint = camera.getWorldPoint(btnScreenX, btnScreenY);
+
+    jumpBtn.x = btnWorldPoint.x;
+    jumpBtn.y = btnWorldPoint.y;
+    jumpBtn.radius = (minDim * 0.08) / zoom;
+    jumpBtn.updatePosition();
 }

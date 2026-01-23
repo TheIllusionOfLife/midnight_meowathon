@@ -53,36 +53,7 @@ class GatheringScene extends Phaser.Scene {
             const scrollY = (worldH / 2) - (visibleH / 2);
             this.cameras.main.setScroll(scrollX, scrollY);
 
-            // Update Mobile Controls Positions to match Screen Coordinates
-            if (this.joystick) {
-                // Unproject screen coordinates to world coordinates
-                const joyScreenX = screenW * 0.15;
-                const joyScreenY = screenH * 0.82;
-                const joyWorldPoint = this.cameras.main.getWorldPoint(joyScreenX, joyScreenY);
-
-                this.joystick.baseX = joyWorldPoint.x;
-                this.joystick.baseY = joyWorldPoint.y;
-
-                // Adjust radius for zoom to keep constant screen size
-                const minDim = Math.min(screenW, screenH);
-                this.joystick.radius = (minDim * 0.08) / zoom;
-
-                this.joystick.updatePosition();
-            }
-
-            if (this.jumpBtn) {
-                const btnScreenX = screenW * 0.85;
-                const btnScreenY = screenH * 0.82;
-                const btnWorldPoint = this.cameras.main.getWorldPoint(btnScreenX, btnScreenY);
-
-                this.jumpBtn.x = btnWorldPoint.x;
-                this.jumpBtn.y = btnWorldPoint.y;
-
-                const minDim = Math.min(screenW, screenH);
-                this.jumpBtn.radius = (minDim * 0.08) / zoom;
-
-                this.jumpBtn.updatePosition();
-            }
+            updateMobileControlsForCamera(this.joystick, this.jumpBtn, this.cameras.main, screenW, screenH);
         }
     }
 

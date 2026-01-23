@@ -151,32 +151,34 @@ class GameScene extends Phaser.Scene {
         }
 
         // 窓（パララックス対応）
-        this.add.rectangle(680, 120, 100, 150, 0x1a1a30)
+        const windowX = GameLayout.isPortrait ? 600 : 680;
+        const windowY = 120;
+        this.add.rectangle(windowX, windowY, 100, 150, 0x1a1a30)
             .setStrokeStyle(6, 0x3a3a5a)
             .setDepth(0)
             .setScrollFactor(0.5);
-        this.add.rectangle(680, 120, 85, 135, 0x080818)
+        this.add.rectangle(windowX, windowY, 85, 135, 0x080818)
             .setDepth(0)
             .setScrollFactor(0.5);
-        this.add.image(700, 95, 'moon').setScale(0.5)
+        this.add.image(windowX + 20, windowY - 25, 'moon').setScale(0.5)
             .setDepth(0)
             .setScrollFactor(0.5);
 
         // 星（窓の外）
         for (let i = 0; i < 5; i++) {
             this.add.circle(
-                650 + Math.random() * 60,
-                80 + Math.random() * 80,
+                windowX - 30 + Math.random() * 60,
+                windowY - 40 + Math.random() * 80,
                 1,
                 0xffffff,
                 0.5
             ).setDepth(0).setScrollFactor(0.5);
         }
 
-        this.add.rectangle(680, 120, 4, 135, 0x3a3a5a).setDepth(0).setScrollFactor(0.5);
-        this.add.rectangle(680, 120, 85, 4, 0x3a3a5a).setDepth(0).setScrollFactor(0.5);
-        this.add.rectangle(620, 120, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
-        this.add.rectangle(740, 120, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
+        this.add.rectangle(windowX, windowY, 4, 135, 0x3a3a5a).setDepth(0).setScrollFactor(0.5);
+        this.add.rectangle(windowX, windowY, 85, 4, 0x3a3a5a).setDepth(0).setScrollFactor(0.5);
+        this.add.rectangle(windowX - 60, windowY, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
+        this.add.rectangle(windowX + 60, windowY, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
 
         // 床
         this.add.rectangle(W / 2, H - 30, W, 60, 0x2a2520);
@@ -259,13 +261,13 @@ class GameScene extends Phaser.Scene {
         this.addPlatform(W / 2, H - 5, W - 20, 10, 0x3a3530);
 
         // ステージ名表示（一時的）
-        const stageNameText = this.add.text(W / 2, 60, layout.name, {
-            fontSize: '28px',
+        const stageNameText = this.add.text(GameLayout.W / 2, GameLayout.pctY(0.12), layout.name, {
+            fontSize: GameLayout.fontSize(24) + 'px',
             color: '#ffffff',
             fontStyle: 'bold',
             stroke: '#000000',
-            strokeThickness: 4
-        }).setOrigin(0.5).setDepth(150).setScrollFactor(0).setAlpha(0);
+            strokeThickness: GameLayout.scale(4)
+        }).setOrigin(0.5).setDepth(250).setScrollFactor(0).setAlpha(0);
 
         this.tweens.add({
             targets: stageNameText,
@@ -300,6 +302,10 @@ class GameScene extends Phaser.Scene {
     }
 
     addWall(x, y, w, h) {
+        // Visible wall to hint wall-kick
+        this.add.rectangle(x, y, w, h, 0x2a2a44, 0.6)
+            .setDepth(5);
+
         const wall = this.add.rectangle(x, y, w, h, 0x101015, 0);
         this.physics.add.existing(wall, true);
         this.walls.add(wall);
