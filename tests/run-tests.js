@@ -216,6 +216,37 @@ test('猫のセリフに不適切な語が含まれていない', () => {
     assert(!content.includes('ふんっ'), '猫のセリフに「ふんっ」が残っています');
 });
 
+test('ゲームオーバー時に不快なサウンドを再生しない', () => {
+    const gameScene = fs.readFileSync('js/scenes/GameScene.js', 'utf8');
+    const gatheringScene = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    assert(!gameScene.includes('sound.gameOver()'), 'GameScene に sound.gameOver が残っています');
+    assert(!gatheringScene.includes('sound.gameOver()'), 'GatheringScene に sound.gameOver が残っています');
+});
+
+test('タイトルの日本語表記が更新されている', () => {
+    const titleScene = fs.readFileSync('js/scenes/TitleScene.js', 'utf8');
+    const indexHtml = fs.readFileSync('index.html', 'utf8');
+    assert(!titleScene.includes('よるのうんどうかい'), 'TitleScene に旧タイトルが残っています');
+    assert(!indexHtml.includes('よるのうんどうかい'), 'index.html に旧タイトルが残っています');
+});
+
+test('タイトル画面の月が縦画面で重複しない', () => {
+    const content = fs.readFileSync('js/scenes/TitleScene.js', 'utf8');
+    assert(
+        content.includes('GameLayout.isPortrait') && content.includes('moon'),
+        'TitleScene に縦画面の月分岐がありません'
+    );
+});
+
+test('モバイル操作がゲームモード間で共有されている', () => {
+    const mobile = fs.readFileSync('js/mobile.js', 'utf8');
+    const gathering = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    const hud = fs.readFileSync('js/scenes/HUDScene.js', 'utf8');
+    assert(mobile.includes('createMobileControls'), 'mobile.js に共通モバイル制御関数がありません');
+    assert(gathering.includes('createMobileControls'), 'GatheringScene が共通モバイル制御を使っていません');
+    assert(hud.includes('createMobileControls'), 'HUDScene が共通モバイル制御を使っていません');
+});
+
 test('textures.js にアイコンテクスチャが定義されている', () => {
     const content = fs.readFileSync('js/textures.js', 'utf8');
     const requiredIcons = ['iconCatnip', 'iconBell', 'iconThunder', 'iconMoon', 'iconFish', 'iconCatToy'];
