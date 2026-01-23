@@ -138,6 +138,52 @@ test('index.html のスクリプト読み込み順序が正しい', () => {
     assert(validateIndex > titleSceneIndex, 'validate.js がシーンファイルより前に読み込まれています');
 });
 
+test('GameScene が固定ワールドサイズの物理境界を設定している', () => {
+    const content = fs.readFileSync('js/scenes/GameScene.js', 'utf8');
+    assert(
+        content.includes('physics.world.setBounds') ||
+        content.includes('physics.world.setBounds('),
+        'GameScene に physics.world.setBounds がありません'
+    );
+    assert(
+        content.includes('WORLD_WIDTH') && content.includes('WORLD_HEIGHT'),
+        'GameScene が固定ワールドサイズ定数を使用していません'
+    );
+});
+
+test('結果画面が GameLayout のレスポンシブ値を使用している', () => {
+    const content = fs.readFileSync('js/scenes/GameScene.js', 'utf8');
+    const start = content.indexOf('showResultScreen');
+    assert(start !== -1, 'showResultScreen が見つかりません');
+    const snippet = content.slice(start, start + 1200);
+    assert(snippet.includes('GameLayout.'), 'showResultScreen が GameLayout を使用していません');
+});
+
+test('結果画面表示時に HUDScene の入力を停止している', () => {
+    const content = fs.readFileSync('js/scenes/GameScene.js', 'utf8');
+    const start = content.indexOf('showResultScreen');
+    assert(start !== -1, 'showResultScreen が見つかりません');
+    const snippet = content.slice(start, start + 800);
+    assert(
+        snippet.includes("stop('HUDScene')") || snippet.includes('stop("HUDScene")'),
+        'showResultScreen で HUDScene を停止していません'
+    );
+});
+
+test('ゲームオーバー時の不快なサウンドを停止している', () => {
+    const content = fs.readFileSync('js/scenes/GameScene.js', 'utf8');
+    assert(!content.includes('sound.hiss()'), 'sound.hiss が残っています');
+});
+
+test('モバイルで雷を発動できる UI がある', () => {
+    const content = fs.readFileSync('js/scenes/HUDScene.js', 'utf8');
+    assert(
+        content.includes('createThunderButton') ||
+        content.includes('thunderBtn'),
+        'HUDScene に雷ボタンがありません'
+    );
+});
+
 test('textures.js にアイコンテクスチャが定義されている', () => {
     const content = fs.readFileSync('js/textures.js', 'utf8');
     const requiredIcons = ['iconCatnip', 'iconBell', 'iconThunder', 'iconMoon', 'iconFish', 'iconCatToy'];
