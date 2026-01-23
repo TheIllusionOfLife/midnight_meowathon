@@ -247,6 +247,38 @@ test('モバイル操作がゲームモード間で共有されている', () =>
     assert(hud.includes('createMobileControls'), 'HUDScene が共通モバイル制御を使っていません');
 });
 
+test('アイテム破壊音が快適な効果音に置き換わっている', () => {
+    const gameScene = fs.readFileSync('js/scenes/GameScene.js', 'utf8');
+    const gatheringScene = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    assert(gameScene.includes('sound.itemBreak'), 'GameScene が itemBreak サウンドを使用していません');
+    assert(gatheringScene.includes('sound.itemBreak'), 'GatheringScene が itemBreak サウンドを使用していません');
+    assert(!gameScene.includes('sound.hit('), 'GameScene に sound.hit が残っています');
+    assert(!gatheringScene.includes('sound.hit('), 'GatheringScene に sound.hit が残っています');
+});
+
+test('月明かりがウィンドウ座標に同期している', () => {
+    const content = fs.readFileSync('js/scenes/GameScene.js', 'utf8');
+    const start = content.indexOf('createAtmosphere');
+    assert(start !== -1, 'createAtmosphere が見つかりません');
+    const snippet = content.slice(start, start + 800);
+    assert(snippet.includes('this.windowX'), 'createAtmosphere が windowX を使用していません');
+    assert(snippet.includes('this.windowY'), 'createAtmosphere が windowY を使用していません');
+});
+
+test('猫の集会の移動入力がジョイスティック方向に基づいている', () => {
+    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    assert(content.includes('getDirection()'), 'GatheringScene が getDirection を使用していません');
+    assert(!content.includes('joystick.left'), 'GatheringScene に joystick.left が残っています');
+    assert(!content.includes('joystick.right'), 'GatheringScene に joystick.right が残っています');
+});
+
+test('モバイル操作が破棄後のリサイズで落ちない', () => {
+    const content = fs.readFileSync('js/mobile.js', 'utf8');
+    assert(content.includes('this.destroyed'), 'mobile.js に破棄フラグがありません');
+    assert(content.includes('this.base.geom'), 'VirtualJoystick の geom ガードがありません');
+    assert(content.includes('this.button.geom'), 'JumpButton の geom ガードがありません');
+});
+
 test('textures.js にアイコンテクスチャが定義されている', () => {
     const content = fs.readFileSync('js/textures.js', 'utf8');
     const requiredIcons = ['iconCatnip', 'iconBell', 'iconThunder', 'iconMoon', 'iconFish', 'iconCatToy'];
