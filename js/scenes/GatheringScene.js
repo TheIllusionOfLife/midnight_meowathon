@@ -17,6 +17,7 @@ class GatheringScene extends Phaser.Scene {
         // 初期化フラグ
         this.isInitialized = false;
         this.selectedBoss = null;
+        this.physics.world.setBounds(0, 0, 800, 550);
 
         // ボス選択画面
         this.showBossSelection();
@@ -38,6 +39,7 @@ class GatheringScene extends Phaser.Scene {
             const screenH = gameSize.height;
             const worldW = 800;
             const worldH = 550;
+            this.physics.world.setBounds(0, 0, worldW, worldH);
 
             const zoomX = screenW / worldW;
             const zoomY = screenH / worldH;
