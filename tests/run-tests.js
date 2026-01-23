@@ -353,14 +353,15 @@ test('猫の集会のジョイスティック位置がUIの安全領域に合わ
     );
 });
 
-test('ジョイスティックがタッチ補正オフセットに対応している', () => {
+test('画面座標用モバイル操作がズーム補正を行う', () => {
     const mobile = fs.readFileSync('js/mobile.js', 'utf8');
-    assert(mobile.includes('touchOffsetX') && mobile.includes('touchOffsetY'), 'VirtualJoystick にタッチ補正がありません');
-});
-
-test('猫の集会でジョイスティックのタッチ補正を設定している', () => {
-    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
-    assert(content.includes('touchOffsetX') && content.includes('touchOffsetY'), 'GatheringScene にタッチ補正が設定されていません');
+    assert(mobile.includes('updateMobileControlsForScreen'), 'updateMobileControlsForScreen がありません');
+    assert(
+        mobile.includes('inputScale = zoom') ||
+        mobile.includes('1 / zoom') ||
+        mobile.includes('/ zoom'),
+        'updateMobileControlsForScreen がズーム補正を行っていません'
+    );
 });
 
 test('textures.js にアイコンテクスチャが定義されている', () => {
