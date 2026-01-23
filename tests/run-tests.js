@@ -279,6 +279,20 @@ test('モバイル操作が破棄後のリサイズで落ちない', () => {
     assert(content.includes('this.button.geom'), 'JumpButton の geom ガードがありません');
 });
 
+test('猫の集会のリサイズがゲーム画面を中央に保つ', () => {
+    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    const start = content.indexOf('handleResize');
+    assert(start !== -1, 'GatheringScene に handleResize がありません');
+    const snippet = content.slice(start, start + 600);
+    assert(snippet.includes('centerOn'), 'GatheringScene が centerOn を使用していません');
+    assert(snippet.includes('removeBounds'), 'GatheringScene が removeBounds を使用していません');
+});
+
+test('猫の集会のモバイル操作が画面座標で配置されている', () => {
+    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    assert(!content.includes('updateMobileControlsForCamera'), 'GatheringScene に updateMobileControlsForCamera が残っています');
+});
+
 test('textures.js にアイコンテクスチャが定義されている', () => {
     const content = fs.readFileSync('js/textures.js', 'utf8');
     const requiredIcons = ['iconCatnip', 'iconBell', 'iconThunder', 'iconMoon', 'iconFish', 'iconCatToy'];
