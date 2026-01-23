@@ -304,6 +304,19 @@ test('猫の集会のズームが1以上に拡大されない', () => {
     );
 });
 
+test('猫の集会のモバイル横画面にズーム余白がある', () => {
+    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    const start = content.indexOf('handleResize');
+    assert(start !== -1, 'GatheringScene に handleResize がありません');
+    const snippet = content.slice(start, start + 900);
+    assert(
+        snippet.includes('zoomPadding') ||
+        snippet.includes('* 0.92') ||
+        snippet.includes('* 0.9'),
+        'GatheringScene にモバイル横画面のズーム余白がありません'
+    );
+});
+
 test('猫の集会の初期位置が床に合わせている', () => {
     const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
     const start = content.indexOf('createCat()');
