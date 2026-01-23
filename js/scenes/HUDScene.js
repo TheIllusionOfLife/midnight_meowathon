@@ -43,6 +43,8 @@ class HUDScene extends Phaser.Scene {
         // Destroy mobile controls before removing children
         if (this.joystick) this.joystick.destroy();
         if (this.jumpBtn) this.jumpBtn.destroy();
+        if (this.thunderBtn) this.thunderBtn.destroy();
+        if (this.thunderIcon) this.thunderIcon.destroy();
 
         this.children.removeAll(true);
         this.createScore();
@@ -180,6 +182,8 @@ class HUDScene extends Phaser.Scene {
         this.joystick.base.setVisible(true);
         this.joystick.stick.setVisible(true);
         this.jumpBtn.show();
+
+        this.createThunderButton();
     }
 
     updateScore(score) {
@@ -193,6 +197,31 @@ class HUDScene extends Phaser.Scene {
     updateNoise(noise) {
         this.noise = noise;
         this.updateOwnerMonitorVisuals();
+    }
+
+    createThunderButton() {
+        if (!powerUpManager || !powerUpManager.hasPowerUp('thunder')) return;
+
+        const x = GameLayout.controlsRight;
+        const y = GameLayout.controlsBottom - GameLayout.scale(70);
+        const radius = GameLayout.scale(22);
+
+        this.thunderBtn = this.add.circle(x, y, radius, 0x5a3a8a, 0.9)
+            .setStrokeStyle(GameLayout.scale(2), 0x8a6acc)
+            .setDepth(1002)
+            .setScrollFactor(0)
+            .setInteractive({ useHandCursor: true });
+
+        this.thunderIcon = this.add.image(x, y, 'iconThunder')
+            .setScale(GameLayout.scale(0.7))
+            .setDepth(1003)
+            .setScrollFactor(0);
+
+        this.thunderBtn.on('pointerdown', () => {
+            if (this.mainScene && this.mainScene.activateThunder) {
+                this.mainScene.activateThunder();
+            }
+        });
     }
 
     shutdown() {
@@ -209,5 +238,7 @@ class HUDScene extends Phaser.Scene {
         // Destroy mobile controls properly
         if (this.joystick) this.joystick.destroy();
         if (this.jumpBtn) this.jumpBtn.destroy();
+        if (this.thunderBtn) this.thunderBtn.destroy();
+        if (this.thunderIcon) this.thunderIcon.destroy();
     }
 }

@@ -53,6 +53,9 @@ class GameScene extends Phaser.Scene {
         this.walls = this.physics.add.staticGroup();
         this.breakables = this.physics.add.group({ allowGravity: false });
 
+        // 固定ワールド境界を設定（画面サイズ変更の影響を受けない）
+        this.physics.world.setBounds(0, 0, GAME_CONSTANTS.WORLD_WIDTH, GAME_CONSTANTS.WORLD_HEIGHT);
+
         // シーン構築
         this.createBackground();
         this.createRoom();
@@ -79,6 +82,9 @@ class GameScene extends Phaser.Scene {
     handleResize(gameSize) {
         const screenW = gameSize.width;
         const screenH = gameSize.height;
+
+        // Keep physics bounds fixed to game world
+        this.physics.world.setBounds(0, 0, GAME_CONSTANTS.WORLD_WIDTH, GAME_CONSTANTS.WORLD_HEIGHT);
 
         // Fixed game world dimensions
         const worldW = GAME_CONSTANTS.WORLD_WIDTH;  // 800
@@ -414,11 +420,7 @@ class GameScene extends Phaser.Scene {
         // 雷の発動（Eキー）
         if (powerUpManager.hasPowerUp('thunder')) {
             this.keys.E.on('down', () => {
-                if (powerUpManager.activateThunder()) {
-                    sound.tone(800, 0.2, 'sawtooth');
-                    showCatDialogue(this, this.cat.x, this.cat.y, 'jump');
-                    this.cameras.main.flash(100, 255, 255, 100);
-                }
+                this.activateThunder();
             });
         }
     }
@@ -825,7 +827,6 @@ class GameScene extends Phaser.Scene {
         // this.doorLight.setAlpha(1); // 廃止
         // this.zzzIcon.setVisible(false); // 廃止
 
-        sound.hiss();
         this.cat.body.setVelocity(0, -350);
         this.shakeIntensity = 15;
         this.cameras.main.flash(250, 255, 100, 100);
@@ -847,7 +848,18 @@ class GameScene extends Phaser.Scene {
     }
 
     showResultScreen(isVictory) {
-        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0)
+        // HUDの入力を止めて結果画面のボタンを優先する
+        if (this.scene.isActive('HUDScene')) {
+            this.scene.stop('HUDScene');
+        }
+
+        const uiW = GameLayout.W;
+        const uiH = GameLayout.H;
+        const centerX = uiW / 2;
+        const centerY = uiH / 2;
+        const uiScale = GameLayout.scale(1);
+
+        const overlay = this.add.rectangle(centerX, centerY, uiW, uiH, 0x000000, 0)
             .setDepth(200)
             .setScrollFactor(0);
         this.tweens.add({
@@ -857,19 +869,19 @@ class GameScene extends Phaser.Scene {
         });
 
         this.time.delayedCall(300, () => {
-            const c = this.add.container(W / 2, H / 2)
+            const c = this.add.container(centerX, centerY)
                 .setDepth(210)
                 .setAlpha(0)
                 .setScrollFactor(0);
 
             if (isVictory) {
-                c.add(this.add.image(0, -130, 'celebrate').setScale(1.2));
-                c.add(this.add.text(0, -70, 'ミッションコンプリート！', {
-                    fontSize: '32px',
+                c.add(this.add.image(0, -GameLayout.scale(130), 'celebrate').setScale(1.2 * uiScale));
+                c.add(this.add.text(0, -GameLayout.scale(70), 'ミッションコンプリート！', {
+                    fontSize: GameLayout.fontSize(32) + 'px',
                     color: '#44ff44',
                     fontStyle: 'bold',
                     stroke: '#000',
-                    strokeThickness: 4
+                    strokeThickness: GameLayout.scale(4)
                 }).setOrigin(0.5));
 
                 const tb = this.timeLeft * 10;
@@ -877,53 +889,93 @@ class GameScene extends Phaser.Scene {
                 const cb = this.maxCombo * 50;
                 const total = this.score + tb + sb + cb;
 
-                c.add(this.add.text(-90, -20, 'スコア:', { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
-                c.add(this.add.text(90, -20, this.score.toString(), { fontSize: '18px', color: '#ffd700' }).setOrigin(1, 0.5));
-                c.add(this.add.text(-90, 8, 'タイムボーナス:', { fontSize: '15px', color: '#aaa' }).setOrigin(0, 0.5));
-                c.add(this.add.text(90, 8, `+${tb}`, { fontSize: '15px', color: '#88ff88' }).setOrigin(1, 0.5));
-                c.add(this.add.text(-90, 32, '生還ボーナス:', { fontSize: '15px', color: '#aaa' }).setOrigin(0, 0.5));
-                c.add(this.add.text(90, 32, `+${sb}`, { fontSize: '15px', color: '#88ff88' }).setOrigin(1, 0.5));
-                c.add(this.add.text(-90, 56, 'コンボボーナス:', { fontSize: '15px', color: '#aaa' }).setOrigin(0, 0.5));
-                c.add(this.add.text(90, 56, `+${cb}`, { fontSize: '15px', color: '#88ff88' }).setOrigin(1, 0.5));
-                c.add(this.add.rectangle(0, 80, 200, 2, 0x666666));
-                c.add(this.add.text(0, 105, `TOTAL: ${total}`, { fontSize: '28px', color: '#ffd700', fontStyle: 'bold' }).setOrigin(0.5));
+                c.add(this.add.text(-GameLayout.scale(90), -GameLayout.scale(20), 'スコア:', {
+                    fontSize: GameLayout.fontSize(18) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0, 0.5));
+                c.add(this.add.text(GameLayout.scale(90), -GameLayout.scale(20), this.score.toString(), {
+                    fontSize: GameLayout.fontSize(18) + 'px',
+                    color: '#ffd700'
+                }).setOrigin(1, 0.5));
+                c.add(this.add.text(-GameLayout.scale(90), GameLayout.scale(8), 'タイムボーナス:', {
+                    fontSize: GameLayout.fontSize(15) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0, 0.5));
+                c.add(this.add.text(GameLayout.scale(90), GameLayout.scale(8), `+${tb}`, {
+                    fontSize: GameLayout.fontSize(15) + 'px',
+                    color: '#88ff88'
+                }).setOrigin(1, 0.5));
+                c.add(this.add.text(-GameLayout.scale(90), GameLayout.scale(32), '生還ボーナス:', {
+                    fontSize: GameLayout.fontSize(15) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0, 0.5));
+                c.add(this.add.text(GameLayout.scale(90), GameLayout.scale(32), `+${sb}`, {
+                    fontSize: GameLayout.fontSize(15) + 'px',
+                    color: '#88ff88'
+                }).setOrigin(1, 0.5));
+                c.add(this.add.text(-GameLayout.scale(90), GameLayout.scale(56), 'コンボボーナス:', {
+                    fontSize: GameLayout.fontSize(15) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0, 0.5));
+                c.add(this.add.text(GameLayout.scale(90), GameLayout.scale(56), `+${cb}`, {
+                    fontSize: GameLayout.fontSize(15) + 'px',
+                    color: '#88ff88'
+                }).setOrigin(1, 0.5));
+                c.add(this.add.rectangle(0, GameLayout.scale(80), GameLayout.scale(200), GameLayout.scale(2), 0x666666));
+                c.add(this.add.text(0, GameLayout.scale(105), `TOTAL: ${total}`, {
+                    fontSize: GameLayout.fontSize(28) + 'px',
+                    color: '#ffd700',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5));
 
                 // ストーリー進行
                 const result = storyProgress.completeStage(total);
                 storyProgress.save();
 
                 if (result.ending) {
-                    c.add(this.add.text(0, 140, '🎉 全ステージクリア！ 🎉', {
-                        fontSize: '20px',
+                    c.add(this.add.text(0, GameLayout.scale(140), '🎉 全ステージクリア！ 🎉', {
+                        fontSize: GameLayout.fontSize(20) + 'px',
                         color: '#ff66ff',
                         fontStyle: 'bold'
                     }).setOrigin(0.5));
-                    c.add(this.add.text(0, 165, 'ステージ1に戻ります', {
-                        fontSize: '14px',
+                    c.add(this.add.text(0, GameLayout.scale(165), 'ステージ1に戻ります', {
+                        fontSize: GameLayout.fontSize(14) + 'px',
                         color: '#aaaacc'
                     }).setOrigin(0.5));
                 } else if (result.completed) {
-                    c.add(this.add.text(0, 140, '全ステージクリア！', { fontSize: '20px', color: '#ff66ff' }).setOrigin(0.5));
+                    c.add(this.add.text(0, GameLayout.scale(140), '全ステージクリア！', {
+                        fontSize: GameLayout.fontSize(20) + 'px',
+                        color: '#ff66ff'
+                    }).setOrigin(0.5));
                 }
             } else {
-                c.add(this.add.image(0, -100, 'shock').setScale(1.3));
-                c.add(this.add.text(0, -30, 'みつかった！', {
-                    fontSize: '42px',
+                c.add(this.add.image(0, -GameLayout.scale(100), 'shock').setScale(1.3 * uiScale));
+                c.add(this.add.text(0, -GameLayout.scale(30), 'みつかった！', {
+                    fontSize: GameLayout.fontSize(42) + 'px',
                     color: '#ff5555',
                     fontStyle: 'bold',
                     stroke: '#000',
-                    strokeThickness: 4
+                    strokeThickness: GameLayout.scale(4)
                 }).setOrigin(0.5));
-                c.add(this.add.text(0, 30, `スコア: ${this.score}`, { fontSize: '28px', color: '#ffd700' }).setOrigin(0.5));
-                c.add(this.add.text(0, 70, `最大コンボ: ${this.maxCombo}`, { fontSize: '18px', color: '#aaa' }).setOrigin(0.5));
+                c.add(this.add.text(0, GameLayout.scale(30), `スコア: ${this.score}`, {
+                    fontSize: GameLayout.fontSize(28) + 'px',
+                    color: '#ffd700'
+                }).setOrigin(0.5));
+                c.add(this.add.text(0, GameLayout.scale(70), `最大コンボ: ${this.maxCombo}`, {
+                    fontSize: GameLayout.fontSize(18) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0.5));
             }
 
             const makeBtn = (y, iconKey, txt, cb) => {
-                const bg = this.add.rectangle(0, y, 200, 45, 0x4a4a8a)
-                    .setStrokeStyle(2, 0x7a7aba)
+                const bg = this.add.rectangle(0, y, GameLayout.scale(200), GameLayout.scale(45), 0x4a4a8a)
+                    .setStrokeStyle(GameLayout.scale(2), 0x7a7aba)
                     .setInteractive({ useHandCursor: true });
-                const icon = this.add.image(-70, y, iconKey).setScale(0.6);
-                const tx = this.add.text(10, y, txt, { fontSize: '18px', color: '#fff' }).setOrigin(0, 0.5);
+                const icon = this.add.image(-GameLayout.scale(70), y, iconKey).setScale(0.6 * uiScale);
+                const tx = this.add.text(GameLayout.scale(10), y, txt, {
+                    fontSize: GameLayout.fontSize(18) + 'px',
+                    color: '#fff'
+                }).setOrigin(0, 0.5);
                 bg.on('pointerover', () => bg.setFillStyle(0x6a6aaa));
                 bg.on('pointerout', () => bg.setFillStyle(0x4a4a8a));
                 bg.on('pointerdown', () => {
@@ -934,17 +986,17 @@ class GameScene extends Phaser.Scene {
             };
 
             if (isVictory) {
-                c.add(makeBtn(170, 'iconRetry', '次へ', () => {
+                c.add(makeBtn(GameLayout.scale(170), 'iconRetry', '次へ', () => {
                     this.scene.start('PowerUpScene');
                 }));
-                c.add(makeBtn(220, 'iconHome', 'タイトル', () => {
+                c.add(makeBtn(GameLayout.scale(220), 'iconHome', 'タイトル', () => {
                     this.scene.start('TitleScene');
                 }));
             } else {
-                c.add(makeBtn(130, 'iconRetry', 'リトライ', () => {
+                c.add(makeBtn(GameLayout.scale(130), 'iconRetry', 'リトライ', () => {
                     this.scene.restart();
                 }));
-                c.add(makeBtn(180, 'iconHome', 'タイトル', () => {
+                c.add(makeBtn(GameLayout.scale(180), 'iconHome', 'タイトル', () => {
                     powerUpManager.reset();
                     this.scene.start('TitleScene');
                 }));
@@ -953,11 +1005,21 @@ class GameScene extends Phaser.Scene {
             this.tweens.add({
                 targets: c,
                 alpha: 1,
-                y: H / 2 - 10,
+                y: centerY - GameLayout.scale(10),
                 duration: 350,
                 ease: 'Back.easeOut'
             });
         });
+    }
+
+    activateThunder() {
+        if (powerUpManager.activateThunder()) {
+            sound.tone(800, 0.2, 'sawtooth');
+            showCatDialogue(this, this.cat.x, this.cat.y, 'jump');
+            this.cameras.main.flash(100, 255, 255, 100);
+            return true;
+        }
+        return false;
     }
 
     shutdown() {

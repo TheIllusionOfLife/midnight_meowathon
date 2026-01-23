@@ -478,8 +478,7 @@ class ComboEffects {
             EnhancedParticles.createSparkles(scene, x, y, 5, 0xffdd00);
             showCatDialogue(scene, x, y, 'combo');
         } else if (combo === 5) {
-            // 画面周囲に虹色オーラ
-            EnhancedParticles.createScreenBorder(scene, 0xff00ff, 10, 2000);
+            // 画面周囲の枠は視認性を損なうため廃止
             EnhancedParticles.createSparkles(scene, x, y, 12, 0xff00ff);
             showCatDialogue(scene, x, y, 'combo');
             sound.meowShort();
