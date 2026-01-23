@@ -345,6 +345,14 @@ test('猫の集会が固定ワールド境界を設定している', () => {
     );
 });
 
+test('猫の集会のジョイスティック位置がUIの安全領域に合わせられている', () => {
+    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    assert(
+        content.includes('controlsLeft') && content.includes('controlsRight'),
+        'GatheringScene が GameLayout.controlsLeft/Right を使用していません'
+    );
+});
+
 test('textures.js にアイコンテクスチャが定義されている', () => {
     const content = fs.readFileSync('js/textures.js', 'utf8');
     const requiredIcons = ['iconCatnip', 'iconBell', 'iconThunder', 'iconMoon', 'iconFish', 'iconCatToy'];
