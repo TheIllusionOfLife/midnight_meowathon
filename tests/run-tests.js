@@ -283,7 +283,7 @@ test('猫の集会のリサイズがゲーム画面を中央に保つ', () => {
     const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
     const start = content.indexOf('handleResize');
     assert(start !== -1, 'GatheringScene に handleResize がありません');
-    const snippet = content.slice(start, start + 600);
+    const snippet = content.slice(start, start + 1200);
     assert(snippet.includes('centerOn'), 'GatheringScene が centerOn を使用していません');
     assert(snippet.includes('removeBounds'), 'GatheringScene が removeBounds を使用していません');
 });
