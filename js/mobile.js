@@ -21,7 +21,7 @@ class VirtualJoystick {
         this.stickX = this.baseX;
         this.stickY = this.baseY;
         this.active = false;
-        this.pointer = null;
+        this.pointerId = null; // Track specific pointer for multi-touch
 
         // ベース円
         this.base = scene.add.circle(this.baseX, this.baseY, this.radius, 0x333366, 0.5).setDepth(1000);
@@ -72,20 +72,22 @@ class VirtualJoystick {
     setupInput() {
         // Store bound handlers for cleanup
         this.onPointerDown = (pointer) => {
-            // 左半分の画面でタッチ
-            if (pointer.x < this.scene.scale.width / 2) {
+            // Only respond if no joystick is active and touch is in left half
+            if (this.pointerId === null && pointer.x < this.scene.scale.width / 2) {
                 this.activate(pointer);
             }
         };
 
         this.onPointerMove = (pointer) => {
-            if (this.active && this.pointer === pointer) {
+            // Only respond to the pointer that owns this joystick
+            if (this.active && pointer.id === this.pointerId) {
                 this.updateStick(pointer);
             }
         };
 
         this.onPointerUp = (pointer) => {
-            if (this.pointer === pointer) {
+            // Only respond to the pointer that owns this joystick
+            if (pointer.id === this.pointerId) {
                 this.deactivate();
             }
         };
@@ -97,7 +99,7 @@ class VirtualJoystick {
 
     activate(pointer) {
         this.active = true;
-        this.pointer = pointer;
+        this.pointerId = pointer.id; // Lock to this specific pointer
         this.baseX = pointer.x;
         this.baseY = pointer.y;
         this.base.setPosition(this.baseX, this.baseY);
@@ -125,7 +127,7 @@ class VirtualJoystick {
 
     deactivate() {
         this.active = false;
-        this.pointer = null;
+        this.pointerId = null; // Release pointer lock
         this.base.setVisible(false);
         this.stick.setVisible(false);
         this.stickX = this.baseX;

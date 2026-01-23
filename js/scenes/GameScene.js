@@ -81,42 +81,31 @@ class GameScene extends Phaser.Scene {
         const screenH = gameSize.height;
 
         // Fixed game world dimensions
-        const worldW = GAME_CONSTANTS.WORLD_WIDTH;
-        const worldH = GAME_CONSTANTS.WORLD_HEIGHT;
+        const worldW = GAME_CONSTANTS.WORLD_WIDTH;  // 800
+        const worldH = GAME_CONSTANTS.WORLD_HEIGHT; // 550
 
-        // Calculate zoom to fit the game world in the screen (FIT mode)
+        // Calculate zoom to fit the entire game world in the screen
         const zoomX = screenW / worldW;
         const zoomY = screenH / worldH;
         const zoom = Math.min(zoomX, zoomY);
 
+        // Store base zoom for slow-motion effects
+        this.baseZoom = zoom;
         this.cameras.main.setZoom(zoom);
 
-        // Remove bounds to allow viewing "void" space (filled by background)
+        // Remove camera bounds to allow viewing beyond world edges
         this.cameras.main.removeBounds();
 
-        // Calculate scroll position to center the game world on screen
-        // The visible area in world coordinates is (screenW/zoom) x (screenH/zoom)
-        // We want the center of this visible area to be at (worldW/2, worldH/2)
-        const visibleW = screenW / zoom;
-        const visibleH = screenH / zoom;
+        // Use Phaser's centerOn to center the camera on the middle of the game world
+        // This ensures the entire 800x550 world is visible and centered
+        const worldCenterX = worldW / 2;  // 400
+        const worldCenterY = worldH / 2;  // 275
 
-        // Vertical Alignment Strategy
-        // scrollX/scrollY is the top-left corner of the view in world coords
-        const scrollX = (worldW / 2) - (visibleW / 2);
+        this.cameras.main.centerOn(worldCenterX, worldCenterY);
 
-        let scrollY;
-        if (screenH > screenW) {
-            // Portrait: Align bottom logic
-            // We want floor (Y=550) to be visible near bottom, leaving space for HUD controls.
-            // Leave 150px screen margin (converted to world units).
-            const marginBottom = 150 / zoom;
-            scrollY = (worldH + marginBottom) - visibleH;
-        } else {
-            // Landscape: Center Vertically
-            scrollY = (worldH / 2) - (visibleH / 2);
-        }
-
-        this.cameras.main.setScroll(scrollX, scrollY);
+        // Store base scroll for effects (centerOn sets scroll internally)
+        this.baseScrollX = this.cameras.main.scrollX;
+        this.baseScrollY = this.cameras.main.scrollY;
     }
 
     createBackground() {
@@ -593,7 +582,9 @@ class GameScene extends Phaser.Scene {
     triggerSlowMotion() {
         this.slowMoTimer = GAME_CONSTANTS.SLOW_MO_DURATION;
         this.physics.world.timeScale = GAME_CONSTANTS.SLOW_MO_TIME_SCALE;
-        this.cameras.main.zoomTo(1.08, 100);
+        // Use relative zoom based on base zoom for responsive support
+        const targetZoom = (this.baseZoom || 1) * 1.08;
+        this.cameras.main.zoomTo(targetZoom, 100);
     }
 
     addNoise(amount) {
@@ -657,19 +648,23 @@ class GameScene extends Phaser.Scene {
             this.slowMoTimer--;
             if (this.slowMoTimer === 0) {
                 this.physics.world.timeScale = 1;
-                this.cameras.main.zoomTo(1, 150);
+                // Return to base zoom for responsive support
+                this.cameras.main.zoomTo(this.baseZoom || 1, 150);
             }
         }
 
         if (this.shakeIntensity > 0) {
+            // Shake relative to base scroll position for responsive support
+            const baseX = this.baseScrollX || 0;
+            const baseY = this.baseScrollY || 0;
             this.cameras.main.setScroll(
-                Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity),
-                Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity)
+                baseX + Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity),
+                baseY + Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity)
             );
             this.shakeIntensity *= 0.85;
             if (this.shakeIntensity < 0.5) {
                 this.shakeIntensity = 0;
-                this.cameras.main.setScroll(0, 0);
+                this.cameras.main.setScroll(baseX, baseY);
             }
         }
 

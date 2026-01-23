@@ -19,6 +19,12 @@ body {
     overflow: hidden;
     box-shadow: 0 0 40px rgba(60, 60, 150, 0.5);
     position: relative;
+    /* Prevent mobile browser gestures during gameplay */
+    touch-action: none;
+    overscroll-behavior: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 /* Virtual Joystick Styles */

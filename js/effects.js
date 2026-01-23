@@ -94,17 +94,137 @@ function showCatDialogue(scene, x, y, category) {
     return new SpeechBubble(scene, x, y - 40, text);
 }
 
+// オブジェクトプールシステム - GC圧力を軽減
+class ParticlePool {
+    constructor(scene, type, maxSize = 50) {
+        this.scene = scene;
+        this.type = type;
+        this.maxSize = maxSize;
+        this.pool = [];
+        this.active = [];
+    }
+
+    acquire(x, y, options = {}) {
+        let particle;
+
+        if (this.pool.length > 0) {
+            particle = this.pool.pop();
+            particle.setPosition(x, y);
+            particle.setVisible(true);
+            particle.setActive(true);
+            particle.setAlpha(1);
+            particle.setScale(1);
+            particle.setAngle(0);
+        } else if (this.active.length < this.maxSize) {
+            // Create new particle if pool is empty and under max
+            particle = this.createParticle(x, y, options);
+        } else {
+            // Reuse oldest active particle if at max
+            particle = this.active.shift();
+            particle.setPosition(x, y);
+            particle.setAlpha(1);
+            particle.setScale(1);
+            particle.setAngle(0);
+        }
+
+        if (particle) {
+            this.active.push(particle);
+            // Apply options
+            if (options.color !== undefined) particle.setFillStyle(options.color);
+            if (options.size !== undefined && this.type === 'shard') {
+                particle.setSize(options.size, options.size);
+            }
+            if (options.radius !== undefined && this.type === 'dust') {
+                particle.setRadius(options.radius);
+            }
+        }
+
+        return particle;
+    }
+
+    release(particle) {
+        const index = this.active.indexOf(particle);
+        if (index > -1) {
+            this.active.splice(index, 1);
+            particle.setVisible(false);
+            particle.setActive(false);
+            if (particle.body) {
+                particle.body.setVelocity(0, 0);
+                particle.body.setAngularVelocity(0);
+            }
+            this.pool.push(particle);
+        }
+    }
+
+    createParticle(x, y, options) {
+        let particle;
+        switch (this.type) {
+            case 'shard':
+                const size = options.size || 8;
+                particle = this.scene.add.rectangle(x, y, size, size, options.color || 0xffffff).setDepth(50);
+                // Only add physics if scene has physics enabled
+                if (this.scene.physics && this.scene.physics.add) {
+                    this.scene.physics.add.existing(particle);
+                }
+                break;
+            case 'sparkle':
+                particle = this.scene.add.star(x, y, 4, 3, 6, options.color || 0xffff00, 1).setDepth(100);
+                break;
+            case 'dust':
+                particle = this.scene.add.circle(x, y, options.radius || 4, 0xaaaaaa, 0.7).setDepth(50);
+                break;
+            case 'wave':
+                particle = this.scene.add.circle(x, y, 10, options.color || 0xffffff, 0.6).setDepth(50);
+                break;
+        }
+        return particle;
+    }
+
+    clear() {
+        this.active.forEach(p => { if (p) p.destroy(); });
+        this.pool.forEach(p => { if (p) p.destroy(); });
+        this.active = [];
+        this.pool = [];
+    }
+}
+
+// グローバルプールマネージャー
+const particlePools = {
+    shard: null,
+    sparkle: null,
+    dust: null,
+    wave: null,
+
+    init(scene) {
+        this.shard = new ParticlePool(scene, 'shard', 100);
+        this.sparkle = new ParticlePool(scene, 'sparkle', 60);
+        this.dust = new ParticlePool(scene, 'dust', 50);
+        this.wave = new ParticlePool(scene, 'wave', 20);
+    },
+
+    clear() {
+        if (this.shard) this.shard.clear();
+        if (this.sparkle) this.sparkle.clear();
+        if (this.dust) this.dust.clear();
+        if (this.wave) this.wave.clear();
+    }
+};
+
 // 強化パーティクルシステム
 class EnhancedParticles {
-    // キラキラエフェクト（コンボ用）
+    // キラキラエフェクト（コンボ用）- プール使用
     static createSparkles(scene, x, y, count = 10, color = 0xffff00) {
+        // Initialize pool if needed
+        if (!particlePools.sparkle) particlePools.init(scene);
+
         for (let i = 0; i < count; i++) {
             const angle = (Math.PI * 2 * i) / count;
             const distance = 30 + Math.random() * 20;
             const targetX = x + Math.cos(angle) * distance;
             const targetY = y + Math.sin(angle) * distance;
 
-            const sparkle = scene.add.star(x, y, 4, 3, 6, color, 1).setDepth(100);
+            const sparkle = particlePools.sparkle.acquire(x, y, { color });
+            if (!sparkle) continue;
 
             scene.tweens.add({
                 targets: sparkle,
@@ -115,44 +235,50 @@ class EnhancedParticles {
                 angle: 360,
                 duration: 500 + Math.random() * 300,
                 ease: 'Cubic.easeOut',
-                onComplete: () => sparkle.destroy()
+                onComplete: () => particlePools.sparkle.release(sparkle)
             });
         }
     }
 
-    // 破片エフェクト（強化版）
+    // 破片エフェクト（強化版）- プール使用
     static createShards(scene, x, y, color, count = 12, scoreValue = 100) {
+        // Initialize pool if needed
+        if (!particlePools.shard) particlePools.init(scene);
+
         for (let i = 0; i < count; i++) {
             const size = Phaser.Math.Between(4, 12);
-            const shard = scene.add.rectangle(x, y, size, size, color).setDepth(50);
+            const shard = particlePools.shard.acquire(x, y, { color, size });
+            if (!shard) continue;
 
-            const physics = scene.physics.add.existing(shard);
-            shard.body.setVelocity(
-                Phaser.Math.Between(-300, 300),
-                Phaser.Math.Between(-400, -150)
-            );
-            shard.body.setAngularVelocity(Phaser.Math.Between(-600, 600));
-            shard.body.setGravityY(800);
+            if (shard.body) {
+                shard.body.setVelocity(
+                    Phaser.Math.Between(-300, 300),
+                    Phaser.Math.Between(-400, -150)
+                );
+                shard.body.setAngularVelocity(Phaser.Math.Between(-600, 600));
+                shard.body.setGravityY(800);
+            }
 
-            // 色の変化
             scene.tweens.add({
                 targets: shard,
                 alpha: 0,
                 duration: 600 + Math.random() * 400,
-                onComplete: () => shard.destroy()
+                onComplete: () => particlePools.shard.release(shard)
             });
         }
 
-        // 中心に衝撃波
-        const wave = scene.add.circle(x, y, 10, color, 0.6).setDepth(50);
-        scene.tweens.add({
-            targets: wave,
-            scale: 3,
-            alpha: 0,
-            duration: 400,
-            ease: 'Cubic.easeOut',
-            onComplete: () => wave.destroy()
-        });
+        // 中心に衝撃波 - プール使用
+        const wave = particlePools.wave.acquire(x, y, { color });
+        if (wave) {
+            scene.tweens.add({
+                targets: wave,
+                scale: 3,
+                alpha: 0,
+                duration: 400,
+                ease: 'Cubic.easeOut',
+                onComplete: () => particlePools.wave.release(wave)
+            });
+        }
     }
 
     // オーラエフェクト（コンボ時）
@@ -306,10 +432,15 @@ class EnhancedParticles {
         return stars;
     }
 
-    // ダストバースト（着地・壁キック用）
+    // ダストバースト（着地・壁キック用）- プール使用
     static createDustBurst(scene, x, y, count = 8, direction = 'down') {
+        // Initialize pool if needed
+        if (!particlePools.dust) particlePools.init(scene);
+
         for (let i = 0; i < count; i++) {
-            const dust = scene.add.circle(x, y, 3 + Math.random() * 4, 0xaaaaaa, 0.7).setDepth(50);
+            const radius = 3 + Math.random() * 4;
+            const dust = particlePools.dust.acquire(x, y, { radius });
+            if (!dust) continue;
 
             let vx, vy;
             if (direction === 'down') {
@@ -323,15 +454,17 @@ class EnhancedParticles {
                 vy = Phaser.Math.Between(-30, 30);
             }
 
+            const startX = dust.x;
+            const startY = dust.y;
             scene.tweens.add({
                 targets: dust,
-                x: dust.x + vx,
-                y: dust.y + vy,
+                x: startX + vx,
+                y: startY + vy,
                 alpha: 0,
                 scale: 0.2,
                 duration: 400 + Math.random() * 200,
                 ease: 'Cubic.easeOut',
-                onComplete: () => dust.destroy()
+                onComplete: () => particlePools.dust.release(dust)
             });
         }
     }
