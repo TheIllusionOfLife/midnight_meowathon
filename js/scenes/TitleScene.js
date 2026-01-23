@@ -176,6 +176,12 @@ class TitleScene extends Phaser.Scene {
             color: '#666688'
         }).setOrigin(0.5).setDepth(10);
 
+        const tipText = 'ヒント: 壁に触れながらジャンプで壁キック！';
+        this.add.text(W / 2, controlY + GameLayout.scale(20), tipText, {
+            fontSize: GameLayout.fontSize(12) + 'px',
+            color: '#555577'
+        }).setOrigin(0.5).setDepth(10);
+
         this.add.text(W / 2, GameLayout.pctY(0.96), '© 2025 Midnight Meowathon', {
             fontSize: GameLayout.fontSize(11) + 'px',
             color: '#333355'

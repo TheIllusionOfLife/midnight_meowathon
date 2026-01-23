@@ -16,12 +16,16 @@ class HUDScene extends Phaser.Scene {
         this.mobileControls = null;
         this.noiseGauge = null;
         this.ownerPortrait = null;
+        this.thunderLabel = null;
+        this.thunderBtn = null;
+        this.thunderIcon = null;
 
         // Create UI Elements
         this.createScore();
         this.createTimer();
         this.createOwnerMonitor();
         this.createPowerUps();
+        this.createThunderIndicator();
 
         // Mobile Controls
         this.createMobileControls();
@@ -45,12 +49,14 @@ class HUDScene extends Phaser.Scene {
         if (this.jumpBtn) this.jumpBtn.destroy();
         if (this.thunderBtn) this.thunderBtn.destroy();
         if (this.thunderIcon) this.thunderIcon.destroy();
+        if (this.thunderLabel) this.thunderLabel.destroy();
 
         this.children.removeAll(true);
         this.createScore();
         this.createTimer();
         this.createOwnerMonitor();
         this.createPowerUps();
+        this.createThunderIndicator();
         this.createMobileControls();
 
         // Restore state
@@ -199,12 +205,54 @@ class HUDScene extends Phaser.Scene {
         this.updateOwnerMonitorVisuals();
     }
 
+    update() {
+        if (!this.thunderLabel || !powerUpManager) return;
+
+        const isActive = powerUpManager.isThunderActive();
+        const cooldown = Math.ceil(powerUpManager.getThunderCooldown());
+        const remaining = Math.ceil(powerUpManager.getThunderRemaining());
+
+        if (isActive) {
+            this.thunderLabel.setText(`⚡ 残り ${remaining}秒`);
+            this.thunderLabel.setColor('#44ff44');
+            if (this.thunderBtn) this.thunderBtn.setAlpha(0.7);
+        } else if (cooldown > 0) {
+            this.thunderLabel.setText(`⚡ CD ${cooldown}秒`);
+            this.thunderLabel.setColor('#888888');
+            if (this.thunderBtn) this.thunderBtn.setAlpha(0.5);
+        } else {
+            const readyText = DeviceDetector.isMobile() ? '⚡ READY' : '⚡ READY (E)';
+            this.thunderLabel.setText(readyText);
+            this.thunderLabel.setColor('#ffff66');
+            if (this.thunderBtn) this.thunderBtn.setAlpha(1);
+        }
+    }
+
+    createThunderIndicator() {
+        if (!powerUpManager || !powerUpManager.hasPowerUp('thunder')) return;
+
+        const isMobile = DeviceDetector.isMobile();
+        const fontSize = GameLayout.fontSize(isMobile ? 12 : 14);
+        const x = isMobile ? GameLayout.controlsRight : GameLayout.W - GameLayout.scale(20);
+        const y = isMobile
+            ? GameLayout.controlsBottom - GameLayout.scale(130)
+            : (GameLayout.isPortrait ? 100 : 70);
+
+        this.thunderLabel = this.add.text(x, y, '⚡ READY', {
+            fontSize: fontSize + 'px',
+            fontFamily: 'Fredoka One',
+            color: '#ffff66',
+            stroke: '#000000',
+            strokeThickness: GameLayout.scale(2)
+        }).setOrigin(isMobile ? 0.5 : 1, 0.5);
+    }
+
     createThunderButton() {
         if (!powerUpManager || !powerUpManager.hasPowerUp('thunder')) return;
 
         const x = GameLayout.controlsRight;
-        const y = GameLayout.controlsBottom - GameLayout.scale(70);
-        const radius = GameLayout.scale(22);
+        const y = GameLayout.controlsBottom - (GameLayout.isPortrait ? GameLayout.scale(110) : GameLayout.scale(90));
+        const radius = GameLayout.scale(GameLayout.isPortrait ? 20 : 18);
 
         this.thunderBtn = this.add.circle(x, y, radius, 0x5a3a8a, 0.9)
             .setStrokeStyle(GameLayout.scale(2), 0x8a6acc)
@@ -240,5 +288,6 @@ class HUDScene extends Phaser.Scene {
         if (this.jumpBtn) this.jumpBtn.destroy();
         if (this.thunderBtn) this.thunderBtn.destroy();
         if (this.thunderIcon) this.thunderIcon.destroy();
+        if (this.thunderLabel) this.thunderLabel.destroy();
     }
 }

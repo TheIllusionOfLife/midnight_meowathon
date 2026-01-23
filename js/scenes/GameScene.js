@@ -629,23 +629,6 @@ class GameScene extends Phaser.Scene {
         // ローグライト: パワーアップ更新
         powerUpManager.update(delta);
 
-        // 雷UI更新
-        if (this.thunderUI) {
-            if (powerUpManager.isThunderActive()) {
-                this.thunderUI.setText('⚡ サイレント中！');
-                this.thunderUI.setColor('#00ff00');
-            } else {
-                const cooldown = powerUpManager.getThunderCooldown();
-                if (cooldown > 0) {
-                    this.thunderUI.setText(`⚡ ${Math.ceil(cooldown)}秒`);
-                    this.thunderUI.setColor('#888888');
-                } else {
-                    this.thunderUI.setText('⚡ 準備完了 (E)');
-                    this.thunderUI.setColor('#ffff00');
-                }
-            }
-        }
-
         if (this.slowMoTimer > 0) {
             this.slowMoTimer--;
             if (this.slowMoTimer === 0) {
@@ -855,13 +838,15 @@ class GameScene extends Phaser.Scene {
 
         const uiW = GameLayout.W;
         const uiH = GameLayout.H;
-        const centerX = uiW / 2;
-        const centerY = uiH / 2;
-        const uiScale = GameLayout.scale(1);
+        const camera = this.cameras.main;
+        const zoom = camera.zoom || 1;
+        const center = camera.getWorldPoint(uiW / 2, uiH / 2);
+        const uiScale = GameLayout.scale(1) / zoom;
+        const uiOffset = (value) => GameLayout.scale(value) / zoom;
+        const uiFont = (value) => Math.max(10, GameLayout.fontSize(value) / zoom);
 
-        const overlay = this.add.rectangle(centerX, centerY, uiW, uiH, 0x000000, 0)
-            .setDepth(200)
-            .setScrollFactor(0);
+        const overlay = this.add.rectangle(center.x, center.y, uiW / zoom, uiH / zoom, 0x000000, 0)
+            .setDepth(200);
         this.tweens.add({
             targets: overlay,
             fillAlpha: 0.85,
@@ -869,19 +854,18 @@ class GameScene extends Phaser.Scene {
         });
 
         this.time.delayedCall(300, () => {
-            const c = this.add.container(centerX, centerY)
+            const c = this.add.container(center.x, center.y)
                 .setDepth(210)
-                .setAlpha(0)
-                .setScrollFactor(0);
+                .setAlpha(0);
 
             if (isVictory) {
-                c.add(this.add.image(0, -GameLayout.scale(130), 'celebrate').setScale(1.2 * uiScale));
-                c.add(this.add.text(0, -GameLayout.scale(70), 'ミッションコンプリート！', {
-                    fontSize: GameLayout.fontSize(32) + 'px',
+                c.add(this.add.image(0, -uiOffset(130), 'celebrate').setScale(1.2 * uiScale));
+                c.add(this.add.text(0, -uiOffset(70), 'ミッションコンプリート！', {
+                    fontSize: uiFont(32) + 'px',
                     color: '#44ff44',
                     fontStyle: 'bold',
                     stroke: '#000',
-                    strokeThickness: GameLayout.scale(4)
+                    strokeThickness: uiOffset(4)
                 }).setOrigin(0.5));
 
                 const tb = this.timeLeft * 10;
@@ -889,41 +873,41 @@ class GameScene extends Phaser.Scene {
                 const cb = this.maxCombo * 50;
                 const total = this.score + tb + sb + cb;
 
-                c.add(this.add.text(-GameLayout.scale(90), -GameLayout.scale(20), 'スコア:', {
-                    fontSize: GameLayout.fontSize(18) + 'px',
+                c.add(this.add.text(-uiOffset(90), -uiOffset(20), 'スコア:', {
+                    fontSize: uiFont(18) + 'px',
                     color: '#aaa'
                 }).setOrigin(0, 0.5));
-                c.add(this.add.text(GameLayout.scale(90), -GameLayout.scale(20), this.score.toString(), {
-                    fontSize: GameLayout.fontSize(18) + 'px',
+                c.add(this.add.text(uiOffset(90), -uiOffset(20), this.score.toString(), {
+                    fontSize: uiFont(18) + 'px',
                     color: '#ffd700'
                 }).setOrigin(1, 0.5));
-                c.add(this.add.text(-GameLayout.scale(90), GameLayout.scale(8), 'タイムボーナス:', {
-                    fontSize: GameLayout.fontSize(15) + 'px',
+                c.add(this.add.text(-uiOffset(90), uiOffset(8), 'タイムボーナス:', {
+                    fontSize: uiFont(15) + 'px',
                     color: '#aaa'
                 }).setOrigin(0, 0.5));
-                c.add(this.add.text(GameLayout.scale(90), GameLayout.scale(8), `+${tb}`, {
-                    fontSize: GameLayout.fontSize(15) + 'px',
+                c.add(this.add.text(uiOffset(90), uiOffset(8), `+${tb}`, {
+                    fontSize: uiFont(15) + 'px',
                     color: '#88ff88'
                 }).setOrigin(1, 0.5));
-                c.add(this.add.text(-GameLayout.scale(90), GameLayout.scale(32), '生還ボーナス:', {
-                    fontSize: GameLayout.fontSize(15) + 'px',
+                c.add(this.add.text(-uiOffset(90), uiOffset(32), '生還ボーナス:', {
+                    fontSize: uiFont(15) + 'px',
                     color: '#aaa'
                 }).setOrigin(0, 0.5));
-                c.add(this.add.text(GameLayout.scale(90), GameLayout.scale(32), `+${sb}`, {
-                    fontSize: GameLayout.fontSize(15) + 'px',
+                c.add(this.add.text(uiOffset(90), uiOffset(32), `+${sb}`, {
+                    fontSize: uiFont(15) + 'px',
                     color: '#88ff88'
                 }).setOrigin(1, 0.5));
-                c.add(this.add.text(-GameLayout.scale(90), GameLayout.scale(56), 'コンボボーナス:', {
-                    fontSize: GameLayout.fontSize(15) + 'px',
+                c.add(this.add.text(-uiOffset(90), uiOffset(56), 'コンボボーナス:', {
+                    fontSize: uiFont(15) + 'px',
                     color: '#aaa'
                 }).setOrigin(0, 0.5));
-                c.add(this.add.text(GameLayout.scale(90), GameLayout.scale(56), `+${cb}`, {
-                    fontSize: GameLayout.fontSize(15) + 'px',
+                c.add(this.add.text(uiOffset(90), uiOffset(56), `+${cb}`, {
+                    fontSize: uiFont(15) + 'px',
                     color: '#88ff88'
                 }).setOrigin(1, 0.5));
-                c.add(this.add.rectangle(0, GameLayout.scale(80), GameLayout.scale(200), GameLayout.scale(2), 0x666666));
-                c.add(this.add.text(0, GameLayout.scale(105), `TOTAL: ${total}`, {
-                    fontSize: GameLayout.fontSize(28) + 'px',
+                c.add(this.add.rectangle(0, uiOffset(80), uiOffset(200), uiOffset(2), 0x666666));
+                c.add(this.add.text(0, uiOffset(105), `TOTAL: ${total}`, {
+                    fontSize: uiFont(28) + 'px',
                     color: '#ffd700',
                     fontStyle: 'bold'
                 }).setOrigin(0.5));
@@ -933,47 +917,47 @@ class GameScene extends Phaser.Scene {
                 storyProgress.save();
 
                 if (result.ending) {
-                    c.add(this.add.text(0, GameLayout.scale(140), '🎉 全ステージクリア！ 🎉', {
-                        fontSize: GameLayout.fontSize(20) + 'px',
+                    c.add(this.add.text(0, uiOffset(140), '🎉 全ステージクリア！ 🎉', {
+                        fontSize: uiFont(20) + 'px',
                         color: '#ff66ff',
                         fontStyle: 'bold'
                     }).setOrigin(0.5));
-                    c.add(this.add.text(0, GameLayout.scale(165), 'ステージ1に戻ります', {
-                        fontSize: GameLayout.fontSize(14) + 'px',
+                    c.add(this.add.text(0, uiOffset(165), 'ステージ1に戻ります', {
+                        fontSize: uiFont(14) + 'px',
                         color: '#aaaacc'
                     }).setOrigin(0.5));
                 } else if (result.completed) {
-                    c.add(this.add.text(0, GameLayout.scale(140), '全ステージクリア！', {
-                        fontSize: GameLayout.fontSize(20) + 'px',
+                    c.add(this.add.text(0, uiOffset(140), '全ステージクリア！', {
+                        fontSize: uiFont(20) + 'px',
                         color: '#ff66ff'
                     }).setOrigin(0.5));
                 }
             } else {
-                c.add(this.add.image(0, -GameLayout.scale(100), 'shock').setScale(1.3 * uiScale));
-                c.add(this.add.text(0, -GameLayout.scale(30), 'みつかった！', {
-                    fontSize: GameLayout.fontSize(42) + 'px',
+                c.add(this.add.image(0, -uiOffset(100), 'shock').setScale(1.3 * uiScale));
+                c.add(this.add.text(0, -uiOffset(30), 'みつかった！', {
+                    fontSize: uiFont(42) + 'px',
                     color: '#ff5555',
                     fontStyle: 'bold',
                     stroke: '#000',
-                    strokeThickness: GameLayout.scale(4)
+                    strokeThickness: uiOffset(4)
                 }).setOrigin(0.5));
-                c.add(this.add.text(0, GameLayout.scale(30), `スコア: ${this.score}`, {
-                    fontSize: GameLayout.fontSize(28) + 'px',
+                c.add(this.add.text(0, uiOffset(30), `スコア: ${this.score}`, {
+                    fontSize: uiFont(28) + 'px',
                     color: '#ffd700'
                 }).setOrigin(0.5));
-                c.add(this.add.text(0, GameLayout.scale(70), `最大コンボ: ${this.maxCombo}`, {
-                    fontSize: GameLayout.fontSize(18) + 'px',
+                c.add(this.add.text(0, uiOffset(70), `最大コンボ: ${this.maxCombo}`, {
+                    fontSize: uiFont(18) + 'px',
                     color: '#aaa'
                 }).setOrigin(0.5));
             }
 
             const makeBtn = (y, iconKey, txt, cb) => {
-                const bg = this.add.rectangle(0, y, GameLayout.scale(200), GameLayout.scale(45), 0x4a4a8a)
-                    .setStrokeStyle(GameLayout.scale(2), 0x7a7aba)
+                const bg = this.add.rectangle(0, y, uiOffset(200), uiOffset(45), 0x4a4a8a)
+                    .setStrokeStyle(uiOffset(2), 0x7a7aba)
                     .setInteractive({ useHandCursor: true });
-                const icon = this.add.image(-GameLayout.scale(70), y, iconKey).setScale(0.6 * uiScale);
-                const tx = this.add.text(GameLayout.scale(10), y, txt, {
-                    fontSize: GameLayout.fontSize(18) + 'px',
+                const icon = this.add.image(-uiOffset(70), y, iconKey).setScale(0.6 * uiScale);
+                const tx = this.add.text(uiOffset(10), y, txt, {
+                    fontSize: uiFont(18) + 'px',
                     color: '#fff'
                 }).setOrigin(0, 0.5);
                 bg.on('pointerover', () => bg.setFillStyle(0x6a6aaa));
@@ -986,17 +970,17 @@ class GameScene extends Phaser.Scene {
             };
 
             if (isVictory) {
-                c.add(makeBtn(GameLayout.scale(170), 'iconRetry', '次へ', () => {
+                c.add(makeBtn(uiOffset(170), 'iconRetry', '次へ', () => {
                     this.scene.start('PowerUpScene');
                 }));
-                c.add(makeBtn(GameLayout.scale(220), 'iconHome', 'タイトル', () => {
+                c.add(makeBtn(uiOffset(220), 'iconHome', 'タイトル', () => {
                     this.scene.start('TitleScene');
                 }));
             } else {
-                c.add(makeBtn(GameLayout.scale(130), 'iconRetry', 'リトライ', () => {
+                c.add(makeBtn(uiOffset(130), 'iconRetry', 'リトライ', () => {
                     this.scene.restart();
                 }));
-                c.add(makeBtn(GameLayout.scale(180), 'iconHome', 'タイトル', () => {
+                c.add(makeBtn(uiOffset(180), 'iconHome', 'タイトル', () => {
                     powerUpManager.reset();
                     this.scene.start('TitleScene');
                 }));
@@ -1005,7 +989,7 @@ class GameScene extends Phaser.Scene {
             this.tweens.add({
                 targets: c,
                 alpha: 1,
-                y: centerY - GameLayout.scale(10),
+                y: center.y - uiOffset(10),
                 duration: 350,
                 ease: 'Back.easeOut'
             });

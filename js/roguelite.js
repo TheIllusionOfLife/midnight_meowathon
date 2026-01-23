@@ -174,6 +174,10 @@ class PowerUpManager {
         return Math.max(0, this.thunderCooldown);
     }
 
+    getThunderRemaining() {
+        return Math.max(0, this.thunderTimer);
+    }
+
     // セーブ/ロード用
     serialize() {
         return {
