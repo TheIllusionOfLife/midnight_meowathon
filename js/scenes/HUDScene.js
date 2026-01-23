@@ -215,15 +215,15 @@ class HUDScene extends Phaser.Scene {
         const remaining = Math.ceil(powerUpManager.getThunderRemaining());
 
         if (isActive) {
-            this.thunderLabel.setText(`⚡ 残り ${remaining}秒`);
+            this.thunderLabel.setText(i18n.t('HUD_THUNDER_ACTIVE').replace('{0}', remaining));
             this.thunderLabel.setColor('#44ff44');
             if (this.thunderBtn) this.thunderBtn.setAlpha(0.7);
         } else if (cooldown > 0) {
-            this.thunderLabel.setText(`⚡ CD ${cooldown}秒`);
+            this.thunderLabel.setText(i18n.t('HUD_THUNDER_CD').replace('{0}', cooldown));
             this.thunderLabel.setColor('#888888');
             if (this.thunderBtn) this.thunderBtn.setAlpha(0.5);
         } else {
-            const readyText = DeviceDetector.isMobile() ? '⚡ READY' : '⚡ READY (E)';
+            const readyText = DeviceDetector.isMobile() ? i18n.t('HUD_THUNDER_READY') : i18n.t('HUD_THUNDER_READY_E');
             this.thunderLabel.setText(readyText);
             this.thunderLabel.setColor('#ffff66');
             if (this.thunderBtn) this.thunderBtn.setAlpha(1);
@@ -252,7 +252,7 @@ class HUDScene extends Phaser.Scene {
     createStageTip() {
         if (!storyProgress || storyProgress.getCurrentStage() !== 1) return;
 
-        const tipText = '壁に触れながらジャンプで壁キック！';
+        const tipText = i18n.t('TIP_WALLKICK');
         const x = GameLayout.W / 2;
         const y = GameLayout.isPortrait ? GameLayout.pctY(0.13) : GameLayout.pctY(0.12);
         const width = GameLayout.scale(280);

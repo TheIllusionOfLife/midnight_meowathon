@@ -4,56 +4,56 @@
 const POWERUPS = {
     catnip: {
         id: 'catnip',
-        name: 'マタタビ',
+        getName: () => i18n.t('PU_CATNIP_NAME'),
+        getDescription: () => i18n.t('PU_CATNIP_DESC'),
         icon: 'iconCatnip',
         effect: { speedMultiplier: 1.5 },
         sideEffect: { dragMultiplier: 0.6 }, // 滑りやすくなる
-        description: '移動速度1.5倍！\nでもちょっと滑る…',
         rarity: 'common'
     },
     bell: {
         id: 'bell',
-        name: '鈴',
+        getName: () => i18n.t('PU_BELL_NAME'),
+        getDescription: () => i18n.t('PU_BELL_DESC'),
         icon: 'iconBell',
         effect: { scoreMultiplier: 2.0 },
         sideEffect: { noiseMultiplier: 2.0 },
-        description: 'スコア2倍！\n騒音も2倍！',
         rarity: 'common'
     },
     thunder: {
         id: 'thunder',
-        name: '雷',
+        getName: () => i18n.t('PU_THUNDER_NAME'),
+        getDescription: () => i18n.t('PU_THUNDER_DESC'),
         icon: 'iconThunder',
         effect: { silentMode: true, silentDuration: 10 }, // 10秒間騒音ゼロ
         sideEffect: { cooldown: 60 }, // 60秒に1回のみ
-        description: '10秒間完全無音！\nクールダウン60秒',
         rarity: 'rare'
     },
     fullMoon: {
         id: 'fullMoon',
-        name: '満月',
+        getName: () => i18n.t('PU_FULLMOON_NAME'),
+        getDescription: () => i18n.t('PU_FULLMOON_DESC'),
         icon: 'iconMoon',
         effect: { jumpMultiplier: 1.4, doubleJump: true },
         sideEffect: { gravityMultiplier: 0.8 }, // ふわふわして制御しにくい
-        description: 'ジャンプ力UP\n二段ジャンプ解禁！',
         rarity: 'rare'
     },
     fish: {
         id: 'fish',
-        name: '焼き魚',
+        getName: () => i18n.t('PU_FISH_NAME'),
+        getDescription: () => i18n.t('PU_FISH_DESC'),
         icon: 'iconFish',
         effect: { noiseHealOnBreak: 5 }, // 破壊時に騒音-5
         sideEffect: { speedMultiplier: 0.9 },
-        description: '破壊で騒音回復！\n少し遅くなる',
         rarity: 'common'
     },
     catToy: {
         id: 'catToy',
-        name: '猫じゃらし',
+        getName: () => i18n.t('PU_CATTOY_NAME'),
+        getDescription: () => i18n.t('PU_CATTOY_DESC'),
         icon: 'iconCatToy',
         effect: { comboTimeMultiplier: 2.0 },
         sideEffect: { scoreMultiplier: 0.9 },
-        description: 'コンボ時間2倍！\n基本スコア10%減',
         rarity: 'common'
     }
 };

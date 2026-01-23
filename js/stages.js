@@ -2,7 +2,7 @@
 
 const STAGE_LAYOUTS = {
     1: { // リビング（現在の基本ステージ）
-        name: 'リビング',
+        getName: () => i18n.t('STAGE_LIVING'),
         background: { color1: 0x12121f, color2: 0x1a1a2a },
         catStart: { x: 650, y: 380 },
         platforms: [
@@ -30,7 +30,7 @@ const STAGE_LAYOUTS = {
         ]
     },
     2: { // 書斎
-        name: '書斎',
+        getName: () => i18n.t('STAGE_STUDY'),
         background: { color1: 0x0f1520, color2: 0x1a2030 },
         catStart: { x: 400, y: 450 },
         platforms: [
@@ -72,7 +72,7 @@ const STAGE_LAYOUTS = {
         ]
     },
     3: { // キッチン
-        name: 'キッチン',
+        getName: () => i18n.t('STAGE_KITCHEN'),
         background: { color1: 0x1a1510, color2: 0x252015 },
         catStart: { x: 100, y: 450 },
         platforms: [
@@ -107,7 +107,7 @@ const STAGE_LAYOUTS = {
         ]
     },
     4: { // 和室
-        name: '和室',
+        getName: () => i18n.t('STAGE_JAPANESE'),
         background: { color1: 0x1a1510, color2: 0x201a10 },
         catStart: { x: 400, y: 450 },
         platforms: [
@@ -135,7 +135,7 @@ const STAGE_LAYOUTS = {
         ]
     },
     5: { // 屋根裏部屋
-        name: '屋根裏部屋',
+        getName: () => i18n.t('STAGE_ATTIC'),
         background: { color1: 0x0a0a10, color2: 0x15151a },
         catStart: { x: 100, y: 450 },
         platforms: [

@@ -117,9 +117,15 @@ class TitleScene extends Phaser.Scene {
             this.add.image(W / 2, GameLayout.pctY(0.08), 'moon').setScale(GameLayout.scale(0.6)).setDepth(10);
         }
 
-        // タイトル - responsive font size
+        // タイトル - responsive font size with language-aware positioning
         const titleY = GameLayout.isPortrait ? GameLayout.pctY(0.20) : GameLayout.pctY(0.24);
-        const title = this.add.text(W / 2, titleY, 'ねこのズーミーズ', {
+        const isJapanese = i18n.lang === 'ja';
+
+        // Swap title/subtitle size based on language
+        const mainTitle = isJapanese ? i18n.t('TITLE_JP') : i18n.t('TITLE_EN');
+        const subTitle = isJapanese ? i18n.t('TITLE_EN') : i18n.t('TITLE_JP');
+
+        const title = this.add.text(W / 2, titleY, mainTitle, {
             fontSize: GameLayout.fontSize(44) + 'px',
             fontFamily: 'Fredoka One',
             color: '#ffffff',
@@ -135,13 +141,13 @@ class TitleScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        this.add.text(W / 2, titleY + GameLayout.scale(50), 'Cat Zoomies', {
+        this.add.text(W / 2, titleY + GameLayout.scale(50), subTitle, {
             fontSize: GameLayout.fontSize(20) + 'px',
             color: '#7777aa'
         }).setOrigin(0.5).setDepth(10);
 
         const descY = GameLayout.isPortrait ? GameLayout.pctY(0.38) : GameLayout.pctY(0.46);
-        this.add.text(W / 2, descY, '深夜、突然スイッチが入った猫になって\n飼い主が起きる前に家中で大暴れ！', {
+        this.add.text(W / 2, descY, i18n.t('TITLE_DESC'), {
             fontSize: GameLayout.fontSize(16) + 'px',
             color: '#9999bb',
             align: 'center',
@@ -150,7 +156,7 @@ class TitleScene extends Phaser.Scene {
 
         // ストーリーモードボタン - responsive positioning
         const buttonY1 = GameLayout.isPortrait ? GameLayout.pctY(0.52) : GameLayout.pctY(0.60);
-        this.createButton(W / 2, buttonY1, 'ストーリーモード', () => {
+        this.createButton(W / 2, buttonY1, i18n.t('BTN_STORY_MODE'), () => {
             sound.init();
             sound.meowShort();
             this.cameras.main.fadeOut(400);
@@ -160,7 +166,7 @@ class TitleScene extends Phaser.Scene {
         // 猫の集会ボタン（解禁条件）
         if (storyProgress.isGatheringUnlocked()) {
             const buttonY2 = GameLayout.isPortrait ? GameLayout.pctY(0.62) : GameLayout.pctY(0.73);
-            this.createButton(W / 2, buttonY2, '猫の集会', () => {
+            this.createButton(W / 2, buttonY2, i18n.t('BTN_GATHERING'), () => {
                 sound.init();
                 sound.meowShort();
                 this.cameras.main.fadeOut(400);
@@ -171,14 +177,14 @@ class TitleScene extends Phaser.Scene {
         // 操作説明
         const controlY = GameLayout.isPortrait ? GameLayout.pctY(0.83) : GameLayout.pctY(0.87);
         const controlText = DeviceDetector.isMobile()
-            ? 'タッチ操作対応'
-            : '← → 移動　　↑/Space ジャンプ　　壁+ジャンプ 壁キック';
+            ? i18n.t('TIP_TOUCH')
+            : i18n.t('TIP_CONTROLS');
         this.add.text(W / 2, controlY, controlText, {
             fontSize: GameLayout.fontSize(14) + 'px',
             color: '#666688'
         }).setOrigin(0.5).setDepth(10);
 
-        const tipText = '壁に触れながらジャンプで壁キック！';
+        const tipText = i18n.t('TIP_WALLKICK');
         const tipY = controlY + GameLayout.scale(30);
         const tipW = GameLayout.scale(280);
         const tipH = GameLayout.scale(36);
@@ -199,21 +205,22 @@ class TitleScene extends Phaser.Scene {
 
         // デバッグボタン（右下隅）
         const debugX = W - GameLayout.scale(120);
-        const debugY1 = H - GameLayout.scale(60);
-        const debugY2 = H - GameLayout.scale(25);
+        const debugY = H - GameLayout.scale(25);
 
-        this.createDebugButton(debugX, debugY1, '進捗リセット', () => {
+        this.createDebugButton(debugX, debugY, i18n.t('DEBUG_RESET'), () => {
             storyProgress.reset();
             storyProgress.save();
             sound.tone(300, 0.1);
             this.scene.restart();
         });
 
-        this.createDebugButton(debugX, debugY2, 'Stage1クリア', () => {
-            storyProgress.reset();
-            storyProgress.completeStage(1000);
-            storyProgress.save();
-            sound.tone(500, 0.1);
+        // Language toggle button (left bottom corner)
+        const langX = GameLayout.scale(120);
+        const langY = H - GameLayout.scale(25);
+        const langText = i18n.lang === 'ja' ? 'EN' : '日本語';
+        this.createDebugButton(langX, langY, langText, () => {
+            i18n.setLanguage(i18n.lang === 'ja' ? 'en' : 'ja');
+            sound.tone(400, 0.1);
             this.scene.restart();
         });
     }

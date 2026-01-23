@@ -265,7 +265,7 @@ class GameScene extends Phaser.Scene {
         this.addPlatform(W / 2, H - 5, W - 20, 10, 0x3a3530);
 
         // ステージ名表示（一時的）
-        const stageNameText = this.add.text(GameLayout.W / 2, GameLayout.pctY(0.12), layout.name, {
+        const stageNameText = this.add.text(GameLayout.W / 2, GameLayout.pctY(0.12), layout.getName(), {
             fontSize: GameLayout.fontSize(24) + 'px',
             color: '#ffffff',
             fontStyle: 'bold',
@@ -869,7 +869,7 @@ class GameScene extends Phaser.Scene {
 
             if (isVictory) {
                 c.add(this.add.image(0, -uiOffset(130), 'celebrate').setScale(1.2 * uiScale));
-                c.add(this.add.text(0, -uiOffset(70), 'ミッションコンプリート！', {
+                c.add(this.add.text(0, -uiOffset(70), i18n.t('RESULT_COMPLETE'), {
                     fontSize: uiFont(32) + 'px',
                     color: '#44ff44',
                     fontStyle: 'bold',
@@ -882,7 +882,7 @@ class GameScene extends Phaser.Scene {
                 const cb = this.maxCombo * 50;
                 const total = this.score + tb + sb + cb;
 
-                c.add(this.add.text(-uiOffset(90), -uiOffset(20), 'スコア:', {
+                c.add(this.add.text(-uiOffset(90), -uiOffset(20), i18n.t('RESULT_SCORE'), {
                     fontSize: uiFont(18) + 'px',
                     color: '#aaa'
                 }).setOrigin(0, 0.5));
@@ -890,7 +890,7 @@ class GameScene extends Phaser.Scene {
                     fontSize: uiFont(18) + 'px',
                     color: '#ffd700'
                 }).setOrigin(1, 0.5));
-                c.add(this.add.text(-uiOffset(90), uiOffset(8), 'タイムボーナス:', {
+                c.add(this.add.text(-uiOffset(90), uiOffset(8), i18n.t('RESULT_TIME_BONUS'), {
                     fontSize: uiFont(15) + 'px',
                     color: '#aaa'
                 }).setOrigin(0, 0.5));
@@ -898,7 +898,7 @@ class GameScene extends Phaser.Scene {
                     fontSize: uiFont(15) + 'px',
                     color: '#88ff88'
                 }).setOrigin(1, 0.5));
-                c.add(this.add.text(-uiOffset(90), uiOffset(32), '生還ボーナス:', {
+                c.add(this.add.text(-uiOffset(90), uiOffset(32), i18n.t('RESULT_SURVIVAL'), {
                     fontSize: uiFont(15) + 'px',
                     color: '#aaa'
                 }).setOrigin(0, 0.5));
@@ -906,7 +906,7 @@ class GameScene extends Phaser.Scene {
                     fontSize: uiFont(15) + 'px',
                     color: '#88ff88'
                 }).setOrigin(1, 0.5));
-                c.add(this.add.text(-uiOffset(90), uiOffset(56), 'コンボボーナス:', {
+                c.add(this.add.text(-uiOffset(90), uiOffset(56), i18n.t('RESULT_COMBO'), {
                     fontSize: uiFont(15) + 'px',
                     color: '#aaa'
                 }).setOrigin(0, 0.5));
@@ -926,35 +926,35 @@ class GameScene extends Phaser.Scene {
                 storyProgress.save();
 
                 if (result.ending) {
-                    c.add(this.add.text(0, uiOffset(140), '🎉 全ステージクリア！ 🎉', {
+                    c.add(this.add.text(0, uiOffset(140), i18n.t('RESULT_ALL_CLEAR_EMOJI'), {
                         fontSize: uiFont(20) + 'px',
                         color: '#ff66ff',
                         fontStyle: 'bold'
                     }).setOrigin(0.5));
-                    c.add(this.add.text(0, uiOffset(165), 'ステージ1に戻ります', {
+                    c.add(this.add.text(0, uiOffset(165), i18n.t('RESULT_BACK_STAGE1'), {
                         fontSize: uiFont(14) + 'px',
                         color: '#aaaacc'
                     }).setOrigin(0.5));
                 } else if (result.completed) {
-                    c.add(this.add.text(0, uiOffset(140), '全ステージクリア！', {
+                    c.add(this.add.text(0, uiOffset(140), i18n.t('RESULT_ALL_CLEAR'), {
                         fontSize: uiFont(20) + 'px',
                         color: '#ff66ff'
                     }).setOrigin(0.5));
                 }
             } else {
                 c.add(this.add.image(0, -uiOffset(100), 'shock').setScale(1.3 * uiScale));
-                c.add(this.add.text(0, -uiOffset(30), 'みつかった！', {
+                c.add(this.add.text(0, -uiOffset(30), i18n.t('GAMEOVER_FOUND'), {
                     fontSize: uiFont(42) + 'px',
                     color: '#ff5555',
                     fontStyle: 'bold',
                     stroke: '#000',
                     strokeThickness: uiOffset(4)
                 }).setOrigin(0.5));
-                c.add(this.add.text(0, uiOffset(30), `スコア: ${this.score}`, {
+                c.add(this.add.text(0, uiOffset(30), `${i18n.t('GAMEOVER_SCORE')} ${this.score}`, {
                     fontSize: uiFont(28) + 'px',
                     color: '#ffd700'
                 }).setOrigin(0.5));
-                c.add(this.add.text(0, uiOffset(70), `最大コンボ: ${this.maxCombo}`, {
+                c.add(this.add.text(0, uiOffset(70), `${i18n.t('GAMEOVER_MAX_COMBO')} ${this.maxCombo}`, {
                     fontSize: uiFont(18) + 'px',
                     color: '#aaa'
                 }).setOrigin(0.5));
@@ -979,17 +979,17 @@ class GameScene extends Phaser.Scene {
             };
 
             if (isVictory) {
-                c.add(makeBtn(uiOffset(170), 'iconRetry', '次へ', () => {
+                c.add(makeBtn(uiOffset(170), 'iconRetry', i18n.t('BTN_NEXT'), () => {
                     this.scene.start('PowerUpScene');
                 }));
-                c.add(makeBtn(uiOffset(220), 'iconHome', 'タイトル', () => {
+                c.add(makeBtn(uiOffset(220), 'iconHome', i18n.t('BTN_TITLE'), () => {
                     this.scene.start('TitleScene');
                 }));
             } else {
-                c.add(makeBtn(uiOffset(130), 'iconRetry', 'リトライ', () => {
+                c.add(makeBtn(uiOffset(130), 'iconRetry', i18n.t('BTN_RETRY'), () => {
                     this.scene.restart();
                 }));
-                c.add(makeBtn(uiOffset(180), 'iconHome', 'タイトル', () => {
+                c.add(makeBtn(uiOffset(180), 'iconHome', i18n.t('BTN_TITLE'), () => {
                     powerUpManager.reset();
                     this.scene.start('TitleScene');
                 }));

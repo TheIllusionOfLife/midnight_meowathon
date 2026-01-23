@@ -33,7 +33,7 @@ class PowerUpScene extends Phaser.Scene {
         gfx.fillRect(0, 0, W, H);
 
         // タイトル
-        this.add.text(W / 2, GameLayout.pctY(0.10), 'パワーアップを選択', {
+        this.add.text(W / 2, GameLayout.pctY(0.10), i18n.t('POWERUP_SELECT'), {
             fontSize: GameLayout.fontSize(36) + 'px',
             fontFamily: 'Kosugi Maru',
             color: '#ffffff',
@@ -44,7 +44,7 @@ class PowerUpScene extends Phaser.Scene {
 
         // ステージ情報
         const stage = storyProgress.getCurrentStage();
-        this.add.text(W / 2, GameLayout.pctY(0.18), `ステージ ${stage} / 5`, {
+        this.add.text(W / 2, GameLayout.pctY(0.18), i18n.t('POWERUP_STAGE').replace('{0}', stage), {
             fontSize: GameLayout.fontSize(20) + 'px',
             fontFamily: 'Kosugi Maru',
             color: '#aaaacc'
@@ -52,7 +52,7 @@ class PowerUpScene extends Phaser.Scene {
 
         // 現在のパワーアップ表示（画像に変更）
         if (powerUpManager.activePowerUps.length > 0) {
-            this.add.text(W / 2, GameLayout.pctY(0.24), '現在のパワーアップ:', {
+            this.add.text(W / 2, GameLayout.pctY(0.24), i18n.t('POWERUP_CURRENT'), {
                 fontSize: GameLayout.fontSize(14) + 'px',
                 color: '#888899'
             }).setOrigin(0.5);
@@ -97,7 +97,7 @@ class PowerUpScene extends Phaser.Scene {
             .setStrokeStyle(2, 0x888899)
             .setInteractive({ useHandCursor: true });
 
-        const skipText = this.add.text(W / 2, skipY, 'スキップ', {
+        const skipText = this.add.text(W / 2, skipY, i18n.t('BTN_SKIP'), {
             fontSize: GameLayout.fontSize(18) + 'px',
             color: '#ffffff'
         }).setOrigin(0.5);
@@ -139,7 +139,7 @@ class PowerUpScene extends Phaser.Scene {
 
         // 名前
         const nameY = GameLayout.isPortrait ? -cardH * 0.05 : -cardH * 0.15;
-        const name = this.add.text(0, nameY, powerUp.name, {
+        const name = this.add.text(0, nameY, powerUp.getName(), {
             fontSize: GameLayout.fontSize(18) + 'px',
             color: '#ffffff',
             fontStyle: 'bold'
@@ -147,7 +147,7 @@ class PowerUpScene extends Phaser.Scene {
 
         // 説明
         const descY = GameLayout.isPortrait ? cardH * 0.25 : cardH * 0.04;
-        const desc = this.add.text(0, descY, powerUp.description, {
+        const desc = this.add.text(0, descY, powerUp.getDescription(), {
             fontSize: GameLayout.fontSize(12) + 'px',
             color: '#ddddee',
             align: 'center',
