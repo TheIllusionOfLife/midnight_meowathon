@@ -36,6 +36,7 @@ Run the utility script to package the game for itch.io:
 ./build.sh
 ```
 This creates `midnight_meowathon.zip` with `index.html`, `css/`, and `js/`.
+Note: Requires the `zip` command to be available on your system.
 
 ### Structure
 *   `index.html`: Entry point and game configuration.
