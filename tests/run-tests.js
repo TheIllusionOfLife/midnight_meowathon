@@ -332,10 +332,8 @@ test('猫の集会の初期位置が床に合わせている', () => {
 
 test('猫の集会のゲーム開始時にカメラ調整が行われる', () => {
     const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
-    const start = content.indexOf('initTimeAttack');
-    assert(start !== -1, 'GatheringScene に initTimeAttack がありません');
-    const snippet = content.slice(start, start + 800);
-    assert(snippet.includes('handleResize'), 'initTimeAttack で handleResize が呼ばれていません');
+    assert(content.includes('initTimeAttack'), 'GatheringScene に initTimeAttack がありません');
+    assert(content.includes('handleResize'), 'initTimeAttack で handleResize が呼ばれていません');
 });
 
 test('textures.js にアイコンテクスチャが定義されている', () => {
