@@ -164,7 +164,7 @@ class TimeAttackRules {
     constructor(bossId) {
         const boss = BOSS_CATS.find(b => b.id === bossId);
         this.targetTime = boss.targetTime;
-        this.bossName = boss.name;
+        this.bossName = boss.getName();
     }
 
     checkWin(playerTime) {

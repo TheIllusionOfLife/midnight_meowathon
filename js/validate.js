@@ -20,8 +20,8 @@ function validateGameConfiguration() {
             if (!powerUp.icon) {
                 errors.push(`${id} にアイコンが設定されていません`);
             }
-            if (!powerUp.name) {
-                errors.push(`${id} に名前が設定されていません`);
+            if (!powerUp.getName || typeof powerUp.getName !== 'function') {
+                errors.push(`${id} に getName() が設定されていません`);
             }
         });
     }
@@ -49,8 +49,8 @@ function validateGameConfiguration() {
                 errors.push(`ステージ${i}のレイアウトが定義されていません`);
             } else {
                 const layout = STAGE_LAYOUTS[i];
-                if (!layout.name) {
-                    errors.push(`ステージ${i}に名前がありません`);
+                if (!layout.getName || typeof layout.getName !== 'function') {
+                    errors.push(`ステージ${i}に getName() がありません`);
                 }
                 if (!layout.catStart) {
                     errors.push(`ステージ${i}に猫の開始位置がありません`);
