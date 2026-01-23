@@ -353,6 +353,16 @@ test('猫の集会のジョイスティック位置がUIの安全領域に合わ
     );
 });
 
+test('ジョイスティックがタッチ補正オフセットに対応している', () => {
+    const mobile = fs.readFileSync('js/mobile.js', 'utf8');
+    assert(mobile.includes('touchOffsetX') && mobile.includes('touchOffsetY'), 'VirtualJoystick にタッチ補正がありません');
+});
+
+test('猫の集会でジョイスティックのタッチ補正を設定している', () => {
+    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    assert(content.includes('touchOffsetX') && content.includes('touchOffsetY'), 'GatheringScene にタッチ補正が設定されていません');
+});
+
 test('textures.js にアイコンテクスチャが定義されている', () => {
     const content = fs.readFileSync('js/textures.js', 'utf8');
     const requiredIcons = ['iconCatnip', 'iconBell', 'iconThunder', 'iconMoon', 'iconFish', 'iconCatToy'];
