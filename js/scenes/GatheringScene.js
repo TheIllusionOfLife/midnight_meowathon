@@ -254,6 +254,7 @@ class GatheringScene extends Phaser.Scene {
         this.createUI();
         this.setupInput();
         this.setupCollisions();
+        this.handleResize(this.scale.gameSize);
 
         // カウントダウン
         this.showCountdown();
