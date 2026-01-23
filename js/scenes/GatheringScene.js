@@ -370,12 +370,9 @@ class GatheringScene extends Phaser.Scene {
 
         // Mobile Controls
         if (DeviceDetector.isMobile()) {
-            this.joystick = new VirtualJoystick(this, {
-                x: 100, y: 450, radius: 50 // Initial placeholders, handleResize will fix
-            });
-            this.jumpBtn = new JumpButton(this, {
-                x: 700, y: 450, radius: 50
-            });
+            const controls = createMobileControls(this);
+            this.joystick = controls.joystick;
+            this.jumpBtn = controls.jumpBtn;
             // Trigger resize to position them correctly immediately
             this.handleResize(this.scale.gameSize);
         }
@@ -573,8 +570,6 @@ class GatheringScene extends Phaser.Scene {
     triggerTimeOver() {
         if (this.gameEnded) return;
         this.gameEnded = true;
-
-        sound.gameOver();
 
         this.time.delayedCall(500, () => {
             this.showResult(false, 'D'); // 敗北、ランクD

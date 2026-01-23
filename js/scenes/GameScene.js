@@ -801,7 +801,6 @@ class GameScene extends Phaser.Scene {
     triggerGameOver() {
         if (this.gameEnded) return;
         this.gameEnded = true;
-        sound.gameOver();
 
         // モニター更新（激怒）
         this.updateOwnerMonitor();

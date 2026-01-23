@@ -383,3 +383,18 @@ class ResponsiveManager {
         }
     }
 }
+
+// Shared mobile control factory (GameScene via HUDScene and GatheringScene)
+function createMobileControls(scene, options = {}) {
+    const joystickOptions = options.joystick || {};
+    const jumpOptions = options.jump || {};
+
+    const joystick = new VirtualJoystick(scene, joystickOptions);
+    const jumpBtn = new JumpButton(scene, jumpOptions);
+
+    joystick.base.setVisible(true);
+    joystick.stick.setVisible(true);
+    jumpBtn.show();
+
+    return { joystick, jumpBtn };
+}

@@ -181,13 +181,9 @@ class HUDScene extends Phaser.Scene {
         // VirtualJoystick defaults: x=12%, y=85%
         // JumpButton defaults: x=88%, y=85%
 
-        this.joystick = new VirtualJoystick(this);
-        this.jumpBtn = new JumpButton(this);
-
-        // Make controls visible
-        this.joystick.base.setVisible(true);
-        this.joystick.stick.setVisible(true);
-        this.jumpBtn.show();
+        const controls = createMobileControls(this);
+        this.joystick = controls.joystick;
+        this.jumpBtn = controls.jumpBtn;
 
         this.createThunderButton();
     }
