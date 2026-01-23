@@ -29,3 +29,10 @@ This game mixes fixed world coordinates (800x550) with variable screen sizes acr
 - [ ] If zoom changes, confirm pointer→world scaling for any input logic.
 - [ ] Ensure camera centering uses `centerOn()` and avoids bounds clamp when screen is larger than world.
 - [ ] Verify spawn positions against the actual collision platforms.
+
+## Quick Debug Guide (When Visuals ≠ Collision)
+- **Log camera state:** `console.log({ zoom: cam.zoom, scrollX: cam.scrollX, scrollY: cam.scrollY });`
+- **Log pointer vs world:** `console.log(pointer.x, pointer.y, cam.getWorldPoint(pointer.x, pointer.y));`
+- **Draw debug markers:** place small circles at expected world positions and compare to visuals.
+- **Check scrollFactor:** if UI uses `setScrollFactor(0)`, it is screen-space; do not offset by scroll.
+- **Validate spawn math:** print the platform top Y and the cat start Y before physics is enabled.
