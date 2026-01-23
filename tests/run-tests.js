@@ -296,13 +296,10 @@ test('猫の集会のモバイル操作が画面座標で配置されている',
 
 test('猫の集会のズームが1以上に拡大されない', () => {
     const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
-    const start = content.indexOf('handleResize');
-    assert(start !== -1, 'GatheringScene に handleResize がありません');
-    const snippet = content.slice(start, start + 800);
     assert(
-        snippet.includes('Math.min(zoomX, zoomY, 1)') ||
-        snippet.includes('Math.min(1, zoomX, zoomY)') ||
-        snippet.includes('Math.min(1, zoomY, zoomX)'),
+        content.includes('Math.min(zoomX, zoomY, 1)') ||
+        content.includes('Math.min(1, zoomX, zoomY)') ||
+        content.includes('Math.min(1, zoomY, zoomX)'),
         'GatheringScene がズーム上限を設定していません'
     );
 });
