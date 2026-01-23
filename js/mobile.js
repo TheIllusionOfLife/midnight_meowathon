@@ -3,17 +3,24 @@
 class VirtualJoystick {
     constructor(scene, options = {}) {
         this.scene = scene;
+        this.destroyed = false;
+        this.inputScale = 1;
+        this.useWorldPointer = false;
 
         // Use percentage-based positioning
         const {
             xPercent = 0.12,
             yPercent = 0.85,
-            radiusPercent = 0.08
+            radiusPercent = 0.08,
+            touchOffsetX = 0,
+            touchOffsetY = 0
         } = options;
 
         this.xPercent = xPercent;
         this.yPercent = yPercent;
         this.radiusPercent = radiusPercent;
+        this.touchOffsetX = touchOffsetX;
+        this.touchOffsetY = touchOffsetY;
 
         // Calculate actual positions
         this.updateDimensions();
@@ -21,7 +28,7 @@ class VirtualJoystick {
         this.stickX = this.baseX;
         this.stickY = this.baseY;
         this.active = false;
-        this.pointer = null;
+        this.pointerId = null; // Track specific pointer for multi-touch
 
         // ベース円
         this.base = scene.add.circle(this.baseX, this.baseY, this.radius, 0x333366, 0.5).setDepth(1000);
@@ -52,11 +59,15 @@ class VirtualJoystick {
     }
 
     onResize(gameSize) {
+        if (this.destroyed) return;
         this.updateDimensions();
         this.updatePosition();
     }
 
     updatePosition() {
+        if (this.destroyed) return;
+        if (!this.base || !this.stick) return;
+        if (!this.base.geom || !this.stick.geom) return;
         if (this.base) {
             this.base.setPosition(this.baseX, this.baseY);
             this.base.setRadius(this.radius);
@@ -72,20 +83,22 @@ class VirtualJoystick {
     setupInput() {
         // Store bound handlers for cleanup
         this.onPointerDown = (pointer) => {
-            // 左半分の画面でタッチ
-            if (pointer.x < this.scene.scale.width / 2) {
+            // Only respond if no joystick is active and touch is in left half
+            if (this.pointerId === null && pointer.x < this.scene.scale.width / 2) {
                 this.activate(pointer);
             }
         };
 
         this.onPointerMove = (pointer) => {
-            if (this.active && this.pointer === pointer) {
+            // Only respond to the pointer that owns this joystick
+            if (this.active && pointer.id === this.pointerId) {
                 this.updateStick(pointer);
             }
         };
 
         this.onPointerUp = (pointer) => {
-            if (this.pointer === pointer) {
+            // Only respond to the pointer that owns this joystick
+            if (pointer.id === this.pointerId) {
                 this.deactivate();
             }
         };
@@ -97,9 +110,13 @@ class VirtualJoystick {
 
     activate(pointer) {
         this.active = true;
-        this.pointer = pointer;
-        this.baseX = pointer.x;
-        this.baseY = pointer.y;
+        this.pointerId = pointer.id; // Lock to this specific pointer
+        const srcX = this.useWorldPointer && typeof pointer.worldX === 'number' ? pointer.worldX : pointer.x;
+        const srcY = this.useWorldPointer && typeof pointer.worldY === 'number' ? pointer.worldY : pointer.y;
+        const px = srcX * this.inputScale + this.touchOffsetX;
+        const py = srcY * this.inputScale + this.touchOffsetY;
+        this.baseX = px;
+        this.baseY = py;
         this.base.setPosition(this.baseX, this.baseY);
         this.stick.setPosition(this.baseX, this.baseY);
         this.base.setVisible(true);
@@ -107,8 +124,12 @@ class VirtualJoystick {
     }
 
     updateStick(pointer) {
-        const dx = pointer.x - this.baseX;
-        const dy = pointer.y - this.baseY;
+        const srcX = this.useWorldPointer && typeof pointer.worldX === 'number' ? pointer.worldX : pointer.x;
+        const srcY = this.useWorldPointer && typeof pointer.worldY === 'number' ? pointer.worldY : pointer.y;
+        const px = srcX * this.inputScale + this.touchOffsetX;
+        const py = srcY * this.inputScale + this.touchOffsetY;
+        const dx = px - this.baseX;
+        const dy = py - this.baseY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance > this.radius) {
@@ -116,8 +137,8 @@ class VirtualJoystick {
             this.stickX = this.baseX + Math.cos(angle) * this.radius;
             this.stickY = this.baseY + Math.sin(angle) * this.radius;
         } else {
-            this.stickX = pointer.x;
-            this.stickY = pointer.y;
+            this.stickX = px;
+            this.stickY = py;
         }
 
         this.stick.setPosition(this.stickX, this.stickY);
@@ -125,7 +146,7 @@ class VirtualJoystick {
 
     deactivate() {
         this.active = false;
-        this.pointer = null;
+        this.pointerId = null; // Release pointer lock
         this.base.setVisible(false);
         this.stick.setVisible(false);
         this.stickX = this.baseX;
@@ -148,6 +169,7 @@ class VirtualJoystick {
     }
 
     destroy() {
+        this.destroyed = true;
         // Remove resize listener
         this.scene.scale.off('resize', this.onResize, this);
 
@@ -159,12 +181,16 @@ class VirtualJoystick {
         // Destroy visual elements
         if (this.base) this.base.destroy();
         if (this.stick) this.stick.destroy();
+
+        this.base = null;
+        this.stick = null;
     }
 }
 
 class JumpButton {
     constructor(scene, options = {}) {
         this.scene = scene;
+        this.destroyed = false;
 
         // Use percentage-based positioning
         const {
@@ -218,16 +244,18 @@ class JumpButton {
     }
 
     onResize(gameSize) {
+        if (this.destroyed) return;
         this.updateDimensions();
         this.updatePosition();
     }
 
     updatePosition() {
-        if (this.button) {
+        if (this.destroyed) return;
+        if (this.button && this.button.geom) {
             this.button.setPosition(this.x, this.y);
             this.button.setRadius(this.radius);
         }
-        if (this.icon) {
+        if (this.icon && this.icon.list) {
             this.icon.setPosition(this.x, this.y);
             // Update icon scale
             const iconScale = this.radius / 40;
@@ -284,9 +312,12 @@ class JumpButton {
     }
 
     destroy() {
+        this.destroyed = true;
         this.scene.scale.off('resize', this.onResize, this);
-        this.button.destroy();
-        this.icon.destroy();
+        if (this.button) this.button.destroy();
+        if (this.icon) this.icon.destroy();
+        this.button = null;
+        this.icon = null;
     }
 }
 
@@ -380,4 +411,84 @@ class ResponsiveManager {
             };
         }
     }
+}
+
+// Shared mobile control factory (GameScene via HUDScene and GatheringScene)
+function createMobileControls(scene, options = {}) {
+    const joystickOptions = options.joystick || {};
+    const jumpOptions = options.jump || {};
+
+    const joystick = new VirtualJoystick(scene, joystickOptions);
+    const jumpBtn = new JumpButton(scene, jumpOptions);
+
+    joystick.base.setVisible(true);
+    joystick.stick.setVisible(true);
+    jumpBtn.show();
+
+    return { joystick, jumpBtn };
+}
+
+function updateMobileControlsForCamera(joystick, jumpBtn, camera, screenW, screenH) {
+    if (!joystick || !jumpBtn || !camera) return;
+    if (joystick.destroyed || jumpBtn.destroyed) return;
+    if (!joystick.base || !joystick.base.geom || !joystick.stick || !joystick.stick.geom) return;
+    if (!jumpBtn.button || !jumpBtn.button.geom) return;
+
+    const minDim = Math.min(screenW, screenH);
+    const zoom = camera.zoom || 1;
+    joystick.inputScale = 1;
+    joystick.useWorldPointer = true;
+
+    const joyXPct = typeof joystick.xPercent === 'number' ? joystick.xPercent : 0.12;
+    const joyYPct = typeof joystick.yPercent === 'number' ? joystick.yPercent : 0.85;
+    const joyScreenX = screenW * joyXPct;
+    const joyScreenY = screenH * joyYPct;
+    const joyWorldPoint = camera.getWorldPoint(joyScreenX, joyScreenY);
+
+    joystick.baseX = joyWorldPoint.x;
+    joystick.baseY = joyWorldPoint.y;
+    joystick.radius = (minDim * (joystick.radiusPercent || 0.08)) / zoom;
+    joystick.updatePosition();
+
+    const btnXPct = typeof jumpBtn.xPercent === 'number' ? jumpBtn.xPercent : 0.88;
+    const btnYPct = typeof jumpBtn.yPercent === 'number' ? jumpBtn.yPercent : 0.85;
+    const btnScreenX = screenW * btnXPct;
+    const btnScreenY = screenH * btnYPct;
+    const btnWorldPoint = camera.getWorldPoint(btnScreenX, btnScreenY);
+
+    jumpBtn.x = btnWorldPoint.x;
+    jumpBtn.y = btnWorldPoint.y;
+    jumpBtn.radius = (minDim * (jumpBtn.radiusPercent || 0.06)) / zoom;
+    jumpBtn.updatePosition();
+}
+
+function updateMobileControlsForScreen(joystick, jumpBtn, camera, screenW, screenH) {
+    if (!joystick || !jumpBtn) return;
+    if (joystick.destroyed || jumpBtn.destroyed) return;
+    if (!joystick.base || !joystick.base.geom || !joystick.stick || !joystick.stick.geom) return;
+    if (!jumpBtn.button || !jumpBtn.button.geom) return;
+
+    const minDim = Math.min(screenW, screenH);
+    joystick.inputScale = 1;
+    joystick.useWorldPointer = false;
+
+    const joyXPct = typeof joystick.xPercent === 'number' ? joystick.xPercent : 0.12;
+    const joyYPct = typeof joystick.yPercent === 'number' ? joystick.yPercent : 0.85;
+    const joyScreenX = screenW * joyXPct;
+    const joyScreenY = screenH * joyYPct;
+
+    joystick.baseX = joyScreenX;
+    joystick.baseY = joyScreenY;
+    joystick.radius = minDim * (joystick.radiusPercent || 0.08);
+    joystick.updatePosition();
+
+    const btnXPct = typeof jumpBtn.xPercent === 'number' ? jumpBtn.xPercent : 0.88;
+    const btnYPct = typeof jumpBtn.yPercent === 'number' ? jumpBtn.yPercent : 0.85;
+    const btnScreenX = screenW * btnXPct;
+    const btnScreenY = screenH * btnYPct;
+
+    jumpBtn.x = btnScreenX;
+    jumpBtn.y = btnScreenY;
+    jumpBtn.radius = minDim * (jumpBtn.radiusPercent || 0.06);
+    jumpBtn.updatePosition();
 }

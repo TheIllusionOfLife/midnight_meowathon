@@ -53,6 +53,9 @@ class GameScene extends Phaser.Scene {
         this.walls = this.physics.add.staticGroup();
         this.breakables = this.physics.add.group({ allowGravity: false });
 
+        // 固定ワールド境界を設定（画面サイズ変更の影響を受けない）
+        this.physics.world.setBounds(0, 0, GAME_CONSTANTS.WORLD_WIDTH, GAME_CONSTANTS.WORLD_HEIGHT);
+
         // シーン構築
         this.createBackground();
         this.createRoom();
@@ -80,43 +83,35 @@ class GameScene extends Phaser.Scene {
         const screenW = gameSize.width;
         const screenH = gameSize.height;
 
-        // Fixed game world dimensions
-        const worldW = GAME_CONSTANTS.WORLD_WIDTH;
-        const worldH = GAME_CONSTANTS.WORLD_HEIGHT;
+        // Keep physics bounds fixed to game world
+        this.physics.world.setBounds(0, 0, GAME_CONSTANTS.WORLD_WIDTH, GAME_CONSTANTS.WORLD_HEIGHT);
 
-        // Calculate zoom to fit the game world in the screen (FIT mode)
+        // Fixed game world dimensions
+        const worldW = GAME_CONSTANTS.WORLD_WIDTH;  // 800
+        const worldH = GAME_CONSTANTS.WORLD_HEIGHT; // 550
+
+        // Calculate zoom to fit the entire game world in the screen
         const zoomX = screenW / worldW;
         const zoomY = screenH / worldH;
         const zoom = Math.min(zoomX, zoomY);
 
+        // Store base zoom for slow-motion effects
+        this.baseZoom = zoom;
         this.cameras.main.setZoom(zoom);
 
-        // Remove bounds to allow viewing "void" space (filled by background)
+        // Remove camera bounds to allow viewing beyond world edges
         this.cameras.main.removeBounds();
 
-        // Calculate scroll position to center the game world on screen
-        // The visible area in world coordinates is (screenW/zoom) x (screenH/zoom)
-        // We want the center of this visible area to be at (worldW/2, worldH/2)
-        const visibleW = screenW / zoom;
-        const visibleH = screenH / zoom;
+        // Use Phaser's centerOn to center the camera on the middle of the game world
+        // This ensures the entire 800x550 world is visible and centered
+        const worldCenterX = worldW / 2;  // 400
+        const worldCenterY = worldH / 2;  // 275
 
-        // Vertical Alignment Strategy
-        // scrollX/scrollY is the top-left corner of the view in world coords
-        const scrollX = (worldW / 2) - (visibleW / 2);
+        this.cameras.main.centerOn(worldCenterX, worldCenterY);
 
-        let scrollY;
-        if (screenH > screenW) {
-            // Portrait: Align bottom logic
-            // We want floor (Y=550) to be visible near bottom, leaving space for HUD controls.
-            // Leave 150px screen margin (converted to world units).
-            const marginBottom = 150 / zoom;
-            scrollY = (worldH + marginBottom) - visibleH;
-        } else {
-            // Landscape: Center Vertically
-            scrollY = (worldH / 2) - (visibleH / 2);
-        }
-
-        this.cameras.main.setScroll(scrollX, scrollY);
+        // Store base scroll for effects (centerOn sets scroll internally)
+        this.baseScrollX = this.cameras.main.scrollX;
+        this.baseScrollY = this.cameras.main.scrollY;
     }
 
     createBackground() {
@@ -156,32 +151,36 @@ class GameScene extends Phaser.Scene {
         }
 
         // 窓（パララックス対応）
-        this.add.rectangle(680, 120, 100, 150, 0x1a1a30)
+        const windowX = GameLayout.isPortrait ? 600 : 680;
+        const windowY = 120;
+        this.windowX = windowX;
+        this.windowY = windowY;
+        this.add.rectangle(windowX, windowY, 100, 150, 0x1a1a30)
             .setStrokeStyle(6, 0x3a3a5a)
             .setDepth(0)
             .setScrollFactor(0.5);
-        this.add.rectangle(680, 120, 85, 135, 0x080818)
+        this.add.rectangle(windowX, windowY, 85, 135, 0x080818)
             .setDepth(0)
             .setScrollFactor(0.5);
-        this.add.image(700, 95, 'moon').setScale(0.5)
+        this.add.image(windowX + 20, windowY - 25, 'moon').setScale(0.5)
             .setDepth(0)
             .setScrollFactor(0.5);
 
         // 星（窓の外）
         for (let i = 0; i < 5; i++) {
             this.add.circle(
-                650 + Math.random() * 60,
-                80 + Math.random() * 80,
+                windowX - 30 + Math.random() * 60,
+                windowY - 40 + Math.random() * 80,
                 1,
                 0xffffff,
                 0.5
             ).setDepth(0).setScrollFactor(0.5);
         }
 
-        this.add.rectangle(680, 120, 4, 135, 0x3a3a5a).setDepth(0).setScrollFactor(0.5);
-        this.add.rectangle(680, 120, 85, 4, 0x3a3a5a).setDepth(0).setScrollFactor(0.5);
-        this.add.rectangle(620, 120, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
-        this.add.rectangle(740, 120, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
+        this.add.rectangle(windowX, windowY, 4, 135, 0x3a3a5a).setDepth(0).setScrollFactor(0.5);
+        this.add.rectangle(windowX, windowY, 85, 4, 0x3a3a5a).setDepth(0).setScrollFactor(0.5);
+        this.add.rectangle(windowX - 60, windowY, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
+        this.add.rectangle(windowX + 60, windowY, 20, 155, 0x5a3a6a, 0.7).setDepth(0).setScrollFactor(0.5);
 
         // 床
         this.add.rectangle(W / 2, H - 30, W, 60, 0x2a2520);
@@ -194,13 +193,15 @@ class GameScene extends Phaser.Scene {
 
     createAtmosphere() {
         // Moonlight Beams (from Window)
+        const windowX = typeof this.windowX === 'number' ? this.windowX : 680;
+        const windowY = typeof this.windowY === 'number' ? this.windowY : 120;
         const light = this.add.graphics();
         light.fillStyle(0xffffcc, 0.08); // Very subtle warm white
         light.beginPath();
-        light.moveTo(680, 120); // Window center
-        light.lineTo(630, 120);
-        light.lineTo(500, H);
-        light.lineTo(800, H);
+        light.moveTo(windowX, windowY); // Window center
+        light.lineTo(windowX - 50, windowY);
+        light.lineTo(windowX - 180, H);
+        light.lineTo(windowX + 120, H);
         light.closePath();
         light.fillPath();
         light.setDepth(10); // In front of background, behind gameplay
@@ -264,13 +265,13 @@ class GameScene extends Phaser.Scene {
         this.addPlatform(W / 2, H - 5, W - 20, 10, 0x3a3530);
 
         // ステージ名表示（一時的）
-        const stageNameText = this.add.text(W / 2, 60, layout.name, {
-            fontSize: '28px',
+        const stageNameText = this.add.text(GameLayout.W / 2, GameLayout.pctY(0.12), layout.name, {
+            fontSize: GameLayout.fontSize(24) + 'px',
             color: '#ffffff',
             fontStyle: 'bold',
             stroke: '#000000',
-            strokeThickness: 4
-        }).setOrigin(0.5).setDepth(150).setScrollFactor(0).setAlpha(0);
+            strokeThickness: GameLayout.scale(4)
+        }).setOrigin(0.5).setDepth(250).setScrollFactor(0).setAlpha(0);
 
         this.tweens.add({
             targets: stageNameText,
@@ -305,6 +306,10 @@ class GameScene extends Phaser.Scene {
     }
 
     addWall(x, y, w, h) {
+        // Visible wall to hint wall-kick
+        this.add.rectangle(x, y, w, h, 0x2a2a44, 0.6)
+            .setDepth(5);
+
         const wall = this.add.rectangle(x, y, w, h, 0x101015, 0);
         this.physics.add.existing(wall, true);
         this.walls.add(wall);
@@ -425,11 +430,7 @@ class GameScene extends Phaser.Scene {
         // 雷の発動（Eキー）
         if (powerUpManager.hasPowerUp('thunder')) {
             this.keys.E.on('down', () => {
-                if (powerUpManager.activateThunder()) {
-                    sound.tone(800, 0.2, 'sawtooth');
-                    showCatDialogue(this, this.cat.x, this.cat.y, 'jump');
-                    this.cameras.main.flash(100, 255, 255, 100);
-                }
+                this.activateThunder();
             });
         }
     }
@@ -522,7 +523,7 @@ class GameScene extends Phaser.Scene {
         this.addNoise(noiseValue);
         this.createBreakEffect(item.x, item.y, itemType, finalScore);
         this.shakeIntensity = Math.min(12, 3 + scoreValue / 30);
-        sound.hit(scoreValue / 80);
+        sound.itemBreak(scoreValue / 80);
 
         if (this.combo >= 2) {
             this.showComboDisplay();
@@ -593,7 +594,9 @@ class GameScene extends Phaser.Scene {
     triggerSlowMotion() {
         this.slowMoTimer = GAME_CONSTANTS.SLOW_MO_DURATION;
         this.physics.world.timeScale = GAME_CONSTANTS.SLOW_MO_TIME_SCALE;
-        this.cameras.main.zoomTo(1.08, 100);
+        // Use relative zoom based on base zoom for responsive support
+        const targetZoom = (this.baseZoom || 1) * 1.08;
+        this.cameras.main.zoomTo(targetZoom, 100);
     }
 
     addNoise(amount) {
@@ -636,40 +639,27 @@ class GameScene extends Phaser.Scene {
         // ローグライト: パワーアップ更新
         powerUpManager.update(delta);
 
-        // 雷UI更新
-        if (this.thunderUI) {
-            if (powerUpManager.isThunderActive()) {
-                this.thunderUI.setText('⚡ サイレント中！');
-                this.thunderUI.setColor('#00ff00');
-            } else {
-                const cooldown = powerUpManager.getThunderCooldown();
-                if (cooldown > 0) {
-                    this.thunderUI.setText(`⚡ ${Math.ceil(cooldown)}秒`);
-                    this.thunderUI.setColor('#888888');
-                } else {
-                    this.thunderUI.setText('⚡ 準備完了 (E)');
-                    this.thunderUI.setColor('#ffff00');
-                }
-            }
-        }
-
         if (this.slowMoTimer > 0) {
             this.slowMoTimer--;
             if (this.slowMoTimer === 0) {
                 this.physics.world.timeScale = 1;
-                this.cameras.main.zoomTo(1, 150);
+                // Return to base zoom for responsive support
+                this.cameras.main.zoomTo(this.baseZoom || 1, 150);
             }
         }
 
         if (this.shakeIntensity > 0) {
+            // Shake relative to base scroll position for responsive support
+            const baseX = this.baseScrollX || 0;
+            const baseY = this.baseScrollY || 0;
             this.cameras.main.setScroll(
-                Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity),
-                Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity)
+                baseX + Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity),
+                baseY + Phaser.Math.Between(-this.shakeIntensity, this.shakeIntensity)
             );
             this.shakeIntensity *= 0.85;
             if (this.shakeIntensity < 0.5) {
                 this.shakeIntensity = 0;
-                this.cameras.main.setScroll(0, 0);
+                this.cameras.main.setScroll(baseX, baseY);
             }
         }
 
@@ -821,7 +811,6 @@ class GameScene extends Phaser.Scene {
     triggerGameOver() {
         if (this.gameEnded) return;
         this.gameEnded = true;
-        sound.gameOver();
 
         // モニター更新（激怒）
         this.updateOwnerMonitor();
@@ -830,7 +819,6 @@ class GameScene extends Phaser.Scene {
         // this.doorLight.setAlpha(1); // 廃止
         // this.zzzIcon.setVisible(false); // 廃止
 
-        sound.hiss();
         this.cat.body.setVelocity(0, -350);
         this.shakeIntensity = 15;
         this.cameras.main.flash(250, 255, 100, 100);
@@ -852,9 +840,22 @@ class GameScene extends Phaser.Scene {
     }
 
     showResultScreen(isVictory) {
-        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0)
-            .setDepth(200)
-            .setScrollFactor(0);
+        // HUDの入力を止めて結果画面のボタンを優先する
+        if (this.scene.isActive('HUDScene')) {
+            this.scene.stop('HUDScene');
+        }
+
+        const uiW = GameLayout.W;
+        const uiH = GameLayout.H;
+        const camera = this.cameras.main;
+        const zoom = camera.zoom || 1;
+        const center = camera.getWorldPoint(uiW / 2, uiH / 2);
+        const uiScale = GameLayout.scale(1) / zoom;
+        const uiOffset = (value) => GameLayout.scale(value) / zoom;
+        const uiFont = (value) => Math.max(10, GameLayout.fontSize(value) / zoom);
+
+        const overlay = this.add.rectangle(center.x, center.y, uiW / zoom, uiH / zoom, 0x000000, 0)
+            .setDepth(200);
         this.tweens.add({
             targets: overlay,
             fillAlpha: 0.85,
@@ -862,19 +863,18 @@ class GameScene extends Phaser.Scene {
         });
 
         this.time.delayedCall(300, () => {
-            const c = this.add.container(W / 2, H / 2)
+            const c = this.add.container(center.x, center.y)
                 .setDepth(210)
-                .setAlpha(0)
-                .setScrollFactor(0);
+                .setAlpha(0);
 
             if (isVictory) {
-                c.add(this.add.image(0, -130, 'celebrate').setScale(1.2));
-                c.add(this.add.text(0, -70, 'ミッションコンプリート！', {
-                    fontSize: '32px',
+                c.add(this.add.image(0, -uiOffset(130), 'celebrate').setScale(1.2 * uiScale));
+                c.add(this.add.text(0, -uiOffset(70), 'ミッションコンプリート！', {
+                    fontSize: uiFont(32) + 'px',
                     color: '#44ff44',
                     fontStyle: 'bold',
                     stroke: '#000',
-                    strokeThickness: 4
+                    strokeThickness: uiOffset(4)
                 }).setOrigin(0.5));
 
                 const tb = this.timeLeft * 10;
@@ -882,53 +882,93 @@ class GameScene extends Phaser.Scene {
                 const cb = this.maxCombo * 50;
                 const total = this.score + tb + sb + cb;
 
-                c.add(this.add.text(-90, -20, 'スコア:', { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
-                c.add(this.add.text(90, -20, this.score.toString(), { fontSize: '18px', color: '#ffd700' }).setOrigin(1, 0.5));
-                c.add(this.add.text(-90, 8, 'タイムボーナス:', { fontSize: '15px', color: '#aaa' }).setOrigin(0, 0.5));
-                c.add(this.add.text(90, 8, `+${tb}`, { fontSize: '15px', color: '#88ff88' }).setOrigin(1, 0.5));
-                c.add(this.add.text(-90, 32, '生還ボーナス:', { fontSize: '15px', color: '#aaa' }).setOrigin(0, 0.5));
-                c.add(this.add.text(90, 32, `+${sb}`, { fontSize: '15px', color: '#88ff88' }).setOrigin(1, 0.5));
-                c.add(this.add.text(-90, 56, 'コンボボーナス:', { fontSize: '15px', color: '#aaa' }).setOrigin(0, 0.5));
-                c.add(this.add.text(90, 56, `+${cb}`, { fontSize: '15px', color: '#88ff88' }).setOrigin(1, 0.5));
-                c.add(this.add.rectangle(0, 80, 200, 2, 0x666666));
-                c.add(this.add.text(0, 105, `TOTAL: ${total}`, { fontSize: '28px', color: '#ffd700', fontStyle: 'bold' }).setOrigin(0.5));
+                c.add(this.add.text(-uiOffset(90), -uiOffset(20), 'スコア:', {
+                    fontSize: uiFont(18) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0, 0.5));
+                c.add(this.add.text(uiOffset(90), -uiOffset(20), this.score.toString(), {
+                    fontSize: uiFont(18) + 'px',
+                    color: '#ffd700'
+                }).setOrigin(1, 0.5));
+                c.add(this.add.text(-uiOffset(90), uiOffset(8), 'タイムボーナス:', {
+                    fontSize: uiFont(15) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0, 0.5));
+                c.add(this.add.text(uiOffset(90), uiOffset(8), `+${tb}`, {
+                    fontSize: uiFont(15) + 'px',
+                    color: '#88ff88'
+                }).setOrigin(1, 0.5));
+                c.add(this.add.text(-uiOffset(90), uiOffset(32), '生還ボーナス:', {
+                    fontSize: uiFont(15) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0, 0.5));
+                c.add(this.add.text(uiOffset(90), uiOffset(32), `+${sb}`, {
+                    fontSize: uiFont(15) + 'px',
+                    color: '#88ff88'
+                }).setOrigin(1, 0.5));
+                c.add(this.add.text(-uiOffset(90), uiOffset(56), 'コンボボーナス:', {
+                    fontSize: uiFont(15) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0, 0.5));
+                c.add(this.add.text(uiOffset(90), uiOffset(56), `+${cb}`, {
+                    fontSize: uiFont(15) + 'px',
+                    color: '#88ff88'
+                }).setOrigin(1, 0.5));
+                c.add(this.add.rectangle(0, uiOffset(80), uiOffset(200), uiOffset(2), 0x666666));
+                c.add(this.add.text(0, uiOffset(105), `TOTAL: ${total}`, {
+                    fontSize: uiFont(28) + 'px',
+                    color: '#ffd700',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5));
 
                 // ストーリー進行
                 const result = storyProgress.completeStage(total);
                 storyProgress.save();
 
                 if (result.ending) {
-                    c.add(this.add.text(0, 140, '🎉 全ステージクリア！ 🎉', {
-                        fontSize: '20px',
+                    c.add(this.add.text(0, uiOffset(140), '🎉 全ステージクリア！ 🎉', {
+                        fontSize: uiFont(20) + 'px',
                         color: '#ff66ff',
                         fontStyle: 'bold'
                     }).setOrigin(0.5));
-                    c.add(this.add.text(0, 165, 'ステージ1に戻ります', {
-                        fontSize: '14px',
+                    c.add(this.add.text(0, uiOffset(165), 'ステージ1に戻ります', {
+                        fontSize: uiFont(14) + 'px',
                         color: '#aaaacc'
                     }).setOrigin(0.5));
                 } else if (result.completed) {
-                    c.add(this.add.text(0, 140, '全ステージクリア！', { fontSize: '20px', color: '#ff66ff' }).setOrigin(0.5));
+                    c.add(this.add.text(0, uiOffset(140), '全ステージクリア！', {
+                        fontSize: uiFont(20) + 'px',
+                        color: '#ff66ff'
+                    }).setOrigin(0.5));
                 }
             } else {
-                c.add(this.add.image(0, -100, 'shock').setScale(1.3));
-                c.add(this.add.text(0, -30, 'みつかった！', {
-                    fontSize: '42px',
+                c.add(this.add.image(0, -uiOffset(100), 'shock').setScale(1.3 * uiScale));
+                c.add(this.add.text(0, -uiOffset(30), 'みつかった！', {
+                    fontSize: uiFont(42) + 'px',
                     color: '#ff5555',
                     fontStyle: 'bold',
                     stroke: '#000',
-                    strokeThickness: 4
+                    strokeThickness: uiOffset(4)
                 }).setOrigin(0.5));
-                c.add(this.add.text(0, 30, `スコア: ${this.score}`, { fontSize: '28px', color: '#ffd700' }).setOrigin(0.5));
-                c.add(this.add.text(0, 70, `最大コンボ: ${this.maxCombo}`, { fontSize: '18px', color: '#aaa' }).setOrigin(0.5));
+                c.add(this.add.text(0, uiOffset(30), `スコア: ${this.score}`, {
+                    fontSize: uiFont(28) + 'px',
+                    color: '#ffd700'
+                }).setOrigin(0.5));
+                c.add(this.add.text(0, uiOffset(70), `最大コンボ: ${this.maxCombo}`, {
+                    fontSize: uiFont(18) + 'px',
+                    color: '#aaa'
+                }).setOrigin(0.5));
             }
 
             const makeBtn = (y, iconKey, txt, cb) => {
-                const bg = this.add.rectangle(0, y, 200, 45, 0x4a4a8a)
-                    .setStrokeStyle(2, 0x7a7aba)
+                const bg = this.add.rectangle(0, y, uiOffset(200), uiOffset(45), 0x4a4a8a)
+                    .setStrokeStyle(uiOffset(2), 0x7a7aba)
                     .setInteractive({ useHandCursor: true });
-                const icon = this.add.image(-70, y, iconKey).setScale(0.6);
-                const tx = this.add.text(10, y, txt, { fontSize: '18px', color: '#fff' }).setOrigin(0, 0.5);
+                const icon = this.add.image(-uiOffset(70), y, iconKey).setScale(0.6 * uiScale);
+                const tx = this.add.text(uiOffset(10), y, txt, {
+                    fontSize: uiFont(18) + 'px',
+                    color: '#fff'
+                }).setOrigin(0, 0.5);
                 bg.on('pointerover', () => bg.setFillStyle(0x6a6aaa));
                 bg.on('pointerout', () => bg.setFillStyle(0x4a4a8a));
                 bg.on('pointerdown', () => {
@@ -939,17 +979,17 @@ class GameScene extends Phaser.Scene {
             };
 
             if (isVictory) {
-                c.add(makeBtn(170, 'iconRetry', '次へ', () => {
+                c.add(makeBtn(uiOffset(170), 'iconRetry', '次へ', () => {
                     this.scene.start('PowerUpScene');
                 }));
-                c.add(makeBtn(220, 'iconHome', 'タイトル', () => {
+                c.add(makeBtn(uiOffset(220), 'iconHome', 'タイトル', () => {
                     this.scene.start('TitleScene');
                 }));
             } else {
-                c.add(makeBtn(130, 'iconRetry', 'リトライ', () => {
+                c.add(makeBtn(uiOffset(130), 'iconRetry', 'リトライ', () => {
                     this.scene.restart();
                 }));
-                c.add(makeBtn(180, 'iconHome', 'タイトル', () => {
+                c.add(makeBtn(uiOffset(180), 'iconHome', 'タイトル', () => {
                     powerUpManager.reset();
                     this.scene.start('TitleScene');
                 }));
@@ -958,11 +998,21 @@ class GameScene extends Phaser.Scene {
             this.tweens.add({
                 targets: c,
                 alpha: 1,
-                y: H / 2 - 10,
+                y: center.y - uiOffset(10),
                 duration: 350,
                 ease: 'Back.easeOut'
             });
         });
+    }
+
+    activateThunder() {
+        if (powerUpManager.activateThunder()) {
+            sound.tone(800, 0.2, 'sawtooth');
+            showCatDialogue(this, this.cat.x, this.cat.y, 'jump');
+            this.cameras.main.flash(100, 255, 255, 100);
+            return true;
+        }
+        return false;
     }
 
     shutdown() {

@@ -3,6 +3,7 @@ class SoundEngine {
     constructor() {
         this.ctx = null;
         this.master = null;
+        this.initialized = false;
     }
 
     init() {
@@ -12,8 +13,30 @@ class SoundEngine {
             this.master = this.ctx.createGain();
             this.master.connect(this.ctx.destination);
             this.master.gain.value = 0.35;
+            this.initialized = true;
+
+            // Auto-resume on user interaction (required for iOS Safari)
+            if (this.ctx.state === 'suspended') {
+                const resumeAudio = () => {
+                    this.resume();
+                    document.removeEventListener('touchstart', resumeAudio);
+                    document.removeEventListener('touchend', resumeAudio);
+                    document.removeEventListener('click', resumeAudio);
+                };
+                document.addEventListener('touchstart', resumeAudio);
+                document.addEventListener('touchend', resumeAudio);
+                document.addEventListener('click', resumeAudio);
+            }
         } catch (e) {
             console.warn('Audio context initialization failed:', e);
+        }
+    }
+
+    resume() {
+        if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(e => {
+                console.warn('Audio resume failed:', e);
+            });
         }
     }
 
@@ -57,6 +80,13 @@ class SoundEngine {
             setTimeout(() => this.tone(80 + Math.random() * 150, 0.08, 'sawtooth', 0.1), i * 20);
         }
         this.tone(50, 0.2, 'sine', 0.2 + intensity * 0.05);
+    }
+
+    itemBreak(intensity = 1) {
+        const base = 520 + Math.min(200, intensity * 40);
+        this.tone(base, 0.06, 'triangle', 0.25);
+        setTimeout(() => this.tone(base * 1.25, 0.07, 'triangle', 0.22), 40);
+        setTimeout(() => this.tone(base * 1.5, 0.08, 'triangle', 0.2), 90);
     }
 
     combo(c) {

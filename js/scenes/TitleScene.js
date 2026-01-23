@@ -57,7 +57,7 @@ class TitleScene extends Phaser.Scene {
             }
         }
 
-        // 月 - responsive positioning
+        // 月 - responsive positioning (avoid double moon in portrait)
         const moonX = GameLayout.isPortrait ? W * 0.5 : W * 0.78;
         const moonY = GameLayout.pctY(0.15);
         this.add.image(moonX, moonY, 'moon').setScale(GameLayout.scale(1.0)).setDepth(1);
@@ -112,12 +112,14 @@ class TitleScene extends Phaser.Scene {
             repeatDelay: 3000
         });
 
-        // 月アイコン
-        this.add.image(W / 2, GameLayout.pctY(0.08), 'moon').setScale(GameLayout.scale(0.6)).setDepth(10);
+        // 月アイコン（縦画面では重複するため非表示）
+        if (!GameLayout.isPortrait) {
+            this.add.image(W / 2, GameLayout.pctY(0.08), 'moon').setScale(GameLayout.scale(0.6)).setDepth(10);
+        }
 
         // タイトル - responsive font size
         const titleY = GameLayout.isPortrait ? GameLayout.pctY(0.20) : GameLayout.pctY(0.24);
-        const title = this.add.text(W / 2, titleY, 'よるのうんどうかい', {
+        const title = this.add.text(W / 2, titleY, 'ねこのズーミーズ', {
             fontSize: GameLayout.fontSize(44) + 'px',
             fontFamily: 'Fredoka One',
             color: '#ffffff',
@@ -133,7 +135,7 @@ class TitleScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        this.add.text(W / 2, titleY + GameLayout.scale(50), 'Midnight Meowathon', {
+        this.add.text(W / 2, titleY + GameLayout.scale(50), 'Cat Zoomies', {
             fontSize: GameLayout.fontSize(20) + 'px',
             color: '#7777aa'
         }).setOrigin(0.5).setDepth(10);
@@ -167,7 +169,7 @@ class TitleScene extends Phaser.Scene {
         }
 
         // 操作説明
-        const controlY = GameLayout.isPortrait ? GameLayout.pctY(0.85) : GameLayout.pctY(0.87);
+        const controlY = GameLayout.isPortrait ? GameLayout.pctY(0.83) : GameLayout.pctY(0.87);
         const controlText = DeviceDetector.isMobile()
             ? 'タッチ操作対応'
             : '← → 移動　　↑/Space ジャンプ　　壁+ジャンプ 壁キック';
@@ -175,6 +177,20 @@ class TitleScene extends Phaser.Scene {
             fontSize: GameLayout.fontSize(14) + 'px',
             color: '#666688'
         }).setOrigin(0.5).setDepth(10);
+
+        const tipText = '壁に触れながらジャンプで壁キック！';
+        const tipY = controlY + GameLayout.scale(30);
+        const tipW = GameLayout.scale(280);
+        const tipH = GameLayout.scale(36);
+        const tipBg = this.add.rectangle(W / 2, tipY, tipW, tipH, 0x2a2a44, 0.9)
+            .setStrokeStyle(2, 0x7777aa)
+            .setDepth(10);
+        this.add.text(W / 2, tipY, tipText, {
+            fontSize: GameLayout.fontSize(14) + 'px',
+            color: '#ffffaa',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5).setDepth(11);
 
         this.add.text(W / 2, GameLayout.pctY(0.96), '© 2025 Midnight Meowathon', {
             fontSize: GameLayout.fontSize(11) + 'px',

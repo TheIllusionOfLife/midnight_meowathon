@@ -16,12 +16,19 @@ class HUDScene extends Phaser.Scene {
         this.mobileControls = null;
         this.noiseGauge = null;
         this.ownerPortrait = null;
+        this.thunderLabel = null;
+        this.thunderBtn = null;
+        this.thunderIcon = null;
+        this.stageTip = null;
+        this.stageTipBg = null;
 
         // Create UI Elements
         this.createScore();
         this.createTimer();
         this.createOwnerMonitor();
         this.createPowerUps();
+        this.createThunderIndicator();
+        this.createStageTip();
 
         // Mobile Controls
         this.createMobileControls();
@@ -43,12 +50,19 @@ class HUDScene extends Phaser.Scene {
         // Destroy mobile controls before removing children
         if (this.joystick) this.joystick.destroy();
         if (this.jumpBtn) this.jumpBtn.destroy();
+        if (this.thunderBtn) this.thunderBtn.destroy();
+        if (this.thunderIcon) this.thunderIcon.destroy();
+        if (this.thunderLabel) this.thunderLabel.destroy();
+        if (this.stageTip) this.stageTip.destroy();
+        if (this.stageTipBg) this.stageTipBg.destroy();
 
         this.children.removeAll(true);
         this.createScore();
         this.createTimer();
         this.createOwnerMonitor();
         this.createPowerUps();
+        this.createThunderIndicator();
+        this.createStageTip();
         this.createMobileControls();
 
         // Restore state
@@ -173,13 +187,11 @@ class HUDScene extends Phaser.Scene {
         // VirtualJoystick defaults: x=12%, y=85%
         // JumpButton defaults: x=88%, y=85%
 
-        this.joystick = new VirtualJoystick(this);
-        this.jumpBtn = new JumpButton(this);
+        const controls = createMobileControls(this);
+        this.joystick = controls.joystick;
+        this.jumpBtn = controls.jumpBtn;
 
-        // Make controls visible
-        this.joystick.base.setVisible(true);
-        this.joystick.stick.setVisible(true);
-        this.jumpBtn.show();
+        this.createThunderButton();
     }
 
     updateScore(score) {
@@ -193,6 +205,107 @@ class HUDScene extends Phaser.Scene {
     updateNoise(noise) {
         this.noise = noise;
         this.updateOwnerMonitorVisuals();
+    }
+
+    update() {
+        if (!this.thunderLabel || !powerUpManager) return;
+
+        const isActive = powerUpManager.isThunderActive();
+        const cooldown = Math.ceil(powerUpManager.getThunderCooldown());
+        const remaining = Math.ceil(powerUpManager.getThunderRemaining());
+
+        if (isActive) {
+            this.thunderLabel.setText(`⚡ 残り ${remaining}秒`);
+            this.thunderLabel.setColor('#44ff44');
+            if (this.thunderBtn) this.thunderBtn.setAlpha(0.7);
+        } else if (cooldown > 0) {
+            this.thunderLabel.setText(`⚡ CD ${cooldown}秒`);
+            this.thunderLabel.setColor('#888888');
+            if (this.thunderBtn) this.thunderBtn.setAlpha(0.5);
+        } else {
+            const readyText = DeviceDetector.isMobile() ? '⚡ READY' : '⚡ READY (E)';
+            this.thunderLabel.setText(readyText);
+            this.thunderLabel.setColor('#ffff66');
+            if (this.thunderBtn) this.thunderBtn.setAlpha(1);
+        }
+    }
+
+    createThunderIndicator() {
+        if (!powerUpManager || !powerUpManager.hasPowerUp('thunder')) return;
+
+        const isMobile = DeviceDetector.isMobile();
+        const fontSize = GameLayout.fontSize(isMobile ? 12 : 14);
+        const x = isMobile ? GameLayout.controlsRight : GameLayout.W - GameLayout.scale(20);
+        const y = isMobile
+            ? GameLayout.controlsBottom - GameLayout.scale(130)
+            : (GameLayout.isPortrait ? 100 : 70);
+
+        this.thunderLabel = this.add.text(x, y, '⚡ READY', {
+            fontSize: fontSize + 'px',
+            fontFamily: 'Fredoka One',
+            color: '#ffff66',
+            stroke: '#000000',
+            strokeThickness: GameLayout.scale(2)
+        }).setOrigin(isMobile ? 0.5 : 1, 0.5);
+    }
+
+    createStageTip() {
+        if (!storyProgress || storyProgress.getCurrentStage() !== 1) return;
+
+        const tipText = '壁に触れながらジャンプで壁キック！';
+        const x = GameLayout.W / 2;
+        const y = GameLayout.isPortrait ? GameLayout.pctY(0.13) : GameLayout.pctY(0.12);
+        const width = GameLayout.scale(280);
+        const height = GameLayout.scale(32);
+
+        this.stageTipBg = this.add.rectangle(x, y, width, height, 0x2a2a44, 0.9)
+            .setStrokeStyle(GameLayout.scale(2), 0x7777aa)
+            .setDepth(120);
+
+        this.stageTip = this.add.text(x, y, tipText, {
+            fontSize: GameLayout.fontSize(14) + 'px',
+            color: '#ffffaa',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5).setDepth(121);
+
+        this.time.delayedCall(5000, () => {
+            if (!this.stageTip || !this.stageTipBg) return;
+            this.tweens.add({
+                targets: [this.stageTip, this.stageTipBg],
+                alpha: 0,
+                duration: 400,
+                onComplete: () => {
+                    if (this.stageTip) this.stageTip.destroy();
+                    if (this.stageTipBg) this.stageTipBg.destroy();
+                }
+            });
+        });
+    }
+
+    createThunderButton() {
+        if (!powerUpManager || !powerUpManager.hasPowerUp('thunder')) return;
+
+        const x = GameLayout.controlsRight;
+        const y = GameLayout.controlsBottom - (GameLayout.isPortrait ? GameLayout.scale(110) : GameLayout.scale(90));
+        const radius = GameLayout.scale(GameLayout.isPortrait ? 20 : 18);
+
+        this.thunderBtn = this.add.circle(x, y, radius, 0x5a3a8a, 0.9)
+            .setStrokeStyle(GameLayout.scale(2), 0x8a6acc)
+            .setDepth(1002)
+            .setScrollFactor(0)
+            .setInteractive({ useHandCursor: true });
+
+        this.thunderIcon = this.add.image(x, y, 'iconThunder')
+            .setScale(GameLayout.scale(0.7))
+            .setDepth(1003)
+            .setScrollFactor(0);
+
+        this.thunderBtn.on('pointerdown', () => {
+            if (this.mainScene && this.mainScene.activateThunder) {
+                this.mainScene.activateThunder();
+            }
+        });
     }
 
     shutdown() {
@@ -209,5 +322,10 @@ class HUDScene extends Phaser.Scene {
         // Destroy mobile controls properly
         if (this.joystick) this.joystick.destroy();
         if (this.jumpBtn) this.jumpBtn.destroy();
+        if (this.thunderBtn) this.thunderBtn.destroy();
+        if (this.thunderIcon) this.thunderIcon.destroy();
+        if (this.thunderLabel) this.thunderLabel.destroy();
+        if (this.stageTip) this.stageTip.destroy();
+        if (this.stageTipBg) this.stageTipBg.destroy();
     }
 }

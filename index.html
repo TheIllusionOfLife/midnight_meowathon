@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>よるのうんどうかい - Midnight Meowathon</title>
+    <title>ねこのズーミーズ - Cat Zoomies</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js"></script>
     <link rel="stylesheet" href="css/styles.css">
     <!-- Google Fonts -->
@@ -59,6 +59,9 @@
                         gravity: { y: 1100 },
                         debug: false
                     }
+                },
+                input: {
+                    activePointers: 2 // Enable multi-touch for joystick + jump button
                 },
                 scale: {
                     mode: Phaser.Scale.RESIZE,

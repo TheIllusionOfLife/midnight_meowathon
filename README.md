@@ -30,6 +30,14 @@ This game is built with **Phaser 3**. It is a pure static web application.
 2.  Serve the root directory with any local web server (e.g., Live Server, `python -m http.server`, or `npm install -g http-server && http-server`).
 3.  Open `index.html` in your browser.
 
+### Build (itch.io)
+Run the utility script to package the game for itch.io:
+```bash
+./build.sh
+```
+This creates `midnight_meowathon.zip` with `index.html`, `css/`, and `js/`.
+Note: Requires the `zip` command to be available on your system.
+
 ### Structure
 *   `index.html`: Entry point and game configuration.
 *   `css/`: Stylesheets.
