@@ -336,6 +336,15 @@ test('猫の集会のゲーム開始時にカメラ調整が行われる', () =>
     assert(content.includes('handleResize'), 'initTimeAttack で handleResize が呼ばれていません');
 });
 
+test('猫の集会が固定ワールド境界を設定している', () => {
+    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    assert(
+        content.includes('physics.world.setBounds') ||
+        content.includes('physics.world.setBounds('),
+        'GatheringScene に physics.world.setBounds がありません'
+    );
+});
+
 test('textures.js にアイコンテクスチャが定義されている', () => {
     const content = fs.readFileSync('js/textures.js', 'utf8');
     const requiredIcons = ['iconCatnip', 'iconBell', 'iconThunder', 'iconMoon', 'iconFish', 'iconCatToy'];
