@@ -10,12 +10,16 @@ class VirtualJoystick {
         const {
             xPercent = 0.12,
             yPercent = 0.85,
-            radiusPercent = 0.08
+            radiusPercent = 0.08,
+            touchOffsetX = 0,
+            touchOffsetY = 0
         } = options;
 
         this.xPercent = xPercent;
         this.yPercent = yPercent;
         this.radiusPercent = radiusPercent;
+        this.touchOffsetX = touchOffsetX;
+        this.touchOffsetY = touchOffsetY;
 
         // Calculate actual positions
         this.updateDimensions();
@@ -106,8 +110,8 @@ class VirtualJoystick {
     activate(pointer) {
         this.active = true;
         this.pointerId = pointer.id; // Lock to this specific pointer
-        const px = pointer.x * this.inputScale;
-        const py = pointer.y * this.inputScale;
+        const px = pointer.x * this.inputScale + this.touchOffsetX;
+        const py = pointer.y * this.inputScale + this.touchOffsetY;
         this.baseX = px;
         this.baseY = py;
         this.base.setPosition(this.baseX, this.baseY);
@@ -117,8 +121,8 @@ class VirtualJoystick {
     }
 
     updateStick(pointer) {
-        const px = pointer.x * this.inputScale;
-        const py = pointer.y * this.inputScale;
+        const px = pointer.x * this.inputScale + this.touchOffsetX;
+        const py = pointer.y * this.inputScale + this.touchOffsetY;
         const dx = px - this.baseX;
         const dy = py - this.baseY;
         const distance = Math.sqrt(dx * dx + dy * dy);
