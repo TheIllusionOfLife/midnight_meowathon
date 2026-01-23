@@ -4,6 +4,7 @@ class VirtualJoystick {
     constructor(scene, options = {}) {
         this.scene = scene;
         this.destroyed = false;
+        this.inputScale = 1;
 
         // Use percentage-based positioning
         const {
@@ -105,8 +106,10 @@ class VirtualJoystick {
     activate(pointer) {
         this.active = true;
         this.pointerId = pointer.id; // Lock to this specific pointer
-        this.baseX = pointer.x;
-        this.baseY = pointer.y;
+        const px = pointer.x * this.inputScale;
+        const py = pointer.y * this.inputScale;
+        this.baseX = px;
+        this.baseY = py;
         this.base.setPosition(this.baseX, this.baseY);
         this.stick.setPosition(this.baseX, this.baseY);
         this.base.setVisible(true);
@@ -114,8 +117,10 @@ class VirtualJoystick {
     }
 
     updateStick(pointer) {
-        const dx = pointer.x - this.baseX;
-        const dy = pointer.y - this.baseY;
+        const px = pointer.x * this.inputScale;
+        const py = pointer.y * this.inputScale;
+        const dx = px - this.baseX;
+        const dy = py - this.baseY;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         if (distance > this.radius) {
@@ -123,8 +128,8 @@ class VirtualJoystick {
             this.stickX = this.baseX + Math.cos(angle) * this.radius;
             this.stickY = this.baseY + Math.sin(angle) * this.radius;
         } else {
-            this.stickX = pointer.x;
-            this.stickY = pointer.y;
+            this.stickX = px;
+            this.stickY = py;
         }
 
         this.stick.setPosition(this.stickX, this.stickY);
@@ -422,6 +427,7 @@ function updateMobileControlsForCamera(joystick, jumpBtn, camera, screenW, scree
 
     const minDim = Math.min(screenW, screenH);
     const zoom = camera.zoom || 1;
+    joystick.inputScale = 1;
 
     const joyXPct = typeof joystick.xPercent === 'number' ? joystick.xPercent : 0.12;
     const joyYPct = typeof joystick.yPercent === 'number' ? joystick.yPercent : 0.85;
@@ -442,6 +448,37 @@ function updateMobileControlsForCamera(joystick, jumpBtn, camera, screenW, scree
 
     jumpBtn.x = btnWorldPoint.x;
     jumpBtn.y = btnWorldPoint.y;
+    jumpBtn.radius = (minDim * (jumpBtn.radiusPercent || 0.06)) / zoom;
+    jumpBtn.updatePosition();
+}
+
+function updateMobileControlsForScreen(joystick, jumpBtn, camera, screenW, screenH) {
+    if (!joystick || !jumpBtn) return;
+    if (joystick.destroyed || jumpBtn.destroyed) return;
+    if (!joystick.base || !joystick.base.geom || !joystick.stick || !joystick.stick.geom) return;
+    if (!jumpBtn.button || !jumpBtn.button.geom) return;
+
+    const minDim = Math.min(screenW, screenH);
+    const zoom = camera && camera.zoom ? camera.zoom : 1;
+    joystick.inputScale = zoom > 0 ? 1 / zoom : 1;
+
+    const joyXPct = typeof joystick.xPercent === 'number' ? joystick.xPercent : 0.12;
+    const joyYPct = typeof joystick.yPercent === 'number' ? joystick.yPercent : 0.85;
+    const joyScreenX = screenW * joyXPct;
+    const joyScreenY = screenH * joyYPct;
+
+    joystick.baseX = joyScreenX / zoom;
+    joystick.baseY = joyScreenY / zoom;
+    joystick.radius = (minDim * (joystick.radiusPercent || 0.08)) / zoom;
+    joystick.updatePosition();
+
+    const btnXPct = typeof jumpBtn.xPercent === 'number' ? jumpBtn.xPercent : 0.88;
+    const btnYPct = typeof jumpBtn.yPercent === 'number' ? jumpBtn.yPercent : 0.85;
+    const btnScreenX = screenW * btnXPct;
+    const btnScreenY = screenH * btnYPct;
+
+    jumpBtn.x = btnScreenX / zoom;
+    jumpBtn.y = btnScreenY / zoom;
     jumpBtn.radius = (minDim * (jumpBtn.radiusPercent || 0.06)) / zoom;
     jumpBtn.updatePosition();
 }

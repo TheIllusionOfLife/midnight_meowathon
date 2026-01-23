@@ -46,6 +46,10 @@ class GatheringScene extends Phaser.Scene {
             this.cameras.main.setZoom(zoom);
             this.cameras.main.removeBounds();
             this.cameras.main.centerOn(worldW / 2, worldH / 2);
+
+            if (this.joystick && this.jumpBtn) {
+                updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, screenW, screenH);
+            }
         }
     }
 
@@ -215,6 +219,7 @@ class GatheringScene extends Phaser.Scene {
         this.elapsedTime = 0;
 
         const layout = GATHERING_STAGE_LAYOUTS[this.selectedBoss.id];
+        this.currentLayout = layout;
         this.totalItems = layout.items.length;
 
         // 背景 (Cover large area for camera zoom/overscan)
@@ -289,8 +294,15 @@ class GatheringScene extends Phaser.Scene {
     }
 
     createCat() {
-        // 床の上に配置（y=470で床の少し上）
-        this.cat = this.add.container(100, 470);
+        const layout = this.currentLayout || GATHERING_STAGE_LAYOUTS[this.selectedBoss.id];
+        const floor = layout && layout.platforms
+            ? layout.platforms.find(p => p.w >= 700) || layout.platforms[0]
+            : { x: 400, y: 500, w: 760, h: 10 };
+        const floorTop = floor.y - floor.h / 2;
+        const catY = floorTop - 15;
+
+        // 床の上に配置
+        this.cat = this.add.container(100, catY);
         this.catSprite = this.add.image(0, 0, 'cat').setScale(1.0);
         this.cat.add(this.catSprite);
 
@@ -336,8 +348,7 @@ class GatheringScene extends Phaser.Scene {
             const controls = createMobileControls(this);
             this.joystick = controls.joystick;
             this.jumpBtn = controls.jumpBtn;
-            // Trigger resize to position them correctly immediately
-            this.handleResize(this.scale.gameSize);
+            updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, this.scale.gameSize.width, this.scale.gameSize.height);
         }
     }
 
