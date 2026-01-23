@@ -3,6 +3,7 @@
 class VirtualJoystick {
     constructor(scene, options = {}) {
         this.scene = scene;
+        this.destroyed = false;
 
         // Use percentage-based positioning
         const {
@@ -52,12 +53,15 @@ class VirtualJoystick {
     }
 
     onResize(gameSize) {
+        if (this.destroyed) return;
         this.updateDimensions();
         this.updatePosition();
     }
 
     updatePosition() {
+        if (this.destroyed) return;
         if (!this.base || !this.stick) return;
+        if (!this.base.geom || !this.stick.geom) return;
         if (this.base) {
             this.base.setPosition(this.baseX, this.baseY);
             this.base.setRadius(this.radius);
@@ -151,6 +155,7 @@ class VirtualJoystick {
     }
 
     destroy() {
+        this.destroyed = true;
         // Remove resize listener
         this.scene.scale.off('resize', this.onResize, this);
 
@@ -171,6 +176,7 @@ class VirtualJoystick {
 class JumpButton {
     constructor(scene, options = {}) {
         this.scene = scene;
+        this.destroyed = false;
 
         // Use percentage-based positioning
         const {
@@ -224,16 +230,18 @@ class JumpButton {
     }
 
     onResize(gameSize) {
+        if (this.destroyed) return;
         this.updateDimensions();
         this.updatePosition();
     }
 
     updatePosition() {
-        if (this.button) {
+        if (this.destroyed) return;
+        if (this.button && this.button.geom) {
             this.button.setPosition(this.x, this.y);
             this.button.setRadius(this.radius);
         }
-        if (this.icon) {
+        if (this.icon && this.icon.list) {
             this.icon.setPosition(this.x, this.y);
             // Update icon scale
             const iconScale = this.radius / 40;
@@ -290,9 +298,12 @@ class JumpButton {
     }
 
     destroy() {
+        this.destroyed = true;
         this.scene.scale.off('resize', this.onResize, this);
-        this.button.destroy();
-        this.icon.destroy();
+        if (this.button) this.button.destroy();
+        if (this.icon) this.icon.destroy();
+        this.button = null;
+        this.icon = null;
     }
 }
 
@@ -405,25 +416,32 @@ function createMobileControls(scene, options = {}) {
 
 function updateMobileControlsForCamera(joystick, jumpBtn, camera, screenW, screenH) {
     if (!joystick || !jumpBtn || !camera) return;
+    if (joystick.destroyed || jumpBtn.destroyed) return;
+    if (!joystick.base || !joystick.base.geom || !joystick.stick || !joystick.stick.geom) return;
+    if (!jumpBtn.button || !jumpBtn.button.geom) return;
 
     const minDim = Math.min(screenW, screenH);
     const zoom = camera.zoom || 1;
 
-    const joyScreenX = screenW * 0.15;
-    const joyScreenY = screenH * 0.82;
+    const joyXPct = typeof joystick.xPercent === 'number' ? joystick.xPercent : 0.12;
+    const joyYPct = typeof joystick.yPercent === 'number' ? joystick.yPercent : 0.85;
+    const joyScreenX = screenW * joyXPct;
+    const joyScreenY = screenH * joyYPct;
     const joyWorldPoint = camera.getWorldPoint(joyScreenX, joyScreenY);
 
     joystick.baseX = joyWorldPoint.x;
     joystick.baseY = joyWorldPoint.y;
-    joystick.radius = (minDim * 0.08) / zoom;
+    joystick.radius = (minDim * (joystick.radiusPercent || 0.08)) / zoom;
     joystick.updatePosition();
 
-    const btnScreenX = screenW * 0.85;
-    const btnScreenY = screenH * 0.82;
+    const btnXPct = typeof jumpBtn.xPercent === 'number' ? jumpBtn.xPercent : 0.88;
+    const btnYPct = typeof jumpBtn.yPercent === 'number' ? jumpBtn.yPercent : 0.85;
+    const btnScreenX = screenW * btnXPct;
+    const btnScreenY = screenH * btnYPct;
     const btnWorldPoint = camera.getWorldPoint(btnScreenX, btnScreenY);
 
     jumpBtn.x = btnWorldPoint.x;
     jumpBtn.y = btnWorldPoint.y;
-    jumpBtn.radius = (minDim * 0.08) / zoom;
+    jumpBtn.radius = (minDim * (jumpBtn.radiusPercent || 0.06)) / zoom;
     jumpBtn.updatePosition();
 }

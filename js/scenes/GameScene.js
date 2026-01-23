@@ -153,6 +153,8 @@ class GameScene extends Phaser.Scene {
         // 窓（パララックス対応）
         const windowX = GameLayout.isPortrait ? 600 : 680;
         const windowY = 120;
+        this.windowX = windowX;
+        this.windowY = windowY;
         this.add.rectangle(windowX, windowY, 100, 150, 0x1a1a30)
             .setStrokeStyle(6, 0x3a3a5a)
             .setDepth(0)
@@ -191,13 +193,15 @@ class GameScene extends Phaser.Scene {
 
     createAtmosphere() {
         // Moonlight Beams (from Window)
+        const windowX = typeof this.windowX === 'number' ? this.windowX : 680;
+        const windowY = typeof this.windowY === 'number' ? this.windowY : 120;
         const light = this.add.graphics();
         light.fillStyle(0xffffcc, 0.08); // Very subtle warm white
         light.beginPath();
-        light.moveTo(680, 120); // Window center
-        light.lineTo(630, 120);
-        light.lineTo(500, H);
-        light.lineTo(800, H);
+        light.moveTo(windowX, windowY); // Window center
+        light.lineTo(windowX - 50, windowY);
+        light.lineTo(windowX - 180, H);
+        light.lineTo(windowX + 120, H);
         light.closePath();
         light.fillPath();
         light.setDepth(10); // In front of background, behind gameplay
@@ -519,7 +523,7 @@ class GameScene extends Phaser.Scene {
         this.addNoise(noiseValue);
         this.createBreakEffect(item.x, item.y, itemType, finalScore);
         this.shakeIntensity = Math.min(12, 3 + scoreValue / 30);
-        sound.hit(scoreValue / 80);
+        sound.itemBreak(scoreValue / 80);
 
         if (this.combo >= 2) {
             this.showComboDisplay();

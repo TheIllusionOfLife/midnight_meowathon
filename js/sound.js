@@ -82,6 +82,13 @@ class SoundEngine {
         this.tone(50, 0.2, 'sine', 0.2 + intensity * 0.05);
     }
 
+    itemBreak(intensity = 1) {
+        const base = 520 + Math.min(200, intensity * 40);
+        this.tone(base, 0.06, 'triangle', 0.25);
+        setTimeout(() => this.tone(base * 1.25, 0.07, 'triangle', 0.22), 40);
+        setTimeout(() => this.tone(base * 1.5, 0.08, 'triangle', 0.2), 90);
+    }
+
     combo(c) {
         const f = 400 + c * 60;
         this.tone(f, 0.08);

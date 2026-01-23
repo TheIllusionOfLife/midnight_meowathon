@@ -447,7 +447,7 @@ class GatheringScene extends Phaser.Scene {
         this.progressText.setText(`${this.brokenCount}/${this.totalItems}`);
 
         EnhancedParticles.createShards(this, item.x, item.y, 0x5bc0de, 10, scoreValue);
-        sound.hit(scoreValue / 80);
+        sound.itemBreak(scoreValue / 80);
 
         item.destroy();
 
@@ -489,8 +489,9 @@ class GatheringScene extends Phaser.Scene {
             body.setVelocityY(Math.min(body.velocity.y, 100));
         }
 
-        const moveL = this.cursors.left.isDown || this.keys.A.isDown || (this.joystick && this.joystick.left);
-        const moveR = this.cursors.right.isDown || this.keys.D.isDown || (this.joystick && this.joystick.right);
+        const joystickDir = this.joystick ? this.joystick.getDirection() : { x: 0, y: 0 };
+        const moveL = this.cursors.left.isDown || this.keys.A.isDown || joystickDir.x < -0.2;
+        const moveR = this.cursors.right.isDown || this.keys.D.isDown || joystickDir.x > 0.2;
 
         if (moveL) {
             body.setVelocityX(-280);
