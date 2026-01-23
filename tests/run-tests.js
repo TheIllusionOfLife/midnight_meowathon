@@ -364,6 +364,34 @@ test('画面座標用モバイル操作がズーム補正を行う', () => {
     );
 });
 
+test('猫の集会のモバイル操作を再生成する前にクリーンアップしている', () => {
+    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    const start = content.indexOf('createUI()');
+    assert(start !== -1, 'GatheringScene に createUI がありません');
+    const snippet = content.slice(start, start + 600);
+    assert(
+        snippet.includes('cleanupMobileControls') || snippet.includes('destroy()'),
+        'createUI で既存モバイル操作のクリーンアップがありません'
+    );
+});
+
+test('猫の集会の遷移時にモバイル操作をクリーンアップしている', () => {
+    const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
+    assert(content.includes('cleanupMobileControls'), 'cleanupMobileControls がありません');
+    assert(
+        content.includes('shutdown()') && content.includes('cleanupMobileControls'),
+        'shutdown で cleanupMobileControls が呼ばれていません'
+    );
+});
+
+test('ジョイスティックがワールド座標入力に対応している', () => {
+    const mobile = fs.readFileSync('js/mobile.js', 'utf8');
+    assert(
+        mobile.includes('pointer.worldX') || mobile.includes('pointer.worldY'),
+        'VirtualJoystick が worldX/worldY を参照していません'
+    );
+});
+
 test('textures.js にアイコンテクスチャが定義されている', () => {
     const content = fs.readFileSync('js/textures.js', 'utf8');
     const requiredIcons = ['iconCatnip', 'iconBell', 'iconThunder', 'iconMoon', 'iconFish', 'iconCatToy'];
