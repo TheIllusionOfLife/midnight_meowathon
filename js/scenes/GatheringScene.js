@@ -360,12 +360,7 @@ class GatheringScene extends Phaser.Scene {
             const btnXPct = GameLayout.controlsRight / GameLayout.W;
             const btnYPct = GameLayout.controlsBottom / GameLayout.H;
             const controls = createMobileControls(this, {
-                joystick: {
-                    xPercent: joyXPct,
-                    yPercent: joyYPct,
-                    touchOffsetX: -GameLayout.scale(8),
-                    touchOffsetY: GameLayout.scale(12)
-                },
+                joystick: { xPercent: joyXPct, yPercent: joyYPct },
                 jump: { xPercent: btnXPct, yPercent: btnYPct }
             });
             this.joystick = controls.joystick;

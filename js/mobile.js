@@ -463,16 +463,17 @@ function updateMobileControlsForScreen(joystick, jumpBtn, camera, screenW, scree
     if (!jumpBtn.button || !jumpBtn.button.geom) return;
 
     const minDim = Math.min(screenW, screenH);
-    joystick.inputScale = 1;
+    const zoom = camera && camera.zoom ? camera.zoom : 1;
+    joystick.inputScale = zoom > 0 ? 1 / zoom : 1;
 
     const joyXPct = typeof joystick.xPercent === 'number' ? joystick.xPercent : 0.12;
     const joyYPct = typeof joystick.yPercent === 'number' ? joystick.yPercent : 0.85;
     const joyScreenX = screenW * joyXPct;
     const joyScreenY = screenH * joyYPct;
 
-    joystick.baseX = joyScreenX;
-    joystick.baseY = joyScreenY;
-    joystick.radius = minDim * (joystick.radiusPercent || 0.08);
+    joystick.baseX = joyScreenX / zoom;
+    joystick.baseY = joyScreenY / zoom;
+    joystick.radius = (minDim * (joystick.radiusPercent || 0.08)) / zoom;
     joystick.updatePosition();
 
     const btnXPct = typeof jumpBtn.xPercent === 'number' ? jumpBtn.xPercent : 0.88;
@@ -480,8 +481,8 @@ function updateMobileControlsForScreen(joystick, jumpBtn, camera, screenW, scree
     const btnScreenX = screenW * btnXPct;
     const btnScreenY = screenH * btnYPct;
 
-    jumpBtn.x = btnScreenX;
-    jumpBtn.y = btnScreenY;
-    jumpBtn.radius = minDim * (jumpBtn.radiusPercent || 0.06);
+    jumpBtn.x = btnScreenX / zoom;
+    jumpBtn.y = btnScreenY / zoom;
+    jumpBtn.radius = (minDim * (jumpBtn.radiusPercent || 0.06)) / zoom;
     jumpBtn.updatePosition();
 }
