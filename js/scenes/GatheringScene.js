@@ -41,13 +41,18 @@ class GatheringScene extends Phaser.Scene {
 
             const zoomX = screenW / worldW;
             const zoomY = screenH / worldH;
+            const isLandscape = screenW > screenH;
             const baseZoom = Math.min(zoomX, zoomY, 1);
-            const zoomPadding = (DeviceDetector.isMobile() && !DeviceDetector.isPortrait()) ? 0.92 : 1;
+            const zoomPadding = (DeviceDetector.isMobile() && isLandscape) ? 0.85 : 1;
             const zoom = baseZoom * zoomPadding;
 
             this.cameras.main.setZoom(zoom);
             this.cameras.main.removeBounds();
-            this.cameras.main.centerOn(worldW / 2, worldH / 2);
+            const visibleH = screenH / zoom;
+            const minCenterY = worldH / 2;
+            const bottomPadding = (DeviceDetector.isMobile() && isLandscape) ? 24 : 0;
+            const centerY = Math.max(minCenterY, worldH - visibleH / 2 + bottomPadding);
+            this.cameras.main.centerOn(worldW / 2, centerY);
 
             if (this.joystick && this.jumpBtn) {
                 updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, screenW, screenH);
