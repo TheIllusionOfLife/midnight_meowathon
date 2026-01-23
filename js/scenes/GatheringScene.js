@@ -355,7 +355,14 @@ class GatheringScene extends Phaser.Scene {
 
         // Mobile Controls
         if (DeviceDetector.isMobile()) {
-            const controls = createMobileControls(this);
+            const joyXPct = GameLayout.controlsLeft / GameLayout.W;
+            const joyYPct = GameLayout.controlsBottom / GameLayout.H;
+            const btnXPct = GameLayout.controlsRight / GameLayout.W;
+            const btnYPct = GameLayout.controlsBottom / GameLayout.H;
+            const controls = createMobileControls(this, {
+                joystick: { xPercent: joyXPct, yPercent: joyYPct },
+                jump: { xPercent: btnXPct, yPercent: btnYPct }
+            });
             this.joystick = controls.joystick;
             this.jumpBtn = controls.jumpBtn;
             updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, this.scale.gameSize.width, this.scale.gameSize.height);
