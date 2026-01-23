@@ -184,6 +184,38 @@ test('モバイルで雷を発動できる UI がある', () => {
     );
 });
 
+test('結果画面がカメラ座標変換を使用している', () => {
+    const content = fs.readFileSync('js/scenes/GameScene.js', 'utf8');
+    const start = content.indexOf('showResultScreen');
+    assert(start !== -1, 'showResultScreen が見つかりません');
+    const snippet = content.slice(start, start + 1200);
+    assert(
+        snippet.includes('getWorldPoint'),
+        'showResultScreen が getWorldPoint を使用していません'
+    );
+});
+
+test('雷の状態表示が HUDScene にある', () => {
+    const content = fs.readFileSync('js/scenes/HUDScene.js', 'utf8');
+    assert(
+        content.includes('thunderLabel') || content.includes('Thunder'),
+        'HUDScene に雷の状態表示がありません'
+    );
+});
+
+test('タイトル画面に壁キックのヒントがある', () => {
+    const content = fs.readFileSync('js/scenes/TitleScene.js', 'utf8');
+    assert(
+        content.includes('壁キック') || content.includes('壁ジャンプ'),
+        'タイトル画面に壁キックのヒントがありません'
+    );
+});
+
+test('猫のセリフに不適切な語が含まれていない', () => {
+    const content = fs.readFileSync('js/effects.js', 'utf8');
+    assert(!content.includes('ふんっ'), '猫のセリフに「ふんっ」が残っています');
+});
+
 test('textures.js にアイコンテクスチャが定義されている', () => {
     const content = fs.readFileSync('js/textures.js', 'utf8');
     const requiredIcons = ['iconCatnip', 'iconBell', 'iconThunder', 'iconMoon', 'iconFish', 'iconCatToy'];
