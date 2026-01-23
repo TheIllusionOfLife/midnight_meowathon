@@ -366,8 +366,9 @@ test('画面座標用モバイル操作がズーム補正を行う', () => {
 
 test('猫の集会のモバイル操作を再生成する前にクリーンアップしている', () => {
     const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
-    const start = content.indexOf('createUI()');
-    assert(start !== -1, 'GatheringScene に createUI がありません');
+    const match = content.match(/createUI\(\)\s*\{/);
+    assert(match && typeof match.index === 'number', 'GatheringScene に createUI がありません');
+    const start = match.index;
     const snippet = content.slice(start, start + 600);
     assert(
         snippet.includes('cleanupMobileControls') || snippet.includes('destroy()'),
