@@ -95,8 +95,14 @@ function validateGameConfiguration() {
     ];
 
     requiredClasses.forEach(className => {
-        // Check global scope using globalThis (safer than eval)
-        if (typeof globalThis[className] === 'undefined') {
+        // Check if class exists in global scope
+        try {
+            // Use Function constructor to check global scope without eval security issues
+            const checkExists = new Function(`return typeof ${className} !== 'undefined';`);
+            if (!checkExists()) {
+                errors.push(`Class ${className} is not defined`);
+            }
+        } catch (e) {
             errors.push(`Class ${className} is not defined`);
         }
     });

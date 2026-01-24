@@ -618,6 +618,26 @@ function createAllTextures(scene) {
     g.generateTexture('pen', 12, 40);
     g.destroy();
 
+    // 缶詰（転がる）
+    g = scene.make.graphics({ x: 0, y: 0, add: false });
+    // 缶本体（円柱）
+    g.fillStyle(0xcc8844);
+    g.fillEllipse(16, 8, 24, 8); // 上面
+    g.fillRect(4, 8, 24, 16); // 側面
+    g.fillEllipse(16, 24, 24, 8); // 下面
+    // ラベル
+    g.fillStyle(0xffaa55);
+    g.fillRect(4, 12, 24, 8);
+    // ラベルテキスト（装飾）
+    g.fillStyle(0x664422);
+    g.fillRect(8, 14, 16, 2);
+    g.fillRect(8, 18, 16, 2);
+    // ハイライト
+    g.lineStyle(1, 0xffffff, 0.4);
+    g.lineBetween(4, 10, 4, 22);
+    g.generateTexture('canFood', 32, 32);
+    g.destroy();
+
     // 月
     g = scene.make.graphics({ x: 0, y: 0, add: false });
     g.fillStyle(0xffffd8);

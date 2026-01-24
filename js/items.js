@@ -46,5 +46,10 @@ const ITEM_PROPERTIES = {
         score: 10,
         noise: 3,
         color: 0x2255aa
+    },
+    canFood: {
+        score: 60,
+        noise: 8,
+        color: 0xcc8844
     }
 };
