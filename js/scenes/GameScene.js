@@ -1021,5 +1021,10 @@ class GameScene extends Phaser.Scene {
 
         // Stop HUD scene to prevent memory leaks
         this.scene.stop('HUDScene');
+
+        // Clear particle pools to prevent stale references
+        if (typeof particlePools !== 'undefined') {
+            particlePools.clear();
+        }
     }
 }

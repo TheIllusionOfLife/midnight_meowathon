@@ -181,7 +181,7 @@ const TRANSLATIONS = {
 
 // i18n Manager
 const i18n = {
-    lang: 'ja', // Default language
+    lang: 'en', // Default language
 
     /**
      * Translate a key

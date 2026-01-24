@@ -186,7 +186,8 @@ class TitleScene extends Phaser.Scene {
 
         const tipText = i18n.t('TIP_WALLKICK');
         const tipY = controlY + GameLayout.scale(30);
-        const tipW = GameLayout.scale(280);
+        // Dynamic width based on text length
+        const tipW = Math.max(GameLayout.scale(280), tipText.length * GameLayout.scale(10) + GameLayout.scale(40));
         const tipH = GameLayout.scale(36);
         const tipBg = this.add.rectangle(W / 2, tipY, tipW, tipH, 0x2a2a44, 0.9)
             .setStrokeStyle(2, 0x7777aa)

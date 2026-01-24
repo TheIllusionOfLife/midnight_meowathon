@@ -236,9 +236,10 @@ class HUDScene extends Phaser.Scene {
         const isMobile = DeviceDetector.isMobile();
         const fontSize = GameLayout.fontSize(isMobile ? 12 : 14);
         const x = isMobile ? GameLayout.controlsRight : GameLayout.W - GameLayout.scale(20);
+        // Move down below score text to avoid overlap
         const y = isMobile
             ? GameLayout.controlsBottom - GameLayout.scale(130)
-            : (GameLayout.isPortrait ? 100 : 70);
+            : (GameLayout.isPortrait ? 130 : 100);
 
         this.thunderLabel = this.add.text(x, y, '⚡ READY', {
             fontSize: fontSize + 'px',
@@ -254,8 +255,10 @@ class HUDScene extends Phaser.Scene {
 
         const tipText = i18n.t('TIP_WALLKICK');
         const x = GameLayout.W / 2;
-        const y = GameLayout.isPortrait ? GameLayout.pctY(0.13) : GameLayout.pctY(0.12);
-        const width = GameLayout.scale(280);
+        // Move down to avoid overlapping with timer
+        const y = GameLayout.isPortrait ? GameLayout.pctY(0.18) : GameLayout.pctY(0.17);
+        // Dynamic width based on text length
+        const width = Math.max(GameLayout.scale(280), tipText.length * GameLayout.scale(10) + GameLayout.scale(40));
         const height = GameLayout.scale(32);
 
         this.stageTipBg = this.add.rectangle(x, y, width, height, 0x2a2a44, 0.9)
