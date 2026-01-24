@@ -213,7 +213,6 @@ class JumpButton {
         this.button = scene.add.circle(this.x, this.y, this.radius, 0xffaa88, 0.7).setDepth(1000);
         this.button.setStrokeStyle(3, 0xff8866, 0.9);
         this.button.setScrollFactor(0);
-        this.button.setInteractive();
         this.button.setVisible(false);
 
         // 肉球アイコン
@@ -280,17 +279,25 @@ class JumpButton {
     setupInput() {
         this.activePointerId = null;
 
-        this.button.on('pointerdown', (pointer) => {
-            // Only track the first touch
-            if (this.activePointerId === null) {
+        // Check if pointer is within button bounds
+        this.isPointerInButton = (pointer) => {
+            const dx = pointer.x - this.x;
+            const dy = pointer.y - this.y;
+            return (dx * dx + dy * dy) <= (this.radius * this.radius);
+        };
+
+        // Use scene-level input for reliable multi-touch on iOS
+        this.onPointerDown = (pointer) => {
+            // Only respond if no button press is active and touch is in button area
+            if (this.activePointerId === null && this.isPointerInButton(pointer)) {
                 this.activePointerId = pointer.id;
                 this.pressed = true;
                 this.button.setFillStyle(0xff8866, 0.9);
                 this.button.setScale(0.95);
             }
-        });
+        };
 
-        this.releaseButton = (pointer) => {
+        this.onPointerUp = (pointer) => {
             // Only release if this is the tracked pointer
             if (pointer && pointer.id === this.activePointerId) {
                 this.pressed = false;
@@ -300,11 +307,8 @@ class JumpButton {
             }
         };
 
-        this.button.on('pointerup', this.releaseButton);
-        this.button.on('pointerupoutside', this.releaseButton);
-
-        // Global pointerup handler to catch releases anywhere on screen
-        this.scene.input.on('pointerup', this.releaseButton);
+        this.scene.input.on('pointerdown', this.onPointerDown);
+        this.scene.input.on('pointerup', this.onPointerUp);
     }
 
     isPressed() {
@@ -324,8 +328,12 @@ class JumpButton {
     destroy() {
         this.destroyed = true;
         this.scene.scale.off('resize', this.onResize, this);
-        if (this.releaseButton) {
-            this.scene.input.off('pointerup', this.releaseButton);
+        // Remove input handlers
+        if (this.onPointerDown) {
+            this.scene.input.off('pointerdown', this.onPointerDown);
+        }
+        if (this.onPointerUp) {
+            this.scene.input.off('pointerup', this.onPointerUp);
         }
         if (this.button) this.button.destroy();
         if (this.icon) this.icon.destroy();
