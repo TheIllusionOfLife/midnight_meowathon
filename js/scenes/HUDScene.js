@@ -257,20 +257,22 @@ class HUDScene extends Phaser.Scene {
         const x = GameLayout.W / 2;
         // Move down to avoid overlapping with timer
         const y = GameLayout.isPortrait ? GameLayout.pctY(0.18) : GameLayout.pctY(0.17);
-        // Dynamic width based on text length
-        const width = Math.max(GameLayout.scale(280), tipText.length * GameLayout.scale(10) + GameLayout.scale(40));
-        const height = GameLayout.scale(32);
 
-        this.stageTipBg = this.add.rectangle(x, y, width, height, 0x2a2a44, 0.9)
-            .setStrokeStyle(GameLayout.scale(2), 0x7777aa)
-            .setDepth(120);
-
+        // Create text first to measure actual width
         this.stageTip = this.add.text(x, y, tipText, {
             fontSize: GameLayout.fontSize(14) + 'px',
             color: '#ffffaa',
             stroke: '#000000',
             strokeThickness: 3
         }).setOrigin(0.5).setDepth(121);
+
+        // Use measured text width for background
+        const width = Math.max(GameLayout.scale(280), this.stageTip.width + GameLayout.scale(40));
+        const height = GameLayout.scale(32);
+
+        this.stageTipBg = this.add.rectangle(x, y, width, height, 0x2a2a44, 0.9)
+            .setStrokeStyle(GameLayout.scale(2), 0x7777aa)
+            .setDepth(120);
 
         this.time.delayedCall(5000, () => {
             if (!this.stageTip || !this.stageTipBg) return;

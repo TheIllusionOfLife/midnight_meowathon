@@ -95,12 +95,8 @@ function validateGameConfiguration() {
     ];
 
     requiredClasses.forEach(className => {
-        // Check both window and global scope (class declarations may not be on window)
-        try {
-            if (typeof eval(className) === 'undefined') {
-                errors.push(`Class ${className} is not defined`);
-            }
-        } catch (e) {
+        // Check global scope using globalThis (safer than eval)
+        if (typeof globalThis[className] === 'undefined') {
             errors.push(`Class ${className} is not defined`);
         }
     });

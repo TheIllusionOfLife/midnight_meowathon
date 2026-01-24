@@ -62,7 +62,8 @@ const CAT_DIALOGUES_JA = {
     combo: ['にゃにゃ！', 'にゃーん♪', 'にゃっにゃっ'],
     danger: ['しーっ…', 'にゃ…', 'そーっと…'],
     victory: ['にゃーん！', 'にゃにゃ～♪', 'にゃっほー！'],
-    defeat: ['にゃぁ…', 'にゃう…', 'むむむ…']
+    defeat: ['にゃぁ…', 'にゃう…', 'むむむ…'],
+    default: ['にゃー']
 };
 
 const CAT_DIALOGUES_EN = {
@@ -72,7 +73,8 @@ const CAT_DIALOGUES_EN = {
     combo: ['Wow!', 'Purrfect!', 'Nice!'],
     danger: ['Shh...', 'Quiet...', 'Careful...'],
     victory: ['Meow~!', 'Purr~♪', 'Yay!'],
-    defeat: ['Meow...', 'Aww...', 'Hmm...']
+    defeat: ['Meow...', 'Aww...', 'Hmm...'],
+    default: ['Meow!']
 };
 
 // Get dialogues based on current language
@@ -105,8 +107,7 @@ function showCatDialogue(scene, x, y, category) {
     speechCooldowns[cooldownKey] = now;
 
     const catDialogues = getCatDialogues();
-    const defaultText = (typeof i18n !== 'undefined' && i18n.lang === 'ja') ? 'にゃー' : 'Meow!';
-    const dialogues = catDialogues[category] || [defaultText];
+    const dialogues = catDialogues[category] || catDialogues.default;
     const text = Phaser.Utils.Array.GetRandom(dialogues);
     return new SpeechBubble(scene, x, y - 40, text);
 }
@@ -178,7 +179,7 @@ class ParticlePool {
                 if (options.size !== undefined && this.type === 'shard' && particle.setSize) {
                     particle.setSize(options.size, options.size);
                 }
-                if (options.radius !== undefined && this.type === 'dust' && particle.geom) {
+                if (options.radius !== undefined && this.type === 'dust' && particle.setRadius) {
                     particle.setRadius(options.radius);
                 }
             } catch (e) {

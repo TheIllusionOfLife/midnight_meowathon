@@ -46,7 +46,9 @@ class SoundEngine {
             if (this.ctx.state === 'running') {
                 this.ctx.suspend().then(() => this.ctx.resume());
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn('Failed to stop all sounds:', e);
+        }
     }
 
     tone(freq, dur, type = 'sine', vol = 0.3) {
