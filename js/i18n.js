@@ -46,6 +46,7 @@ const TRANSLATIONS = {
         GATHERING_BEST: 'ベスト: {0}秒',
         GATHERING_BEST_NONE: 'ベスト: ---',
         GATHERING_NEW_RECORD: '新記録！',
+        GATHERING_TIME_UNIT: '秒',
         BTN_AGAIN: 'もういちど',
         BTN_TO_TITLE: 'タイトルへ',
 
@@ -137,6 +138,7 @@ const TRANSLATIONS = {
         GATHERING_BEST: 'Best: {0}s',
         GATHERING_BEST_NONE: 'Best: ---',
         GATHERING_NEW_RECORD: 'NEW RECORD!',
+        GATHERING_TIME_UNIT: 's',
         BTN_AGAIN: 'Try Again',
         BTN_TO_TITLE: 'Back to Title',
 

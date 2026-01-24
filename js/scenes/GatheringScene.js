@@ -700,19 +700,19 @@ class GatheringScene extends Phaser.Scene {
 
             // タイム表示
             c.add(this.add.text(-100, 60, i18n.t('GATHERING_YOU'), { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
-            c.add(this.add.text(100, 60, `${this.elapsedTime.toFixed(2)}秒`, {
+            c.add(this.add.text(100, 60, `${this.elapsedTime.toFixed(2)}${i18n.t('GATHERING_TIME_UNIT')}`, {
                 fontSize: '18px',
                 color: isWin ? '#88ff88' : '#ff8888'
             }).setOrigin(1, 0.5));
 
             c.add(this.add.text(-100, 90, `${this.selectedBoss.getName()}:`, { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
-            c.add(this.add.text(100, 90, `${this.selectedBoss.targetTime.toFixed(2)}秒`, {
+            c.add(this.add.text(100, 90, `${this.selectedBoss.targetTime.toFixed(2)}${i18n.t('GATHERING_TIME_UNIT')}`, {
                 fontSize: '18px',
                 color: '#ffdd88'
             }).setOrigin(1, 0.5));
 
             const diff = Math.abs(this.elapsedTime - this.selectedBoss.targetTime);
-            const diffText = this.elapsedTime < this.selectedBoss.targetTime ? `-${diff.toFixed(2)}秒` : `+${diff.toFixed(2)}秒`;
+            const diffText = this.elapsedTime < this.selectedBoss.targetTime ? `-${diff.toFixed(2)}${i18n.t('GATHERING_TIME_UNIT')}` : `+${diff.toFixed(2)}${i18n.t('GATHERING_TIME_UNIT')}`;
             c.add(this.add.text(0, 120, diffText, {
                 fontSize: '20px',
                 color: isWin ? '#88ff88' : '#ff8888',

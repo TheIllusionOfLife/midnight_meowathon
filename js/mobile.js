@@ -278,23 +278,33 @@ class JumpButton {
     }
 
     setupInput() {
-        this.button.on('pointerdown', () => {
-            this.pressed = true;
-            this.button.setFillStyle(0xff8866, 0.9);
-            this.button.setScale(0.95);
+        this.activePointerId = null;
+
+        this.button.on('pointerdown', (pointer) => {
+            // Only track the first touch
+            if (this.activePointerId === null) {
+                this.activePointerId = pointer.id;
+                this.pressed = true;
+                this.button.setFillStyle(0xff8866, 0.9);
+                this.button.setScale(0.95);
+            }
         });
 
-        this.button.on('pointerup', () => {
-            this.pressed = false;
-            this.button.setFillStyle(0xffaa88, 0.7);
-            this.button.setScale(1);
-        });
+        this.releaseButton = (pointer) => {
+            // Only release if this is the tracked pointer
+            if (pointer && pointer.id === this.activePointerId) {
+                this.pressed = false;
+                this.activePointerId = null;
+                this.button.setFillStyle(0xffaa88, 0.7);
+                this.button.setScale(1);
+            }
+        };
 
-        this.button.on('pointerupoutside', () => {
-            this.pressed = false;
-            this.button.setFillStyle(0xffaa88, 0.7);
-            this.button.setScale(1);
-        });
+        this.button.on('pointerup', this.releaseButton);
+        this.button.on('pointerupoutside', this.releaseButton);
+
+        // Global pointerup handler to catch releases anywhere on screen
+        this.scene.input.on('pointerup', this.releaseButton);
     }
 
     isPressed() {
@@ -314,6 +324,9 @@ class JumpButton {
     destroy() {
         this.destroyed = true;
         this.scene.scale.off('resize', this.onResize, this);
+        if (this.releaseButton) {
+            this.scene.input.off('pointerup', this.releaseButton);
+        }
         if (this.button) this.button.destroy();
         if (this.icon) this.icon.destroy();
         this.button = null;
