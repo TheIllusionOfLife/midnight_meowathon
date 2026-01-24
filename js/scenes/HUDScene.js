@@ -236,9 +236,10 @@ class HUDScene extends Phaser.Scene {
         const isMobile = DeviceDetector.isMobile();
         const fontSize = GameLayout.fontSize(isMobile ? 12 : 14);
         const x = isMobile ? GameLayout.controlsRight : GameLayout.W - GameLayout.scale(20);
+        // Move down below score text to avoid overlap
         const y = isMobile
-            ? GameLayout.controlsBottom - GameLayout.scale(130)
-            : (GameLayout.isPortrait ? 100 : 70);
+            ? GameLayout.controlsBottom - GameLayout.scale(GameLayout.isPortrait ? 210 : 130)
+            : (GameLayout.isPortrait ? 130 : 100);
 
         this.thunderLabel = this.add.text(x, y, '⚡ READY', {
             fontSize: fontSize + 'px',
@@ -254,20 +255,24 @@ class HUDScene extends Phaser.Scene {
 
         const tipText = i18n.t('TIP_WALLKICK');
         const x = GameLayout.W / 2;
-        const y = GameLayout.isPortrait ? GameLayout.pctY(0.13) : GameLayout.pctY(0.12);
-        const width = GameLayout.scale(280);
-        const height = GameLayout.scale(32);
+        // Move down to avoid overlapping with timer
+        const y = GameLayout.isPortrait ? GameLayout.pctY(0.18) : GameLayout.pctY(0.17);
 
-        this.stageTipBg = this.add.rectangle(x, y, width, height, 0x2a2a44, 0.9)
-            .setStrokeStyle(GameLayout.scale(2), 0x7777aa)
-            .setDepth(120);
-
+        // Create text first to measure actual width
         this.stageTip = this.add.text(x, y, tipText, {
             fontSize: GameLayout.fontSize(14) + 'px',
             color: '#ffffaa',
             stroke: '#000000',
             strokeThickness: 3
         }).setOrigin(0.5).setDepth(121);
+
+        // Use measured text width for background
+        const width = Math.max(GameLayout.scale(280), this.stageTip.width + GameLayout.scale(40));
+        const height = GameLayout.scale(32);
+
+        this.stageTipBg = this.add.rectangle(x, y, width, height, 0x2a2a44, 0.9)
+            .setStrokeStyle(GameLayout.scale(2), 0x7777aa)
+            .setDepth(120);
 
         this.time.delayedCall(5000, () => {
             if (!this.stageTip || !this.stageTipBg) return;
@@ -287,7 +292,7 @@ class HUDScene extends Phaser.Scene {
         if (!powerUpManager || !powerUpManager.hasPowerUp('thunder')) return;
 
         const x = GameLayout.controlsRight;
-        const y = GameLayout.controlsBottom - (GameLayout.isPortrait ? GameLayout.scale(110) : GameLayout.scale(90));
+        const y = GameLayout.controlsBottom - (GameLayout.isPortrait ? GameLayout.scale(180) : GameLayout.scale(90));
         const radius = GameLayout.scale(GameLayout.isPortrait ? 20 : 18);
 
         this.thunderBtn = this.add.circle(x, y, radius, 0x5a3a8a, 0.9)

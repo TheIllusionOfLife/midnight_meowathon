@@ -178,6 +178,12 @@ class PowerUpManager {
         return Math.max(0, this.thunderTimer);
     }
 
+    resetCooldowns() {
+        this.thunderCooldown = 0;
+        this.thunderActive = false;
+        this.thunderTimer = 0;
+    }
+
     // セーブ/ロード用
     serialize() {
         return {

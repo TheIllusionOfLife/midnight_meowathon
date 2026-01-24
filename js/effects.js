@@ -54,16 +54,33 @@ class SpeechBubble {
     }
 }
 
-// 猫語データベース
-const CAT_DIALOGUES = {
+// 猫語データベース (language-aware)
+const CAT_DIALOGUES_JA = {
     jump: ['にゃ！', 'にゃっ', 'ふにゃ'],
     wallKick: ['にゃにゃっ！', 'にゃーん'],
     break: ['にゃー！', 'がしゃーん♪', 'やったにゃ'],
     combo: ['にゃにゃ！', 'にゃーん♪', 'にゃっにゃっ'],
     danger: ['しーっ…', 'にゃ…', 'そーっと…'],
     victory: ['にゃーん！', 'にゃにゃ～♪', 'にゃっほー！'],
-    defeat: ['にゃぁ…', 'にゃう…', 'むむむ…']
+    defeat: ['にゃぁ…', 'にゃう…', 'むむむ…'],
+    default: ['にゃー']
 };
+
+const CAT_DIALOGUES_EN = {
+    jump: ['Meow!', 'Mew!', 'Nya!'],
+    wallKick: ['Hup!', 'Yeow!'],
+    break: ['Crash!', 'Smash!', 'Yes!'],
+    combo: ['Wow!', 'Purrfect!', 'Nice!'],
+    danger: ['Shh...', 'Quiet...', 'Careful...'],
+    victory: ['Meow~!', 'Purr~♪', 'Yay!'],
+    defeat: ['Meow...', 'Aww...', 'Hmm...'],
+    default: ['Meow!']
+};
+
+// Get dialogues based on current language
+function getCatDialogues() {
+    return (typeof i18n !== 'undefined' && i18n.lang === 'ja') ? CAT_DIALOGUES_JA : CAT_DIALOGUES_EN;
+}
 
 // 吹き出しクールダウン管理
 const speechCooldowns = {};
@@ -89,7 +106,8 @@ function showCatDialogue(scene, x, y, category) {
 
     speechCooldowns[cooldownKey] = now;
 
-    const dialogues = CAT_DIALOGUES[category] || ['にゃー'];
+    const catDialogues = getCatDialogues();
+    const dialogues = catDialogues[category] || catDialogues.default;
     const text = Phaser.Utils.Array.GetRandom(dialogues);
     return new SpeechBubble(scene, x, y - 40, text);
 }
@@ -107,35 +125,65 @@ class ParticlePool {
     acquire(x, y, options = {}) {
         let particle;
 
-        if (this.pool.length > 0) {
+        // Try to get from pool
+        while (this.pool.length > 0) {
             particle = this.pool.pop();
-            particle.setPosition(x, y);
-            particle.setVisible(true);
-            particle.setActive(true);
-            particle.setAlpha(1);
-            particle.setScale(1);
-            particle.setAngle(0);
-        } else if (this.active.length < this.maxSize) {
+            // Check if particle is still valid (not destroyed)
+            if (particle && particle.scene && !particle.scene.sys.isDestroyed) {
+                try {
+                    particle.setPosition(x, y);
+                    particle.setVisible(true);
+                    particle.setActive(true);
+                    particle.setAlpha(1);
+                    particle.setScale(1);
+                    particle.setAngle(0);
+                    break;
+                } catch (e) {
+                    particle = null; // Invalid particle, try next
+                }
+            } else {
+                particle = null;
+            }
+        }
+
+        if (!particle && this.active.length < this.maxSize) {
             // Create new particle if pool is empty and under max
             particle = this.createParticle(x, y, options);
-        } else {
+        } else if (!particle) {
             // Reuse oldest active particle if at max
-            particle = this.active.shift();
-            particle.setPosition(x, y);
-            particle.setAlpha(1);
-            particle.setScale(1);
-            particle.setAngle(0);
+            while (this.active.length > 0) {
+                particle = this.active.shift();
+                if (particle && particle.scene && !particle.scene.sys.isDestroyed) {
+                    try {
+                        particle.setPosition(x, y);
+                        particle.setAlpha(1);
+                        particle.setScale(1);
+                        particle.setAngle(0);
+                        break;
+                    } catch (e) {
+                        particle = null;
+                    }
+                } else {
+                    particle = null;
+                }
+            }
         }
 
         if (particle) {
             this.active.push(particle);
-            // Apply options
-            if (options.color !== undefined) particle.setFillStyle(options.color);
-            if (options.size !== undefined && this.type === 'shard') {
-                particle.setSize(options.size, options.size);
-            }
-            if (options.radius !== undefined && this.type === 'dust') {
-                particle.setRadius(options.radius);
+            // Apply options with safety checks
+            try {
+                if (options.color !== undefined && particle.setFillStyle) {
+                    particle.setFillStyle(options.color);
+                }
+                if (options.size !== undefined && this.type === 'shard' && particle.setSize) {
+                    particle.setSize(options.size, options.size);
+                }
+                if (options.radius !== undefined && this.type === 'dust' && particle.setRadius) {
+                    particle.setRadius(options.radius);
+                }
+            } catch (e) {
+                // Silently ignore if particle properties can't be set
             }
         }
 
@@ -194,19 +242,27 @@ const particlePools = {
     sparkle: null,
     dust: null,
     wave: null,
+    currentScene: null,
 
     init(scene) {
-        this.shard = new ParticlePool(scene, 'shard', 100);
-        this.sparkle = new ParticlePool(scene, 'sparkle', 60);
-        this.dust = new ParticlePool(scene, 'dust', 50);
-        this.wave = new ParticlePool(scene, 'wave', 20);
+        // Clear old pools if scene changed
+        if (this.currentScene !== scene) {
+            this.clear();
+            this.currentScene = scene;
+        }
+
+        if (!this.shard) this.shard = new ParticlePool(scene, 'shard', 100);
+        if (!this.sparkle) this.sparkle = new ParticlePool(scene, 'sparkle', 60);
+        if (!this.dust) this.dust = new ParticlePool(scene, 'dust', 50);
+        if (!this.wave) this.wave = new ParticlePool(scene, 'wave', 20);
     },
 
     clear() {
-        if (this.shard) this.shard.clear();
-        if (this.sparkle) this.sparkle.clear();
-        if (this.dust) this.dust.clear();
-        if (this.wave) this.wave.clear();
+        if (this.shard) { this.shard.clear(); this.shard = null; }
+        if (this.sparkle) { this.sparkle.clear(); this.sparkle = null; }
+        if (this.dust) { this.dust.clear(); this.dust = null; }
+        if (this.wave) { this.wave.clear(); this.wave = null; }
+        this.currentScene = null;
     }
 };
 

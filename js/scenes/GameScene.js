@@ -628,7 +628,7 @@ class GameScene extends Phaser.Scene {
                     // Timer warning effect
                 }
 
-                if (this.timeLeft <= 0) this.triggerVictory();
+                if (this.timeLeft <= 0) this.triggerGameOver();
             }
         });
     }
@@ -840,6 +840,7 @@ class GameScene extends Phaser.Scene {
     }
 
     showResultScreen(isVictory) {
+        sound.stopAll();
         // HUDの入力を止めて結果画面のボタンを優先する
         if (this.scene.isActive('HUDScene')) {
             this.scene.stop('HUDScene');
@@ -1021,5 +1022,10 @@ class GameScene extends Phaser.Scene {
 
         // Stop HUD scene to prevent memory leaks
         this.scene.stop('HUDScene');
+
+        // Clear particle pools to prevent stale references
+        if (typeof particlePools !== 'undefined') {
+            particlePools.clear();
+        }
     }
 }

@@ -186,17 +186,21 @@ class TitleScene extends Phaser.Scene {
 
         const tipText = i18n.t('TIP_WALLKICK');
         const tipY = controlY + GameLayout.scale(30);
-        const tipW = GameLayout.scale(280);
-        const tipH = GameLayout.scale(36);
-        const tipBg = this.add.rectangle(W / 2, tipY, tipW, tipH, 0x2a2a44, 0.9)
-            .setStrokeStyle(2, 0x7777aa)
-            .setDepth(10);
-        this.add.text(W / 2, tipY, tipText, {
+
+        // Create text first to measure actual width
+        const tipTextObj = this.add.text(W / 2, tipY, tipText, {
             fontSize: GameLayout.fontSize(14) + 'px',
             color: '#ffffaa',
             stroke: '#000000',
             strokeThickness: 3
         }).setOrigin(0.5).setDepth(11);
+
+        // Use measured text width for background
+        const tipW = Math.max(GameLayout.scale(280), tipTextObj.width + GameLayout.scale(40));
+        const tipH = GameLayout.scale(36);
+        const tipBg = this.add.rectangle(W / 2, tipY, tipW, tipH, 0x2a2a44, 0.9)
+            .setStrokeStyle(2, 0x7777aa)
+            .setDepth(10);
 
         this.add.text(W / 2, GameLayout.pctY(0.96), '© 2025 Cat Zoomies', {
             fontSize: GameLayout.fontSize(11) + 'px',

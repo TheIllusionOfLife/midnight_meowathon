@@ -1,7 +1,32 @@
 // 猫の集会シーン - タイムアタック形式
 class GatheringScene extends Phaser.Scene {
+    static HIGHSCORE_KEY = 'cat_zoomies_gathering_times';
+
     constructor() {
         super('GatheringScene');
+    }
+
+    loadBestTimes() {
+        try {
+            const data = localStorage.getItem(GatheringScene.HIGHSCORE_KEY);
+            return data ? JSON.parse(data) : {};
+        } catch (e) { return {}; }
+    }
+
+    saveBestTime(bossId, time) {
+        try {
+            const times = this.loadBestTimes();
+            if (!times[bossId] || time < times[bossId]) {
+                times[bossId] = time;
+                localStorage.setItem(GatheringScene.HIGHSCORE_KEY, JSON.stringify(times));
+                return true;
+            }
+            return false;
+        } catch (e) { return false; }
+    }
+
+    getBestTime(bossId) {
+        return this.loadBestTimes()[bossId] || null;
     }
 
     create() {
@@ -17,6 +42,7 @@ class GatheringScene extends Phaser.Scene {
         // 初期化フラグ
         this.isInitialized = false;
         this.selectedBoss = null;
+        this.isTransitioning = false; // Prevent selecting multiple bosses during transition
         this.physics.world.setBounds(0, 0, 800, 550);
 
         // ボス選択画面
@@ -57,8 +83,9 @@ class GatheringScene extends Phaser.Scene {
             const centerY = Math.max(minCenterY, worldH - visibleH / 2 + bottomPadding);
             this.cameras.main.centerOn(worldW / 2, centerY);
 
-            if (this.joystick && this.jumpBtn) {
-                updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, screenW, screenH);
+            // Update UI camera size (controls manage their own positioning)
+            if (this.uiCamera) {
+                this.uiCamera.setSize(screenW, screenH);
             }
         }
     }
@@ -67,6 +94,9 @@ class GatheringScene extends Phaser.Scene {
         const W = GameLayout.W;
         const H = GameLayout.H;
 
+        // Reset transition flag
+        this.isTransitioning = false;
+
         // 背景
         const gfx = this.add.graphics();
         gfx.fillGradientStyle(0x0a0a18, 0x0a0a18, 0x12122a, 0x12122a);
@@ -74,7 +104,7 @@ class GatheringScene extends Phaser.Scene {
 
         // タイトル
         const titleSize = GameLayout.fontSize(36) + 'px';
-        this.add.text(W / 2, H * 0.1, i18n.t('GATHERING_TITLE'), {
+        this.add.text(W / 2, H * 0.08, i18n.t('GATHERING_TITLE'), {
             fontSize: titleSize,
             fontFamily: 'Kosugi Maru',
             color: '#ffffff',
@@ -83,7 +113,7 @@ class GatheringScene extends Phaser.Scene {
             strokeThickness: 6
         }).setOrigin(0.5);
 
-        this.add.text(W / 2, H * 0.18, i18n.t('GATHERING_SELECT'), {
+        this.add.text(W / 2, H * 0.14, i18n.t('GATHERING_SELECT'), {
             fontSize: GameLayout.fontSize(20) + 'px',
             fontFamily: 'Kosugi Maru',
             color: '#aaaacc'
@@ -91,16 +121,39 @@ class GatheringScene extends Phaser.Scene {
 
         // ボス猫カード - Responsive Layout
         if (GameLayout.isPortrait) {
-            // 2x2 Grid or Vertical Stack
-            const startY = H * 0.25;
-            const spacer = H * 0.14;
+            // 2x2 Grid - calculate scale to fill available space
+            // Available vertical space: from H*0.18 (below subtitle) to H*0.85 (above back button)
+            const availableHeight = H * 0.65; // 85% - 20% = 65% of screen
+            const availableWidth = W * 0.9; // 90% of screen width
+
+            // Card base size is 160x220, we need 2 columns and 2 rows with gaps
+            const gapRatio = 0.08; // 8% gap between cards
+            const maxCardWidth = availableWidth / (2 + gapRatio);
+            const maxCardHeight = availableHeight / (2 + gapRatio);
+
+            // Scale based on whichever dimension is more constrained
+            const scaleByWidth = maxCardWidth / 160;
+            const scaleByHeight = maxCardHeight / 220;
+            const cardScale = Math.min(scaleByWidth, scaleByHeight, 1.0); // Cap at 1.0
+
+            const cardWidth = 160 * cardScale;
+            const cardHeight = 220 * cardScale;
+            const gapX = cardWidth * gapRatio;
+            const gapY = cardHeight * gapRatio;
+
+            // Center the grid both horizontally and vertically
+            const totalGridWidth = cardWidth * 2 + gapX;
+            const totalGridHeight = cardHeight * 2 + gapY;
+            const startX = (W - totalGridWidth) / 2 + cardWidth / 2;
+            const verticalCenter = H * 0.18 + (H * 0.67) / 2; // Center between subtitle and back button
+            const startY = verticalCenter - totalGridHeight / 2 + cardHeight / 2;
+
             BOSS_CATS.forEach((boss, index) => {
-                // 2 columns
                 const col = index % 2;
                 const row = Math.floor(index / 2);
-                const cx = W * 0.3 + col * (W * 0.4);
-                const cy = startY + row * (H * 0.25) + 60;
-                this.createBossCard(boss, cx, cy, 0.8); // Slightly smaller
+                const cx = startX + col * (cardWidth + gapX);
+                const cy = startY + row * (cardHeight + gapY);
+                this.createBossCard(boss, cx, cy, cardScale);
             });
         } else {
             // Horizontal Spread
@@ -171,7 +224,18 @@ class GatheringScene extends Phaser.Scene {
             wordWrap: { width: 140 }
         }).setOrigin(0.5);
 
-        container.add([card, catIcon, name, difficulty, desc]);
+        // ベストタイム表示
+        const bestTime = this.getBestTime(boss.id);
+        const bestText = bestTime !== null
+            ? i18n.t('GATHERING_BEST').replace('{0}', bestTime.toFixed(2))
+            : i18n.t('GATHERING_BEST_NONE');
+        const best = this.add.text(0, 90, bestText, {
+            fontSize: '10px',
+            color: bestTime !== null ? '#ffdd66' : '#888888',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        container.add([card, catIcon, name, difficulty, desc, best]);
 
         // ホバーエフェクト
         card.on('pointerover', () => {
@@ -195,6 +259,10 @@ class GatheringScene extends Phaser.Scene {
 
         // 選択時
         card.on('pointerdown', () => {
+            // Prevent selecting multiple bosses during transition
+            if (this.isTransitioning) return;
+            this.isTransitioning = true;
+
             sound.meow();
             this.tweens.add({
                 targets: container,
@@ -222,6 +290,7 @@ class GatheringScene extends Phaser.Scene {
     }
 
     cleanupMobileControls() {
+        this.autoIgnoreNewChildren = false;
         if (this.joystick) {
             this.joystick.destroy();
             this.joystick = null;
@@ -230,6 +299,26 @@ class GatheringScene extends Phaser.Scene {
             this.jumpBtn.destroy();
             this.jumpBtn = null;
         }
+        if (this.uiCamera) {
+            this.cameras.remove(this.uiCamera);
+            this.uiCamera = null;
+        }
+        this.controlObjects = null;
+    }
+
+    // Helper to run effects and auto-ignore new children from UI camera
+    runEffect(effectFn) {
+        if (!this.autoIgnoreNewChildren || !this.uiCamera) {
+            effectFn();
+            return;
+        }
+        const childrenBefore = new Set(this.children.list);
+        effectFn();
+        this.children.list.forEach(child => {
+            if (!childrenBefore.has(child) && !this.controlObjects?.has(child)) {
+                this.uiCamera.ignore(child);
+            }
+        });
     }
 
     initTimeAttack() {
@@ -370,19 +459,38 @@ class GatheringScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(1, 1).setDepth(100);
 
-        // Mobile Controls
+        // Mobile Controls - use separate UI camera (no zoom) like HUDScene
         if (isMobile) {
-            const joyXPct = GameLayout.controlsLeft / GameLayout.W;
-            const joyYPct = GameLayout.controlsBottom / GameLayout.H;
-            const btnXPct = GameLayout.controlsRight / GameLayout.W;
-            const btnYPct = GameLayout.controlsBottom / GameLayout.H;
-            const controls = createMobileControls(this, {
-                joystick: { xPercent: joyXPct, yPercent: joyYPct },
-                jump: { xPercent: btnXPct, yPercent: btnYPct }
-            });
+            // Create UI camera that won't be zoomed (transparent, only for controls)
+            this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height);
+            this.uiCamera.setScroll(0, 0);
+            this.uiCamera.transparent = true;
+
+            // Create controls with default positioning (like HUDScene)
+            const controls = createMobileControls(this);
             this.joystick = controls.joystick;
             this.jumpBtn = controls.jumpBtn;
-            updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, this.scale.gameSize.width, this.scale.gameSize.height);
+
+            // Collect all control objects in a Set for fast lookup
+            this.controlObjects = new Set([
+                this.joystick.base, this.joystick.stick,
+                this.jumpBtn.button, this.jumpBtn.icon
+            ]);
+
+            // Main camera ignores controls (won't be affected by zoom)
+            this.controlObjects.forEach(obj => {
+                if (obj) this.cameras.main.ignore(obj);
+            });
+
+            // UI camera ignores everything except controls
+            this.children.each(child => {
+                if (!this.controlObjects.has(child)) {
+                    this.uiCamera.ignore(child);
+                }
+            });
+
+            // Store reference for ignoring new children added later (particles, effects, etc.)
+            this.autoIgnoreNewChildren = true;
         }
     }
 
@@ -406,6 +514,11 @@ class GatheringScene extends Phaser.Scene {
             stroke: '#000000',
             strokeThickness: 8
         }).setOrigin(0.5).setDepth(200).setAlpha(0);
+
+        // Make UI camera ignore countdown (prevent duplicate rendering)
+        if (this.uiCamera) {
+            this.uiCamera.ignore(countdownText);
+        }
 
         let count = 3;
         const countInterval = this.time.addEvent({
@@ -483,7 +596,7 @@ class GatheringScene extends Phaser.Scene {
         this.brokenCount++;
         this.progressText.setText(`${this.brokenCount}/${this.totalItems}`);
 
-        EnhancedParticles.createShards(this, item.x, item.y, 0x5bc0de, 10, scoreValue);
+        this.runEffect(() => EnhancedParticles.createShards(this, item.x, item.y, 0x5bc0de, 10, scoreValue));
         sound.itemBreak(scoreValue / 80);
 
         item.destroy();
@@ -549,7 +662,7 @@ class GatheringScene extends Phaser.Scene {
             if (onGround) {
                 body.setVelocityY(-500);
                 sound.jump();
-                EnhancedParticles.createDustBurst(this, this.cat.x, this.cat.y + 15, 8, 'down');
+                this.runEffect(() => EnhancedParticles.createDustBurst(this, this.cat.x, this.cat.y + 15, 8, 'down'));
             } else if (onWallL && this.catState.canWallKick) {
                 body.setVelocity(400, -480);
                 this.catState.facing = 1;
@@ -593,19 +706,32 @@ class GatheringScene extends Phaser.Scene {
         const isWin = rules.checkWin(this.elapsedTime);
         const rank = rules.getRank(this.elapsedTime);
 
+        // 勝利時にベストタイムを保存
+        let isNewRecord = false;
+        if (isWin) {
+            isNewRecord = this.saveBestTime(this.selectedBoss.id, this.elapsedTime);
+        }
+
         sound.clear();
         if (isWin) {
             sound.victoryMeow();
         }
 
         this.time.delayedCall(500, () => {
-            this.showResult(isWin, rank);
+            this.showResult(isWin, rank, isNewRecord);
         });
     }
 
-    showResult(isWin, rank) {
+    showResult(isWin, rank, isNewRecord = false) {
+        sound.stopAll();
         const overlay = this.add.rectangle(400, 275, 3000, 3000, 0x000000, 0)
             .setDepth(200);
+
+        // Make UI camera ignore the overlay (prevent duplicate rendering)
+        if (this.uiCamera) {
+            this.uiCamera.ignore(overlay);
+        }
+
         this.tweens.add({
             targets: overlay,
             fillAlpha: 0.85,
@@ -616,6 +742,11 @@ class GatheringScene extends Phaser.Scene {
             const c = this.add.container(400, 275)
                 .setDepth(210)
                 .setAlpha(0);
+
+            // Make UI camera ignore the result container (prevent duplicate rendering)
+            if (this.uiCamera) {
+                this.uiCamera.ignore(c);
+            }
 
             if (isWin) {
                 c.add(this.add.image(0, -120, 'celebrate').setScale(1.2));
@@ -633,6 +764,17 @@ class GatheringScene extends Phaser.Scene {
                     color: '#ffd700',
                     fontStyle: 'bold'
                 }).setOrigin(0.5));
+
+                // 新記録表示
+                if (isNewRecord) {
+                    c.add(this.add.text(0, 50, i18n.t('GATHERING_NEW_RECORD'), {
+                        fontSize: '24px',
+                        color: '#ff66ff',
+                        fontStyle: 'bold',
+                        stroke: '#000',
+                        strokeThickness: 3
+                    }).setOrigin(0.5));
+                }
             } else {
                 c.add(this.add.image(0, -120, 'shock').setScale(1.2));
                 c.add(this.add.text(0, -50, i18n.t('GATHERING_DEFEAT'), {
@@ -646,19 +788,19 @@ class GatheringScene extends Phaser.Scene {
 
             // タイム表示
             c.add(this.add.text(-100, 60, i18n.t('GATHERING_YOU'), { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
-            c.add(this.add.text(100, 60, `${this.elapsedTime.toFixed(2)}秒`, {
+            c.add(this.add.text(100, 60, `${this.elapsedTime.toFixed(2)}${i18n.t('GATHERING_TIME_UNIT')}`, {
                 fontSize: '18px',
                 color: isWin ? '#88ff88' : '#ff8888'
             }).setOrigin(1, 0.5));
 
             c.add(this.add.text(-100, 90, `${this.selectedBoss.getName()}:`, { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
-            c.add(this.add.text(100, 90, `${this.selectedBoss.targetTime.toFixed(2)}秒`, {
+            c.add(this.add.text(100, 90, `${this.selectedBoss.targetTime.toFixed(2)}${i18n.t('GATHERING_TIME_UNIT')}`, {
                 fontSize: '18px',
                 color: '#ffdd88'
             }).setOrigin(1, 0.5));
 
             const diff = Math.abs(this.elapsedTime - this.selectedBoss.targetTime);
-            const diffText = this.elapsedTime < this.selectedBoss.targetTime ? `-${diff.toFixed(2)}秒` : `+${diff.toFixed(2)}秒`;
+            const diffText = this.elapsedTime < this.selectedBoss.targetTime ? `-${diff.toFixed(2)}${i18n.t('GATHERING_TIME_UNIT')}` : `+${diff.toFixed(2)}${i18n.t('GATHERING_TIME_UNIT')}`;
             c.add(this.add.text(0, 120, diffText, {
                 fontSize: '20px',
                 color: isWin ? '#88ff88' : '#ff8888',
@@ -680,13 +822,15 @@ class GatheringScene extends Phaser.Scene {
                 return [bg, tx];
             };
 
-            c.add(makeBtn(170, i18n.t('BTN_AGAIN'), () => {
+            c.add(makeBtn(160, i18n.t('BTN_AGAIN'), () => {
                 this.cleanupMobileControls();
                 this.children.removeAll(true);
                 this.isInitialized = false;
+                this.selectedBoss = null; // Reset so resize handler knows we're in selection screen
+                this.cameras.main.setZoom(1); // Reset zoom
                 this.showBossSelection();
             }));
-            c.add(makeBtn(220, i18n.t('BTN_TO_TITLE'), () => {
+            c.add(makeBtn(230, i18n.t('BTN_TO_TITLE'), () => {
                 this.cleanupMobileControls();
                 this.scene.start('TitleScene');
             }));

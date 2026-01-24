@@ -4,6 +4,7 @@ class VirtualJoystick {
     constructor(scene, options = {}) {
         this.scene = scene;
         this.destroyed = false;
+        this.autoResize = true; // Can be disabled when managed externally
         this.inputScale = 1;
         this.useWorldPointer = false;
 
@@ -60,6 +61,7 @@ class VirtualJoystick {
 
     onResize(gameSize) {
         if (this.destroyed) return;
+        if (!this.autoResize) return; // Skip if managed externally
         this.updateDimensions();
         this.updatePosition();
     }
@@ -191,12 +193,13 @@ class JumpButton {
     constructor(scene, options = {}) {
         this.scene = scene;
         this.destroyed = false;
+        this.autoResize = true; // Can be disabled when managed externally
 
         // Use percentage-based positioning
         const {
             xPercent = 0.88,
             yPercent = 0.85,
-            radiusPercent = 0.06
+            radiusPercent = 0.09  // Larger touch target for easier tapping
         } = options;
 
         this.xPercent = xPercent;
@@ -213,16 +216,15 @@ class JumpButton {
         this.button = scene.add.circle(this.x, this.y, this.radius, 0xffaa88, 0.7).setDepth(1000);
         this.button.setStrokeStyle(3, 0xff8866, 0.9);
         this.button.setScrollFactor(0);
-        this.button.setInteractive();
         this.button.setVisible(false);
 
-        // 肉球アイコン
-        const iconScale = this.radius / 40; // Scale icon based on button size
+        // 肉球アイコン (larger for better visibility)
+        const iconScale = this.radius / 28; // Bigger icon relative to button
         const icon = scene.add.container(this.x, this.y).setDepth(1001).setScrollFactor(0);
-        const pad = scene.add.ellipse(0, 2 * iconScale, 12 * iconScale, 9 * iconScale, 0xff8866);
-        const toe1 = scene.add.circle(-6 * iconScale, -4 * iconScale, 4 * iconScale, 0xff8866);
-        const toe2 = scene.add.circle(0, -6 * iconScale, 4 * iconScale, 0xff8866);
-        const toe3 = scene.add.circle(6 * iconScale, -4 * iconScale, 4 * iconScale, 0xff8866);
+        const pad = scene.add.ellipse(0, 2 * iconScale, 14 * iconScale, 10 * iconScale, 0xff8866);
+        const toe1 = scene.add.circle(-7 * iconScale, -5 * iconScale, 5 * iconScale, 0xff8866);
+        const toe2 = scene.add.circle(0, -7 * iconScale, 5 * iconScale, 0xff8866);
+        const toe3 = scene.add.circle(7 * iconScale, -5 * iconScale, 5 * iconScale, 0xff8866);
         icon.add([pad, toe1, toe2, toe3]);
         icon.setVisible(false);
         this.icon = icon;
@@ -245,6 +247,7 @@ class JumpButton {
 
     onResize(gameSize) {
         if (this.destroyed) return;
+        if (!this.autoResize) return; // Skip if managed externally
         this.updateDimensions();
         this.updatePosition();
     }
@@ -257,44 +260,61 @@ class JumpButton {
         }
         if (this.icon && this.icon.list) {
             this.icon.setPosition(this.x, this.y);
-            // Update icon scale
-            const iconScale = this.radius / 40;
+            // Update icon scale (larger for better visibility)
+            const iconScale = this.radius / 28;
             this.icon.list.forEach((child, index) => {
                 if (index === 0) { // pad
-                    child.setSize(12 * iconScale, 9 * iconScale);
+                    child.setSize(14 * iconScale, 10 * iconScale);
                     child.setPosition(0, 2 * iconScale);
                 } else if (index === 1) { // toe1
-                    child.setRadius(4 * iconScale);
-                    child.setPosition(-6 * iconScale, -4 * iconScale);
+                    child.setRadius(5 * iconScale);
+                    child.setPosition(-7 * iconScale, -5 * iconScale);
                 } else if (index === 2) { // toe2
-                    child.setRadius(4 * iconScale);
-                    child.setPosition(0, -6 * iconScale);
+                    child.setRadius(5 * iconScale);
+                    child.setPosition(0, -7 * iconScale);
                 } else if (index === 3) { // toe3
-                    child.setRadius(4 * iconScale);
-                    child.setPosition(6 * iconScale, -4 * iconScale);
+                    child.setRadius(5 * iconScale);
+                    child.setPosition(7 * iconScale, -5 * iconScale);
                 }
             });
         }
     }
 
     setupInput() {
-        this.button.on('pointerdown', () => {
-            this.pressed = true;
-            this.button.setFillStyle(0xff8866, 0.9);
-            this.button.setScale(0.95);
-        });
+        this.activePointerId = null;
 
-        this.button.on('pointerup', () => {
-            this.pressed = false;
-            this.button.setFillStyle(0xffaa88, 0.7);
-            this.button.setScale(1);
-        });
+        // Check if pointer is within button bounds (use larger hit area for easier tapping)
+        const hitMultiplier = 1.5; // Hit area is 1.5x the visual radius
+        this.isPointerInButton = (pointer) => {
+            const dx = pointer.x - this.x;
+            const dy = pointer.y - this.y;
+            const hitRadius = this.radius * hitMultiplier;
+            return (dx * dx + dy * dy) <= (hitRadius * hitRadius);
+        };
 
-        this.button.on('pointerout', () => {
-            this.pressed = false;
-            this.button.setFillStyle(0xffaa88, 0.7);
-            this.button.setScale(1);
-        });
+        // Use scene-level input for reliable multi-touch on iOS
+        this.onPointerDown = (pointer) => {
+            // Only respond if no button press is active and touch is in button area
+            if (this.activePointerId === null && this.isPointerInButton(pointer)) {
+                this.activePointerId = pointer.id;
+                this.pressed = true;
+                this.button.setFillStyle(0xff8866, 0.9);
+                this.button.setScale(0.95);
+            }
+        };
+
+        this.onPointerUp = (pointer) => {
+            // Only release if this is the tracked pointer
+            if (pointer && pointer.id === this.activePointerId) {
+                this.pressed = false;
+                this.activePointerId = null;
+                this.button.setFillStyle(0xffaa88, 0.7);
+                this.button.setScale(1);
+            }
+        };
+
+        this.scene.input.on('pointerdown', this.onPointerDown);
+        this.scene.input.on('pointerup', this.onPointerUp);
     }
 
     isPressed() {
@@ -314,6 +334,13 @@ class JumpButton {
     destroy() {
         this.destroyed = true;
         this.scene.scale.off('resize', this.onResize, this);
+        // Remove input handlers
+        if (this.onPointerDown) {
+            this.scene.input.off('pointerdown', this.onPointerDown);
+        }
+        if (this.onPointerUp) {
+            this.scene.input.off('pointerup', this.onPointerUp);
+        }
         if (this.button) this.button.destroy();
         if (this.icon) this.icon.destroy();
         this.button = null;
@@ -434,6 +461,10 @@ function updateMobileControlsForCamera(joystick, jumpBtn, camera, screenW, scree
     if (!joystick.base || !joystick.base.geom || !joystick.stick || !joystick.stick.geom) return;
     if (!jumpBtn.button || !jumpBtn.button.geom) return;
 
+    // Disable auto-resize since this function manages positions
+    joystick.autoResize = false;
+    jumpBtn.autoResize = false;
+
     const minDim = Math.min(screenW, screenH);
     const zoom = camera.zoom || 1;
     joystick.inputScale = 1;
@@ -467,6 +498,10 @@ function updateMobileControlsForScreen(joystick, jumpBtn, camera, screenW, scree
     if (joystick.destroyed || jumpBtn.destroyed) return;
     if (!joystick.base || !joystick.base.geom || !joystick.stick || !joystick.stick.geom) return;
     if (!jumpBtn.button || !jumpBtn.button.geom) return;
+
+    // Disable auto-resize since this function manages positions
+    joystick.autoResize = false;
+    jumpBtn.autoResize = false;
 
     const minDim = Math.min(screenW, screenH);
     joystick.inputScale = 1;

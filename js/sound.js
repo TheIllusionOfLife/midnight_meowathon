@@ -40,8 +40,19 @@ class SoundEngine {
         }
     }
 
-    tone(freq, dur, type = 'sine', vol = 0.3) {
+    stopAll() {
         if (!this.ctx) return;
+        try {
+            if (this.ctx.state === 'running') {
+                this.ctx.suspend().then(() => this.ctx.resume());
+            }
+        } catch (e) {
+            console.warn('Failed to stop all sounds:', e);
+        }
+    }
+
+    tone(freq, dur, type = 'sine', vol = 0.3) {
+        if (!this.ctx || !this.master) return;
         try {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -59,11 +70,13 @@ class SoundEngine {
     }
 
     jump() {
+        if (!this.ctx || !this.master) return;
         this.tone(320, 0.08);
         setTimeout(() => this.tone(480, 0.1), 30);
     }
 
     wallKick() {
+        if (!this.ctx || !this.master) return;
         this.tone(150, 0.04, 'square', 0.2);
         setTimeout(() => this.tone(300, 0.06), 20);
         setTimeout(() => this.tone(500, 0.08), 40);
@@ -71,11 +84,13 @@ class SoundEngine {
     }
 
     land() {
+        if (!this.ctx || !this.master) return;
         this.tone(100, 0.08, 'sine', 0.25);
         this.tone(60, 0.12, 'triangle', 0.15);
     }
 
     hit(intensity) {
+        if (!this.ctx || !this.master) return;
         for (let i = 0; i < 3 + intensity; i++) {
             setTimeout(() => this.tone(80 + Math.random() * 150, 0.08, 'sawtooth', 0.1), i * 20);
         }
@@ -83,6 +98,7 @@ class SoundEngine {
     }
 
     itemBreak(intensity = 1) {
+        if (!this.ctx || !this.master) return;
         const base = 520 + Math.min(200, intensity * 40);
         this.tone(base, 0.06, 'triangle', 0.25);
         setTimeout(() => this.tone(base * 1.25, 0.07, 'triangle', 0.22), 40);
@@ -90,6 +106,7 @@ class SoundEngine {
     }
 
     combo(c) {
+        if (!this.ctx || !this.master) return;
         const f = 400 + c * 60;
         this.tone(f, 0.08);
         setTimeout(() => this.tone(f * 1.25, 0.08), 60);
@@ -97,19 +114,23 @@ class SoundEngine {
     }
 
     danger() {
+        if (!this.ctx || !this.master) return;
         this.tone(120, 0.4, 'sawtooth', 0.12);
     }
 
     gameOver() {
+        if (!this.ctx || !this.master) return;
         // BGMなし（サイレント）
     }
 
     clear() {
+        if (!this.ctx || !this.master) return;
         [523, 659, 784, 880, 1047].forEach((f, i) => setTimeout(() => this.tone(f, 0.15), i * 80));
     }
 
     // 猫の鳴き声バリエーション
     meow() {
+        if (!this.ctx || !this.master) return;
         // 基本の「にゃー」
         this.tone(700, 0.08);
         setTimeout(() => this.tone(900, 0.1), 60);
@@ -117,6 +138,7 @@ class SoundEngine {
     }
 
     meowShort() {
+        if (!this.ctx || !this.master) return;
         // 短い「にゃっ」
         this.tone(800, 0.05);
         setTimeout(() => this.tone(650, 0.06), 40);
@@ -124,7 +146,7 @@ class SoundEngine {
 
     purr() {
         // ゴロゴロ（低周波の連続音）
-        if (!this.ctx) return;
+        if (!this.ctx || !this.master) return;
         try {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
@@ -151,7 +173,7 @@ class SoundEngine {
 
     hiss() {
         // フシャー（ホワイトノイズ + 高周波）
-        if (!this.ctx) return;
+        if (!this.ctx || !this.master) return;
         try {
             const bufferSize = this.ctx.sampleRate * 0.3;
             const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -184,6 +206,7 @@ class SoundEngine {
     }
 
     victoryMeow() {
+        if (!this.ctx || !this.master) return;
         // 勝利の鳴き声（高めの「にゃーん」x3）
         this.tone(900, 0.15);
         setTimeout(() => this.tone(950, 0.15), 200);
