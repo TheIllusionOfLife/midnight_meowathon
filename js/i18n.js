@@ -91,7 +91,11 @@ const TRANSLATIONS = {
         GSTAGE_BEGINNER: '初心者の部屋',
         GSTAGE_STAIRS: '階段の部屋',
         GSTAGE_MAZE: '迷路の部屋',
-        GSTAGE_BOSS: 'ボスの城'
+        GSTAGE_BOSS: 'ボスの城',
+
+        // Level Design Mechanics
+        DOMINO_BONUS: 'ドミノボーナス',
+        MOONBEAM_BONUS: '月光ボーナス'
     },
     en: {
         // TitleScene
@@ -183,7 +187,11 @@ const TRANSLATIONS = {
         GSTAGE_BEGINNER: 'Beginner\'s Room',
         GSTAGE_STAIRS: 'Staircase Room',
         GSTAGE_MAZE: 'Maze Room',
-        GSTAGE_BOSS: 'Boss Castle'
+        GSTAGE_BOSS: 'Boss Castle',
+
+        // Level Design Mechanics
+        DOMINO_BONUS: 'DOMINO BONUS',
+        MOONBEAM_BONUS: 'MOONBEAM'
     }
 };
 

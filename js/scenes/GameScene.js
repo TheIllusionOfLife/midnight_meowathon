@@ -29,13 +29,15 @@ class GameScene extends Phaser.Scene {
         this.combo = 0;
         this.maxCombo = 0;
         this.comboTimer = 0;
-        this.timeLeft = 90;
+        this.timeLeft = 90; // Will be overridden by stage layout
         this.gameEnded = false;
         this.slowMoTimer = 0;
         this.shakeIntensity = 0;
         this.brokenCount = 0;
         this.catExpression = 'cat';
         this.lastJumpPressed = false;
+        this.catComfyStunned = false;
+        this.lastBreakTime = 0;
 
         // 猫の状態
         this.catState = {
@@ -259,6 +261,9 @@ class GameScene extends Phaser.Scene {
     createRoom() {
         const layout = this.getCurrentStageLayout();
 
+        // Set time limit from layout
+        this.timeLeft = layout.timeLimit || 90;
+
         // 壁と床
         this.addWall(8, H / 2, 16, H);
         this.addWall(W - 8, H / 2, 16, H);
@@ -288,7 +293,39 @@ class GameScene extends Phaser.Scene {
             if (p.bouncy) {
                 platform.setData('isBouncy', true);
             }
+            if (p.comfy) {
+                platform.setData('comfy', true);
+            }
+            if (p.crumbling) {
+                platform.setData('crumbling', true);
+                platform.setData('landCount', 0);
+            }
         });
+
+        // ソフトゾーン（畳）配置
+        if (layout.softZones) {
+            this.softZones = layout.softZones.map(zone => {
+                const rect = this.add.rectangle(zone.x, zone.y, zone.w, zone.h, 0x88cc88, 0.1)
+                    .setDepth(1);
+                return { ...zone, sprite: rect };
+            });
+        } else {
+            this.softZones = [];
+        }
+
+        // スローゾーン（蜘蛛の巣）配置
+        if (layout.slowZones) {
+            this.slowZones = layout.slowZones.map(zone => {
+                const rect = this.add.rectangle(zone.x, zone.y, zone.w, zone.h, 0xcccccc, 0.15)
+                    .setDepth(1);
+                return { ...zone, sprite: rect };
+            });
+        } else {
+            this.slowZones = [];
+        }
+
+        // ムーンビーム作成
+        this.createMoonbeam();
 
         // アイテム配置
         layout.items.forEach(item => {
@@ -313,6 +350,82 @@ class GameScene extends Phaser.Scene {
         const wall = this.add.rectangle(x, y, w, h, 0x101015, 0);
         this.physics.add.existing(wall, true);
         this.walls.add(wall);
+    }
+
+    createMoonbeam() {
+        const layout = this.getCurrentStageLayout();
+        if (!layout.moonbeam) return;
+
+        const mb = layout.moonbeam;
+        this.moonbeam = this.add.rectangle(mb.startX, 275, mb.width, 550, 0xffffcc, 0.15)
+            .setDepth(15);
+
+        this.tweens.add({
+            targets: this.moonbeam,
+            x: mb.endX,
+            duration: mb.cycleTime,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Linear'
+        });
+    }
+
+    isInSoftZone(x, y) {
+        if (!this.softZones || this.softZones.length === 0) return false;
+        return this.softZones.some(zone => {
+            return Math.abs(x - zone.x) < zone.w / 2 && Math.abs(y - zone.y) < zone.h / 2;
+        });
+    }
+
+    isInSlowZone(x, y) {
+        if (!this.slowZones || this.slowZones.length === 0) return false;
+        return this.slowZones.some(zone => {
+            return Math.abs(x - zone.x) < zone.w / 2 && Math.abs(y - zone.y) < zone.h / 2;
+        });
+    }
+
+    isInMoonbeam(x, y) {
+        if (!this.moonbeam) return false;
+        const mb = this.moonbeam;
+        return Math.abs(x - mb.x) < mb.width / 2 && Math.abs(y - mb.y) < mb.height / 2;
+    }
+
+    collapsePlatform(platform) {
+        if (!platform || platform.getData('collapsed')) return;
+        platform.setData('collapsed', true);
+
+        // Items on platform fall with it
+        const platformBounds = platform.getBounds();
+        this.breakables.getChildren().forEach(item => {
+            if (item.getData('isBroken')) return;
+            const itemBounds = item.getBounds();
+            if (Phaser.Geom.Intersects.RectangleToRectangle(platformBounds, itemBounds)) {
+                if (!item.getData('isFalling')) {
+                    item.setData('isFalling', true);
+                    item.body.setAllowGravity(true);
+                    item.body.setImmovable(false);
+                    item.body.setVelocity(
+                        Phaser.Math.Between(-30, 30),
+                        50
+                    );
+                }
+            }
+        });
+
+        // Platform falls
+        this.tweens.add({
+            targets: platform,
+            y: platform.y + 600,
+            alpha: 0,
+            duration: 1500,
+            ease: 'Cubic.easeIn',
+            onComplete: () => {
+                platform.destroy();
+            }
+        });
+
+        this.shakeIntensity = 6;
+        sound.tone(120, 0.3, 'sawtooth');
     }
 
     spawnBreakable(x, y, type, scale) {
@@ -459,6 +572,41 @@ class GameScene extends Phaser.Scene {
             // 二段ジャンプリセット
             this.catState.doubleJumpUsed = false;
 
+            // Comfy trap (kotatsu)
+            if (platform.getData('comfy') && !this.catComfyStunned) {
+                this.catComfyStunned = true;
+                this.cat.body.setVelocity(0, 0);
+                this.changeCatExpression('catHappy');
+                sound.tone(440, 0.2);
+                showCatDialogue(this, cat.x, cat.y, 'jump');
+                this.time.delayedCall(1500, () => {
+                    this.catComfyStunned = false;
+                    this.changeCatExpression('cat');
+                });
+            }
+
+            // Crumbling platform
+            if (platform.getData('crumbling')) {
+                const landCount = (platform.getData('landCount') || 0) + 1;
+                platform.setData('landCount', landCount);
+
+                if (landCount === 1) {
+                    // First landing: shake warning
+                    this.tweens.add({
+                        targets: platform,
+                        x: platform.x + 3,
+                        yoyo: true,
+                        repeat: 5,
+                        duration: 50
+                    });
+                    sound.tone(200, 0.1);
+                } else if (landCount >= 2) {
+                    // Second landing: collapse after delay
+                    this.time.delayedCall(2000, () => this.collapsePlatform(platform));
+                }
+            }
+
+            // Bouncy platform
             if (platform.getData('isBouncy')) {
                 const jumpMult = powerUpManager.getMultiplier('jumpMultiplier');
                 cat.body.setVelocityY(-450 * jumpMult);
@@ -473,6 +621,9 @@ class GameScene extends Phaser.Scene {
         if (item.getData('isFalling') || item.getData('isBroken')) return;
         item.setData('isFalling', true);
 
+        // Check if item is rolling type (canFood)
+        const isRolling = item.getData('type') === 'canFood';
+
         this.tweens.add({
             targets: item,
             angle: { from: -12, to: 12 },
@@ -483,11 +634,23 @@ class GameScene extends Phaser.Scene {
                 if (!item || !item.body || item.getData('isBroken')) return;
                 item.body.setAllowGravity(true);
                 item.body.setImmovable(false);
-                item.body.setVelocity(
-                    this.catState.facing * Phaser.Math.Between(20, 60),
-                    -60
-                );
-                item.body.setAngularVelocity(Phaser.Math.Between(-300, 300));
+
+                if (isRolling) {
+                    // Rolling items: stronger horizontal velocity, angular velocity
+                    item.body.setVelocity(
+                        this.catState.facing * Phaser.Math.Between(120, 180),
+                        -40
+                    );
+                    item.body.setAngularVelocity(this.catState.facing * Phaser.Math.Between(300, 500));
+                } else {
+                    // Normal items
+                    item.body.setVelocity(
+                        this.catState.facing * Phaser.Math.Between(20, 60),
+                        -60
+                    );
+                    item.body.setAngularVelocity(Phaser.Math.Between(-300, 300));
+                }
+
                 if (item.getData('scoreValue') >= 100) this.triggerSlowMotion();
             }
         });
@@ -499,8 +662,14 @@ class GameScene extends Phaser.Scene {
         item.setData('isBroken', true);
 
         const scoreValue = item.getData('scoreValue');
-        const noiseValue = item.getData('noiseValue');
+        let noiseValue = item.getData('noiseValue');
         const itemType = item.getData('type');
+
+        // Check if in soft zone (tatami)
+        const inSoftZone = this.isInSoftZone(item.x, item.y);
+        if (inSoftZone) {
+            noiseValue *= 0.5; // 50% noise reduction
+        }
 
         this.combo++;
         this.comboTimer = GAME_CONSTANTS.BASE_COMBO_TIMER * powerUpManager.getMultiplier('comboTimeMultiplier');
@@ -509,10 +678,31 @@ class GameScene extends Phaser.Scene {
         // ローグライト: スコア倍率
         const scoreMult = powerUpManager.getMultiplier('scoreMultiplier');
         const comboMult = 1 + this.combo * 0.15;
-        const finalScore = Math.floor(scoreValue * scoreMult * comboMult);
+
+        // Moonbeam multiplier
+        const inMoonbeam = this.isInMoonbeam(item.x, item.y);
+        const moonbeamMult = inMoonbeam ? 1.5 : 1.0;
+
+        const finalScore = Math.floor(scoreValue * scoreMult * comboMult * moonbeamMult);
 
         this.score += finalScore;
         this.events.emit('updateScore', this.score);
+
+        // Check for domino bonus (3+ items broken within 1 second)
+        const now = this.time.now;
+        if (now - this.lastBreakTime < 1000) {
+            this.chainBreakCount = (this.chainBreakCount || 0) + 1;
+            if (this.chainBreakCount >= 3) {
+                const dominoBonus = 500;
+                this.score += dominoBonus;
+                this.events.emit('updateScore', this.score);
+                this.showDominoBonus(item.x, item.y);
+                this.chainBreakCount = 0;
+            }
+        } else {
+            this.chainBreakCount = 1;
+        }
+        this.lastBreakTime = now;
 
         // ローグライト: 焼き魚効果
         if (powerUpManager.hasPowerUp('fish')) {
@@ -521,7 +711,7 @@ class GameScene extends Phaser.Scene {
         }
 
         this.addNoise(noiseValue);
-        this.createBreakEffect(item.x, item.y, itemType, finalScore);
+        this.createBreakEffect(item.x, item.y, itemType, finalScore, inMoonbeam);
         this.shakeIntensity = Math.min(12, 3 + scoreValue / 30);
         sound.itemBreak(scoreValue / 80);
 
@@ -544,7 +734,7 @@ class GameScene extends Phaser.Scene {
         }
     }
 
-    createBreakEffect(x, y, type, score) {
+    createBreakEffect(x, y, type, score, inMoonbeam = false) {
         const colors = {
             vase: 0x5bc0de,
             book: 0x8b4513,
@@ -554,15 +744,17 @@ class GameScene extends Phaser.Scene {
             mug: 0xf5f5dc,
             frame: 0xdaa520,
             remote: 0x3a3a3a,
-            pen: 0x2255aa
+            pen: 0x2255aa,
+            canFood: 0xcc8844
         };
         const color = colors[type] || 0xffffff;
 
         EnhancedParticles.createShards(this, x, y, color, 14, score);
 
-        const popup = this.add.text(x, y, `+${score}`, {
+        const popupText = inMoonbeam ? `+${score} ☾` : `+${score}`;
+        const popup = this.add.text(x, y, popupText, {
             fontSize: '24px',
-            color: '#ffd700',
+            color: inMoonbeam ? '#ffffcc' : '#ffd700',
             fontStyle: 'bold',
             stroke: '#000000',
             strokeThickness: 3
@@ -576,6 +768,29 @@ class GameScene extends Phaser.Scene {
             duration: 700,
             onComplete: () => popup.destroy()
         });
+    }
+
+    showDominoBonus(x, y) {
+        const popup = this.add.text(x, y - 40, i18n.t('DOMINO_BONUS') + '\n+500', {
+            fontSize: '28px',
+            color: '#ff88ff',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 4,
+            align: 'center'
+        }).setOrigin(0.5).setDepth(50);
+
+        this.tweens.add({
+            targets: popup,
+            y: y - 100,
+            alpha: 0,
+            scale: 1.5,
+            duration: 1000,
+            onComplete: () => popup.destroy()
+        });
+
+        sound.tone(660, 0.2);
+        this.cameras.main.flash(200, 255, 136, 255);
     }
 
     showComboDisplay() {
@@ -692,7 +907,12 @@ class GameScene extends Phaser.Scene {
 
         // ローグライト: 速度倍率
         const speedMult = powerUpManager.getMultiplier('speedMultiplier');
-        const baseSpeed = 280 * speedMult;
+
+        // Slow zone (cobweb) effect
+        const inSlowZone = this.isInSlowZone(this.cat.x, this.cat.y);
+        const slowMult = inSlowZone ? 0.5 : 1.0;
+
+        const baseSpeed = 280 * speedMult * slowMult;
 
         if (moveL) {
             body.setVelocityX(-baseSpeed);
@@ -704,6 +924,11 @@ class GameScene extends Phaser.Scene {
             if (onGround) this.addNoise(0.004);
         } else {
             body.setVelocityX(body.velocity.x * 0.85);
+        }
+
+        // Prevent movement when comfy stunned
+        if (this.catComfyStunned) {
+            body.setVelocityX(0);
         }
 
         let jumpPressed = Phaser.Input.Keyboard.JustDown(this.cursors.up) ||
