@@ -207,16 +207,24 @@ const i18n = {
             lang = 'ja';
         }
         this.lang = lang;
-        localStorage.setItem('cat_zoomies_language', lang);
+        try {
+            localStorage.setItem('cat_zoomies_language', lang);
+        } catch (e) {
+            console.warn('Unable to save language preference to localStorage:', e.message);
+        }
     },
 
     /**
      * Load language preference from localStorage
      */
     load() {
-        const saved = localStorage.getItem('cat_zoomies_language');
-        if (saved && TRANSLATIONS[saved]) {
-            this.lang = saved;
+        try {
+            const saved = localStorage.getItem('cat_zoomies_language');
+            if (saved && TRANSLATIONS[saved]) {
+                this.lang = saved;
+            }
+        } catch (e) {
+            console.warn('Unable to load language preference from localStorage:', e.message);
         }
     }
 };
