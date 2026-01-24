@@ -1,0 +1,21 @@
+[GET] http://localhost:8000/ => [200] OK
+[GET] https://cdnjs.cloudflare.com/ajax/libs/phaser/3.70.0/phaser.min.js => [200] 
+[GET] http://localhost:8000/css/styles.css => [200] OK
+[GET] https://fonts.googleapis.com/css2?family=Fredoka+One&family=Kosugi+Maru&display=swap => [200] 
+[GET] http://localhost:8000/js/i18n.js => [200] OK
+[GET] http://localhost:8000/js/responsive.js => [200] OK
+[GET] http://localhost:8000/js/sound.js => [200] OK
+[GET] http://localhost:8000/js/textures.js => [200] OK
+[GET] http://localhost:8000/js/effects.js => [200] OK
+[GET] http://localhost:8000/js/mobile.js => [200] OK
+[GET] http://localhost:8000/js/roguelite.js => [200] OK
+[GET] http://localhost:8000/js/gathering.js => [200] OK
+[GET] http://localhost:8000/js/items.js => [200] OK
+[GET] http://localhost:8000/js/stages.js => [200] OK
+[GET] http://localhost:8000/js/scenes/TitleScene.js => [200] OK
+[GET] http://localhost:8000/js/scenes/PowerUpScene.js => [200] OK
+[GET] http://localhost:8000/js/scenes/GameScene.js => [200] OK
+[GET] http://localhost:8000/js/scenes/GatheringScene.js => [200] OK
+[GET] http://localhost:8000/js/scenes/HUDScene.js => [200] OK
+[GET] http://localhost:8000/js/validate.js => [200] OK
+[GET] https://fonts.gstatic.com/s/kosugimaru/v17/0nksC9PgP_wGh21A2KeqGhTtgPvfiwq-.woff2 => [200] 
