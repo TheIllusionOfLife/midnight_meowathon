@@ -43,6 +43,9 @@ const TRANSLATIONS = {
         GATHERING_VICTORY: '勝利！',
         GATHERING_DEFEAT: '失敗',
         GATHERING_RANK: 'ランク: {0}',
+        GATHERING_BEST: 'ベスト: {0}秒',
+        GATHERING_BEST_NONE: 'ベスト: ---',
+        GATHERING_NEW_RECORD: '新記録！',
         BTN_AGAIN: 'もういちど',
         BTN_TO_TITLE: 'タイトルへ',
 
@@ -131,6 +134,9 @@ const TRANSLATIONS = {
         GATHERING_VICTORY: 'Victory!',
         GATHERING_DEFEAT: 'Defeat',
         GATHERING_RANK: 'Rank: {0}',
+        GATHERING_BEST: 'Best: {0}s',
+        GATHERING_BEST_NONE: 'Best: ---',
+        GATHERING_NEW_RECORD: 'NEW RECORD!',
         BTN_AGAIN: 'Try Again',
         BTN_TO_TITLE: 'Back to Title',
 

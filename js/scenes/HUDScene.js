@@ -238,7 +238,7 @@ class HUDScene extends Phaser.Scene {
         const x = isMobile ? GameLayout.controlsRight : GameLayout.W - GameLayout.scale(20);
         // Move down below score text to avoid overlap
         const y = isMobile
-            ? GameLayout.controlsBottom - GameLayout.scale(130)
+            ? GameLayout.controlsBottom - GameLayout.scale(GameLayout.isPortrait ? 210 : 130)
             : (GameLayout.isPortrait ? 130 : 100);
 
         this.thunderLabel = this.add.text(x, y, '⚡ READY', {
@@ -290,7 +290,7 @@ class HUDScene extends Phaser.Scene {
         if (!powerUpManager || !powerUpManager.hasPowerUp('thunder')) return;
 
         const x = GameLayout.controlsRight;
-        const y = GameLayout.controlsBottom - (GameLayout.isPortrait ? GameLayout.scale(110) : GameLayout.scale(90));
+        const y = GameLayout.controlsBottom - (GameLayout.isPortrait ? GameLayout.scale(180) : GameLayout.scale(90));
         const radius = GameLayout.scale(GameLayout.isPortrait ? 20 : 18);
 
         this.thunderBtn = this.add.circle(x, y, radius, 0x5a3a8a, 0.9)

@@ -290,7 +290,7 @@ class JumpButton {
             this.button.setScale(1);
         });
 
-        this.button.on('pointerout', () => {
+        this.button.on('pointerupoutside', () => {
             this.pressed = false;
             this.button.setFillStyle(0xffaa88, 0.7);
             this.button.setScale(1);

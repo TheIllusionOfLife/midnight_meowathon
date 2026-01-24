@@ -4,85 +4,85 @@ function validateGameConfiguration() {
     const errors = [];
     const warnings = [];
 
-    console.log('🔍 ゲーム設定を検証中...');
+    console.log('🔍 Validating game configuration...');
 
-    // 1. 必須グローバル変数の存在確認
+    // 1. Required global variables
     if (typeof POWERUPS === 'undefined') {
-        errors.push('POWERUPS が定義されていません');
+        errors.push('POWERUPS is not defined');
     } else {
         const powerUpIds = Object.keys(POWERUPS);
         if (powerUpIds.length !== 6) {
-            warnings.push(`POWERUPS の数が異常です: ${powerUpIds.length} (期待値: 6)`);
+            warnings.push(`Unexpected POWERUPS count: ${powerUpIds.length} (expected: 6)`);
         }
 
-        // 各パワーアップの検証
+        // Validate each power-up
         Object.entries(POWERUPS).forEach(([id, powerUp]) => {
             if (!powerUp.icon) {
-                errors.push(`${id} にアイコンが設定されていません`);
+                errors.push(`${id} has no icon set`);
             }
             if (!powerUp.getName || typeof powerUp.getName !== 'function') {
-                errors.push(`${id} に getName() が設定されていません`);
+                errors.push(`${id} has no getName() function`);
             }
         });
     }
 
     if (typeof ITEM_PROPERTIES === 'undefined') {
-        errors.push('ITEM_PROPERTIES が定義されていません (js/items.js が必要)');
+        errors.push('ITEM_PROPERTIES is not defined (js/items.js required)');
     } else {
         // Validate essential item types exist
         const requiredItems = ['vase', 'book', 'clock'];
         requiredItems.forEach(item => {
             if (!ITEM_PROPERTIES[item]) {
-                errors.push(`ITEM_PROPERTIES に必須アイテム ${item} がありません`);
+                errors.push(`ITEM_PROPERTIES missing required item: ${item}`);
             } else if (typeof ITEM_PROPERTIES[item].score !== 'number' || typeof ITEM_PROPERTIES[item].noise !== 'number') {
-                errors.push(`ITEM_PROPERTIES[${item}] に score または noise が正しく設定されていません`);
+                errors.push(`ITEM_PROPERTIES[${item}] missing or invalid score/noise`);
             }
         });
     }
 
     if (typeof STAGE_LAYOUTS === 'undefined') {
-        errors.push('STAGE_LAYOUTS が定義されていません');
+        errors.push('STAGE_LAYOUTS is not defined');
     } else {
-        // ステージ1-5の存在確認
+        // Check stages 1-5
         for (let i = 1; i <= 5; i++) {
             if (!STAGE_LAYOUTS[i]) {
-                errors.push(`ステージ${i}のレイアウトが定義されていません`);
+                errors.push(`Stage ${i} layout is not defined`);
             } else {
                 const layout = STAGE_LAYOUTS[i];
                 if (!layout.getName || typeof layout.getName !== 'function') {
-                    errors.push(`ステージ${i}に getName() がありません`);
+                    errors.push(`Stage ${i} has no getName() function`);
                 }
                 if (!layout.catStart) {
-                    errors.push(`ステージ${i}に猫の開始位置がありません`);
+                    errors.push(`Stage ${i} has no cat start position`);
                 }
                 if (!Array.isArray(layout.platforms)) {
-                    errors.push(`ステージ${i}のプラットフォームが配列ではありません`);
+                    errors.push(`Stage ${i} platforms is not an array`);
                 }
                 if (!Array.isArray(layout.items)) {
-                    errors.push(`ステージ${i}のアイテムが配列ではありません`);
+                    errors.push(`Stage ${i} items is not an array`);
                 }
             }
         }
     }
 
     if (typeof GATHERING_STAGE_LAYOUTS === 'undefined') {
-        errors.push('GATHERING_STAGE_LAYOUTS が定義されていません');
+        errors.push('GATHERING_STAGE_LAYOUTS is not defined');
     } else {
         const requiredBosses = ['kuro', 'shiro', 'mike', 'boss'];
         requiredBosses.forEach(bossId => {
             if (!GATHERING_STAGE_LAYOUTS[bossId]) {
-                errors.push(`ボス猫 ${bossId} のステージが定義されていません`);
+                errors.push(`Boss cat ${bossId} stage is not defined`);
             }
         });
     }
 
     if (typeof BOSS_CATS === 'undefined') {
-        errors.push('BOSS_CATS が定義されていません');
+        errors.push('BOSS_CATS is not defined');
     } else if (!Array.isArray(BOSS_CATS) || BOSS_CATS.length !== 4) {
-        errors.push(`BOSS_CATS の数が異常です: ${BOSS_CATS?.length} (期待値: 4)`);
+        errors.push(`Unexpected BOSS_CATS count: ${BOSS_CATS?.length} (expected: 4)`);
     }
 
-    // 2. クラスの存在確認
+    // 2. Required classes
     const requiredClasses = [
         'PowerUpManager',
         'StoryProgress',
@@ -98,25 +98,25 @@ function validateGameConfiguration() {
         // Check both window and global scope (class declarations may not be on window)
         try {
             if (typeof eval(className) === 'undefined') {
-                errors.push(`クラス ${className} が定義されていません`);
+                errors.push(`Class ${className} is not defined`);
             }
         } catch (e) {
-            errors.push(`クラス ${className} が定義されていません`);
+            errors.push(`Class ${className} is not defined`);
         }
     });
 
-    // 3. グローバルインスタンスの確認
+    // 3. Global instances
     if (typeof sound === 'undefined') {
-        errors.push('sound インスタンスが定義されていません');
+        errors.push('sound instance is not defined');
     }
     if (typeof storyProgress === 'undefined') {
-        errors.push('storyProgress インスタンスが定義されていません');
+        errors.push('storyProgress instance is not defined');
     }
     if (typeof powerUpManager === 'undefined') {
-        errors.push('powerUpManager インスタンスが定義されていません');
+        errors.push('powerUpManager instance is not defined');
     }
 
-    // 4. 関数の存在確認
+    // 4. Required functions
     const requiredFunctions = [
         'createAllTextures',
         'showCatDialogue',
@@ -125,36 +125,36 @@ function validateGameConfiguration() {
 
     requiredFunctions.forEach(funcName => {
         if (typeof window[funcName] === 'undefined') {
-            errors.push(`関数 ${funcName} が定義されていません`);
+            errors.push(`Function ${funcName} is not defined`);
         }
     });
 
-    // 結果表示
-    console.log('\n📊 検証結果:');
-    console.log(`✅ エラー: ${errors.length}件`);
-    console.log(`⚠️  警告: ${warnings.length}件`);
+    // Results
+    console.log('\n📊 Validation Results:');
+    console.log(`✅ Errors: ${errors.length}`);
+    console.log(`⚠️  Warnings: ${warnings.length}`);
 
     if (errors.length > 0) {
-        console.error('\n❌ エラー一覧:');
+        console.error('\n❌ Error List:');
         errors.forEach((err, i) => console.error(`  ${i + 1}. ${err}`));
     }
 
     if (warnings.length > 0) {
-        console.warn('\n⚠️  警告一覧:');
+        console.warn('\n⚠️  Warning List:');
         warnings.forEach((warn, i) => console.warn(`  ${i + 1}. ${warn}`));
     }
 
     if (errors.length === 0 && warnings.length === 0) {
-        console.log('\n✨ すべての検証に合格しました！');
+        console.log('\n✨ All validations passed!');
         return true;
     } else if (errors.length === 0) {
-        console.log('\n✅ 検証に合格しました（警告あり）');
+        console.log('\n✅ Validation passed (with warnings)');
         return true;
     } else {
-        console.error('\n💥 検証に失敗しました。ゲームを起動できません。');
+        console.error('\n💥 Validation failed. Cannot start game.');
         return false;
     }
 }
 
-// 手動で呼び出す必要があります（index.htmlから）
-// window.addEventListener('load', ...) は使用しません
+// Must be called manually (from index.html)
+// Does not use window.addEventListener('load', ...)

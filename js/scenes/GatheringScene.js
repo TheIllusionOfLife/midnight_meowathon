@@ -1,7 +1,32 @@
 // 猫の集会シーン - タイムアタック形式
 class GatheringScene extends Phaser.Scene {
+    static HIGHSCORE_KEY = 'cat_zoomies_gathering_times';
+
     constructor() {
         super('GatheringScene');
+    }
+
+    loadBestTimes() {
+        try {
+            const data = localStorage.getItem(GatheringScene.HIGHSCORE_KEY);
+            return data ? JSON.parse(data) : {};
+        } catch (e) { return {}; }
+    }
+
+    saveBestTime(bossId, time) {
+        try {
+            const times = this.loadBestTimes();
+            if (!times[bossId] || time < times[bossId]) {
+                times[bossId] = time;
+                localStorage.setItem(GatheringScene.HIGHSCORE_KEY, JSON.stringify(times));
+                return true;
+            }
+            return false;
+        } catch (e) { return false; }
+    }
+
+    getBestTime(bossId) {
+        return this.loadBestTimes()[bossId] || null;
     }
 
     create() {
@@ -171,7 +196,18 @@ class GatheringScene extends Phaser.Scene {
             wordWrap: { width: 140 }
         }).setOrigin(0.5);
 
-        container.add([card, catIcon, name, difficulty, desc]);
+        // ベストタイム表示
+        const bestTime = this.getBestTime(boss.id);
+        const bestText = bestTime !== null
+            ? i18n.t('GATHERING_BEST').replace('{0}', bestTime.toFixed(2))
+            : i18n.t('GATHERING_BEST_NONE');
+        const best = this.add.text(0, 90, bestText, {
+            fontSize: '10px',
+            color: bestTime !== null ? '#ffdd66' : '#888888',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        container.add([card, catIcon, name, difficulty, desc, best]);
 
         // ホバーエフェクト
         card.on('pointerover', () => {
@@ -593,17 +629,24 @@ class GatheringScene extends Phaser.Scene {
         const isWin = rules.checkWin(this.elapsedTime);
         const rank = rules.getRank(this.elapsedTime);
 
+        // 勝利時にベストタイムを保存
+        let isNewRecord = false;
+        if (isWin) {
+            isNewRecord = this.saveBestTime(this.selectedBoss.id, this.elapsedTime);
+        }
+
         sound.clear();
         if (isWin) {
             sound.victoryMeow();
         }
 
         this.time.delayedCall(500, () => {
-            this.showResult(isWin, rank);
+            this.showResult(isWin, rank, isNewRecord);
         });
     }
 
-    showResult(isWin, rank) {
+    showResult(isWin, rank, isNewRecord = false) {
+        sound.stopAll();
         const overlay = this.add.rectangle(400, 275, 3000, 3000, 0x000000, 0)
             .setDepth(200);
         this.tweens.add({
@@ -633,6 +676,17 @@ class GatheringScene extends Phaser.Scene {
                     color: '#ffd700',
                     fontStyle: 'bold'
                 }).setOrigin(0.5));
+
+                // 新記録表示
+                if (isNewRecord) {
+                    c.add(this.add.text(0, 50, i18n.t('GATHERING_NEW_RECORD'), {
+                        fontSize: '24px',
+                        color: '#ff66ff',
+                        fontStyle: 'bold',
+                        stroke: '#000',
+                        strokeThickness: 3
+                    }).setOrigin(0.5));
+                }
             } else {
                 c.add(this.add.image(0, -120, 'shock').setScale(1.2));
                 c.add(this.add.text(0, -50, i18n.t('GATHERING_DEFEAT'), {

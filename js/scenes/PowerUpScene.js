@@ -198,6 +198,7 @@ class PowerUpScene extends Phaser.Scene {
     }
 
     startGame() {
+        powerUpManager.resetCooldowns();
         this.cameras.main.fadeOut(400);
         this.time.delayedCall(400, () => {
             this.scene.start('GameScene');
