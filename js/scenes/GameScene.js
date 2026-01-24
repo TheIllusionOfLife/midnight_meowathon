@@ -1213,6 +1213,7 @@ class GameScene extends Phaser.Scene {
                 }));
             } else {
                 c.add(makeBtn(uiOffset(130), 'iconRetry', i18n.t('BTN_RETRY'), () => {
+                    powerUpManager.resetCooldowns();
                     this.scene.restart();
                 }));
                 c.add(makeBtn(uiOffset(180), 'iconHome', i18n.t('BTN_TITLE'), () => {
