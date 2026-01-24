@@ -4,6 +4,7 @@ class VirtualJoystick {
     constructor(scene, options = {}) {
         this.scene = scene;
         this.destroyed = false;
+        this.autoResize = true; // Can be disabled when managed externally
         this.inputScale = 1;
         this.useWorldPointer = false;
 
@@ -60,6 +61,7 @@ class VirtualJoystick {
 
     onResize(gameSize) {
         if (this.destroyed) return;
+        if (!this.autoResize) return; // Skip if managed externally
         this.updateDimensions();
         this.updatePosition();
     }
@@ -191,6 +193,7 @@ class JumpButton {
     constructor(scene, options = {}) {
         this.scene = scene;
         this.destroyed = false;
+        this.autoResize = true; // Can be disabled when managed externally
 
         // Use percentage-based positioning
         const {
@@ -244,6 +247,7 @@ class JumpButton {
 
     onResize(gameSize) {
         if (this.destroyed) return;
+        if (!this.autoResize) return; // Skip if managed externally
         this.updateDimensions();
         this.updatePosition();
     }
@@ -455,6 +459,10 @@ function updateMobileControlsForCamera(joystick, jumpBtn, camera, screenW, scree
     if (!joystick.base || !joystick.base.geom || !joystick.stick || !joystick.stick.geom) return;
     if (!jumpBtn.button || !jumpBtn.button.geom) return;
 
+    // Disable auto-resize since this function manages positions
+    joystick.autoResize = false;
+    jumpBtn.autoResize = false;
+
     const minDim = Math.min(screenW, screenH);
     const zoom = camera.zoom || 1;
     joystick.inputScale = 1;
@@ -488,6 +496,10 @@ function updateMobileControlsForScreen(joystick, jumpBtn, camera, screenW, scree
     if (joystick.destroyed || jumpBtn.destroyed) return;
     if (!joystick.base || !joystick.base.geom || !joystick.stick || !joystick.stick.geom) return;
     if (!jumpBtn.button || !jumpBtn.button.geom) return;
+
+    // Disable auto-resize since this function manages positions
+    joystick.autoResize = false;
+    jumpBtn.autoResize = false;
 
     const minDim = Math.min(screenW, screenH);
     joystick.inputScale = 1;
