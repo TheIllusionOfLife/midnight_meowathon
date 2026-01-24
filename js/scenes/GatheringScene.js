@@ -82,8 +82,9 @@ class GatheringScene extends Phaser.Scene {
             const centerY = Math.max(minCenterY, worldH - visibleH / 2 + bottomPadding);
             this.cameras.main.centerOn(worldW / 2, centerY);
 
-            if (this.joystick && this.jumpBtn) {
-                updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, screenW, screenH);
+            // Update UI camera size (controls manage their own positioning)
+            if (this.uiCamera) {
+                this.uiCamera.setSize(screenW, screenH);
             }
         }
     }
@@ -266,6 +267,10 @@ class GatheringScene extends Phaser.Scene {
             this.jumpBtn.destroy();
             this.jumpBtn = null;
         }
+        if (this.uiCamera) {
+            this.cameras.remove(this.uiCamera);
+            this.uiCamera = null;
+        }
     }
 
     initTimeAttack() {
@@ -406,19 +411,35 @@ class GatheringScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(1, 1).setDepth(100);
 
-        // Mobile Controls
+        // Mobile Controls - use separate UI camera (no zoom) like HUDScene
         if (isMobile) {
-            const joyXPct = GameLayout.controlsLeft / GameLayout.W;
-            const joyYPct = GameLayout.controlsBottom / GameLayout.H;
-            const btnXPct = GameLayout.controlsRight / GameLayout.W;
-            const btnYPct = GameLayout.controlsBottom / GameLayout.H;
-            const controls = createMobileControls(this, {
-                joystick: { xPercent: joyXPct, yPercent: joyYPct },
-                jump: { xPercent: btnXPct, yPercent: btnYPct }
-            });
+            // Create UI camera that won't be zoomed (transparent, only for controls)
+            this.uiCamera = this.cameras.add(0, 0, this.scale.width, this.scale.height);
+            this.uiCamera.setScroll(0, 0);
+            this.uiCamera.transparent = true;
+
+            // Create controls with default positioning (like HUDScene)
+            const controls = createMobileControls(this);
             this.joystick = controls.joystick;
             this.jumpBtn = controls.jumpBtn;
-            updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, this.scale.gameSize.width, this.scale.gameSize.height);
+
+            // Collect all control objects
+            const controlObjects = [
+                this.joystick.base, this.joystick.stick,
+                this.jumpBtn.button, this.jumpBtn.icon
+            ];
+
+            // Main camera ignores controls (won't be affected by zoom)
+            controlObjects.forEach(obj => {
+                if (obj) this.cameras.main.ignore(obj);
+            });
+
+            // UI camera ignores everything except controls
+            this.children.each(child => {
+                if (!controlObjects.includes(child)) {
+                    this.uiCamera.ignore(child);
+                }
+            });
         }
     }
 

@@ -285,10 +285,10 @@ test('猫の集会のリサイズがゲーム画面を中央に保つ', () => {
     assert(content.includes('removeBounds'), 'GatheringScene が removeBounds を使用していません');
 });
 
-test('猫の集会のモバイル操作が画面座標で配置されている', () => {
+test('猫の集会のモバイル操作が専用UIカメラで配置されている', () => {
     const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
-    assert(!content.includes('updateMobileControlsForCamera'), 'GatheringScene に updateMobileControlsForCamera が残っています');
-    assert(content.includes('updateMobileControlsForScreen'), 'GatheringScene が updateMobileControlsForScreen を使用していません');
+    assert(content.includes('this.uiCamera = this.cameras.add'), 'GatheringScene が UI カメラを作成していません');
+    assert(content.includes('this.cameras.main.ignore'), 'GatheringScene のメインカメラがコントロールを無視していません');
 });
 
 test('猫の集会のズームが1以上に拡大されない', () => {
@@ -345,11 +345,11 @@ test('猫の集会が固定ワールド境界を設定している', () => {
     );
 });
 
-test('猫の集会のジョイスティック位置がUIの安全領域に合わせられている', () => {
+test('猫の集会のモバイル操作がHUDSceneと同じパターンで作成されている', () => {
     const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
     assert(
-        content.includes('controlsLeft') && content.includes('controlsRight'),
-        'GatheringScene が GameLayout.controlsLeft/Right を使用していません'
+        content.includes('createMobileControls(this)'),
+        'GatheringScene が createMobileControls(this) を使用していません'
     );
 });
 
