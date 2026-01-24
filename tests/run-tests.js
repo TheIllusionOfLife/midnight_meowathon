@@ -285,10 +285,10 @@ test('猫の集会のリサイズがゲーム画面を中央に保つ', () => {
     assert(content.includes('removeBounds'), 'GatheringScene が removeBounds を使用していません');
 });
 
-test('猫の集会のモバイル操作がカメラ座標で配置されている', () => {
+test('猫の集会のモバイル操作が画面座標で配置されている', () => {
     const content = fs.readFileSync('js/scenes/GatheringScene.js', 'utf8');
-    assert(content.includes('updateMobileControlsForCamera'), 'GatheringScene が updateMobileControlsForCamera を使用していません');
-    assert(!content.includes('updateMobileControlsForScreen'), 'GatheringScene に updateMobileControlsForScreen が残っています');
+    assert(!content.includes('updateMobileControlsForCamera'), 'GatheringScene に updateMobileControlsForCamera が残っています');
+    assert(content.includes('updateMobileControlsForScreen'), 'GatheringScene が updateMobileControlsForScreen を使用していません');
 });
 
 test('猫の集会のズームが1以上に拡大されない', () => {

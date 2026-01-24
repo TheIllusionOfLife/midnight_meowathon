@@ -83,7 +83,7 @@ class GatheringScene extends Phaser.Scene {
             this.cameras.main.centerOn(worldW / 2, centerY);
 
             if (this.joystick && this.jumpBtn) {
-                updateMobileControlsForCamera(this.joystick, this.jumpBtn, this.cameras.main, screenW, screenH);
+                updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, screenW, screenH);
             }
         }
     }
@@ -418,7 +418,7 @@ class GatheringScene extends Phaser.Scene {
             });
             this.joystick = controls.joystick;
             this.jumpBtn = controls.jumpBtn;
-            updateMobileControlsForCamera(this.joystick, this.jumpBtn, this.cameras.main, this.scale.width, this.scale.height);
+            updateMobileControlsForScreen(this.joystick, this.jumpBtn, this.cameras.main, this.scale.gameSize.width, this.scale.gameSize.height);
         }
     }
 
