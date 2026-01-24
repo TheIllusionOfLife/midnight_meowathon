@@ -191,7 +191,7 @@ const TRANSLATIONS = {
 
         // Level Design Mechanics
         DOMINO_BONUS: 'DOMINO BONUS',
-        MOONBEAM_BONUS: 'MOONBEAM'
+        MOONBEAM_BONUS: 'MOONBEAM BONUS'
     }
 };
 

@@ -38,6 +38,7 @@ class GameScene extends Phaser.Scene {
         this.lastJumpPressed = false;
         this.catComfyStunned = false;
         this.lastBreakTime = 0;
+        this.chainBreakCount = 0;
 
         // 猫の状態
         this.catState = {
@@ -354,9 +355,9 @@ class GameScene extends Phaser.Scene {
 
     createMoonbeam() {
         const layout = this.getCurrentStageLayout();
-        if (!layout.moonbeam) return;
-
         const mb = layout.moonbeam;
+        if (!mb || mb.startX == null || mb.endX == null || mb.width == null || mb.cycleTime == null) return;
+
         this.moonbeam = this.add.rectangle(mb.startX, 275, mb.width, 550, 0xffffcc, 0.15)
             .setDepth(15);
 
@@ -944,7 +945,7 @@ class GameScene extends Phaser.Scene {
         // ローグライト: ジャンプ倍率
         const jumpMult = powerUpManager.getMultiplier('jumpMultiplier');
 
-        if (jumpPressed) {
+        if (jumpPressed && !this.catComfyStunned) {
             if (onGround) {
                 body.setVelocityY(-500 * jumpMult);
                 this.addNoise(1.5);

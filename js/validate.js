@@ -6,10 +6,6 @@ function validateGameConfiguration() {
 
     console.log('🔍 Validating game configuration...');
 
-    // TEMPORARY: Skip validation - known scoping issue with eval in strict mode
-    console.log('⚠️  Validation temporarily disabled');
-    return true;
-
     // 1. Required global variables
     if (typeof POWERUPS === 'undefined') {
         errors.push('POWERUPS is not defined');
@@ -99,13 +95,8 @@ function validateGameConfiguration() {
     ];
 
     requiredClasses.forEach(className => {
-        // Check if class exists in global scope (indirect eval for global scope access)
-        try {
-            const globalEval = eval;
-            if (typeof globalEval(className) === 'undefined') {
-                errors.push(`Class ${className} is not defined`);
-            }
-        } catch (e) {
+        // Check if class exists in global scope
+        if (typeof window[className] === 'undefined') {
             errors.push(`Class ${className} is not defined`);
         }
     });

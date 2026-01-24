@@ -99,9 +99,9 @@ const STAGE_LAYOUTS = {
         ],
         items: [
             // カウンター（左）- more stacks
-            { x: 110, y: 395, type: 'mug', scale: 0.8, stackGroup: 'stack1' },
-            { x: 110, y: 375, type: 'book', scale: 0.9, stackGroup: 'stack1' },
-            { x: 110, y: 355, type: 'pen', scale: 1.0, stackGroup: 'stack1' }, // 3-stack
+            { x: 110, y: 395, type: 'mug', scale: 0.8,  },
+            { x: 110, y: 375, type: 'book', scale: 0.9,  },
+            { x: 110, y: 355, type: 'pen', scale: 1.0,  }, // 3-stack
             { x: 150, y: 395, type: 'vase', scale: 0.7 },
             // カウンター（中左）- rolling cans
             { x: 260, y: 385, type: 'canFood', scale: 0.8 },
@@ -109,18 +109,18 @@ const STAGE_LAYOUTS = {
             { x: 370, y: 395, type: 'canFood', scale: 0.8 },
             { x: 410, y: 395, type: 'remote', scale: 1.0 },
             // 吊り戸棚（左）- stacks on all levels
-            { x: 100, y: 225, type: 'plant', scale: 0.6, stackGroup: 'stack2' },
-            { x: 100, y: 205, type: 'mug', scale: 0.8, stackGroup: 'stack2' },
+            { x: 100, y: 225, type: 'plant', scale: 0.6,  },
+            { x: 100, y: 205, type: 'mug', scale: 0.8,  },
             { x: 135, y: 225, type: 'frame', scale: 0.7 },
-            { x: 100, y: 155, type: 'clock', scale: 0.7, stackGroup: 'stack3' },
-            { x: 100, y: 135, type: 'lamp', scale: 0.6, stackGroup: 'stack3' },
+            { x: 100, y: 155, type: 'clock', scale: 0.7,  },
+            { x: 100, y: 135, type: 'lamp', scale: 0.6,  },
             { x: 135, y: 155, type: 'book', scale: 0.9 },
             { x: 100, y: 85, type: 'vase', scale: 0.7 },
             { x: 135, y: 85, type: 'pen', scale: 1.0 },
             // 中央の棚 - all levels
             { x: 490, y: 345, type: 'vase', scale: 0.7 },
-            { x: 490, y: 255, type: 'plant', scale: 0.6, stackGroup: 'stack4' },
-            { x: 490, y: 235, type: 'mug', scale: 0.8, stackGroup: 'stack4' },
+            { x: 490, y: 255, type: 'plant', scale: 0.6,  },
+            { x: 490, y: 235, type: 'mug', scale: 0.8,  },
             { x: 490, y: 165, type: 'clock', scale: 0.7 },
             // 冷蔵庫の上
             { x: 650, y: 245, type: 'book', scale: 1.0 },
@@ -161,10 +161,6 @@ const STAGE_LAYOUTS = {
             // 畳エリア（騒音50%減）- smaller
             { x: 380, y: 480, w: 200, h: 40 }
         ],
-        hazards: [
-            // 風鈴（入口エリア）
-            { x: 100, y: 400, type: 'windChime' }
-        ],
         items: [
             // 座卓（左）
             { x: 235, y: 415, type: 'mug', scale: 0.8 },
@@ -173,11 +169,11 @@ const STAGE_LAYOUTS = {
             { x: 490, y: 410, type: 'vase', scale: 0.7 },
             { x: 510, y: 410, type: 'pen', scale: 1.0 },
             // 床の間の棚（高得点アイテム）- all 4 levels, stacked
-            { x: 660, y: 375, type: 'vase', scale: 0.7, stackGroup: 'stack1' },
-            { x: 660, y: 355, type: 'plant', scale: 0.6, stackGroup: 'stack1' },
+            { x: 660, y: 375, type: 'vase', scale: 0.7,  },
+            { x: 660, y: 355, type: 'plant', scale: 0.6,  },
             { x: 690, y: 375, type: 'lamp', scale: 0.6 },
-            { x: 660, y: 295, type: 'clock', scale: 0.7, stackGroup: 'stack2' },
-            { x: 660, y: 275, type: 'frame', scale: 0.7, stackGroup: 'stack2' },
+            { x: 660, y: 295, type: 'clock', scale: 0.7,  },
+            { x: 660, y: 275, type: 'frame', scale: 0.7,  },
             { x: 690, y: 295, type: 'mug', scale: 0.8 },
             { x: 660, y: 215, type: 'book', scale: 0.9 },
             { x: 690, y: 215, type: 'remote', scale: 1.0 },
@@ -246,8 +242,8 @@ const STAGE_LAYOUTS = {
             { x: 200, y: 315, type: 'vase', scale: 0.7 },
             { x: 220, y: 315, type: 'remote', scale: 1.0 },
             // 左3（クランブル - さらに危険！）
-            { x: 260, y: 235, type: 'clock', scale: 0.7, stackGroup: 'stack1' },
-            { x: 260, y: 215, type: 'lamp', scale: 0.6, stackGroup: 'stack1' },
+            { x: 260, y: 235, type: 'clock', scale: 0.7,  },
+            { x: 260, y: 215, type: 'lamp', scale: 0.6,  },
             { x: 280, y: 235, type: 'mug', scale: 0.8 },
             // 左4（クランブル - 蜘蛛の巣）
             { x: 315, y: 155, type: 'vase', scale: 0.7 },
@@ -256,8 +252,8 @@ const STAGE_LAYOUTS = {
             { x: 390, y: 345, type: 'frame', scale: 0.7 },
             { x: 410, y: 345, type: 'mug', scale: 0.8 },
             // 中央2（クランブル）
-            { x: 395, y: 265, type: 'plant', scale: 0.6, stackGroup: 'stack2' },
-            { x: 395, y: 245, type: 'vase', scale: 0.7, stackGroup: 'stack2' },
+            { x: 395, y: 265, type: 'plant', scale: 0.6,  },
+            { x: 395, y: 245, type: 'vase', scale: 0.7,  },
             // 中央3（クランブル）
             { x: 395, y: 185, type: 'clock', scale: 0.7 },
             { x: 405, y: 185, type: 'lamp', scale: 0.6 },
@@ -268,8 +264,8 @@ const STAGE_LAYOUTS = {
             { x: 475, y: 155, type: 'clock', scale: 0.7 },
             { x: 485, y: 155, type: 'plant', scale: 0.6 },
             // 右3（クランブル）
-            { x: 520, y: 235, type: 'lamp', scale: 0.6, stackGroup: 'stack3' },
-            { x: 520, y: 215, type: 'mug', scale: 0.8, stackGroup: 'stack3' },
+            { x: 520, y: 235, type: 'lamp', scale: 0.6,  },
+            { x: 520, y: 215, type: 'mug', scale: 0.8,  },
             { x: 540, y: 235, type: 'vase', scale: 0.7 },
             // 右2（クランブル）
             { x: 580, y: 315, type: 'book', scale: 0.9 },
