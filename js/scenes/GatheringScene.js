@@ -74,7 +74,7 @@ class GatheringScene extends Phaser.Scene {
 
         // タイトル
         const titleSize = GameLayout.fontSize(36) + 'px';
-        this.add.text(W / 2, H * 0.1, '猫の集会 - タイムアタック', {
+        this.add.text(W / 2, H * 0.1, i18n.t('GATHERING_TITLE'), {
             fontSize: titleSize,
             fontFamily: 'Kosugi Maru',
             color: '#ffffff',
@@ -83,7 +83,7 @@ class GatheringScene extends Phaser.Scene {
             strokeThickness: 6
         }).setOrigin(0.5);
 
-        this.add.text(W / 2, H * 0.18, '対戦相手を選択', {
+        this.add.text(W / 2, H * 0.18, i18n.t('GATHERING_SELECT'), {
             fontSize: GameLayout.fontSize(20) + 'px',
             fontFamily: 'Kosugi Maru',
             color: '#aaaacc'
@@ -117,7 +117,7 @@ class GatheringScene extends Phaser.Scene {
             .setStrokeStyle(2, 0x888899)
             .setInteractive({ useHandCursor: true });
 
-        const backText = this.add.text(W / 2, btnY, 'タイトルへ', {
+        const backText = this.add.text(W / 2, btnY, i18n.t('BTN_TO_TITLE'), {
             fontSize: GameLayout.fontSize(18) + 'px',
             color: '#ffffff'
         }).setOrigin(0.5);
@@ -149,7 +149,7 @@ class GatheringScene extends Phaser.Scene {
         const catIcon = this.add.image(0, -70, 'cat').setScale(0.7).setTint(boss.color);
 
         // 名前
-        const name = this.add.text(0, -15, boss.name, {
+        const name = this.add.text(0, -15, boss.getName(), {
             fontSize: '18px',
             color: '#ffffff',
             fontStyle: 'bold'
@@ -163,7 +163,7 @@ class GatheringScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // 説明
-        const desc = this.add.text(0, 50, boss.description, {
+        const desc = this.add.text(0, 50, boss.getDescription(), {
             fontSize: '11px',
             color: '#ddddee',
             align: 'center',
@@ -252,7 +252,7 @@ class GatheringScene extends Phaser.Scene {
         // ステージ名表示
         const stageNameBg = this.add.rectangle(400, 30, 300, 40, 0x000000, 0.7)
             .setDepth(100);
-        this.add.text(400, 30, layout.name, {
+        this.add.text(400, 30, layout.getName(), {
             fontSize: '24px',
             color: '#ffffff',
             fontStyle: 'bold'
@@ -358,7 +358,7 @@ class GatheringScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(100);
 
         // 目標タイム表示
-        this.add.text(400, 110, `目標: ${this.selectedBoss.targetTime.toFixed(2)}秒`, {
+        this.add.text(400, 110, i18n.t('GATHERING_TARGET').replace('{0}', this.selectedBoss.targetTime.toFixed(2)), {
             fontSize: '20px',
             color: '#ff6666'
         }).setOrigin(0.5).setDepth(100);
@@ -619,7 +619,7 @@ class GatheringScene extends Phaser.Scene {
 
             if (isWin) {
                 c.add(this.add.image(0, -120, 'celebrate').setScale(1.2));
-                c.add(this.add.text(0, -50, '勝利！', {
+                c.add(this.add.text(0, -50, i18n.t('GATHERING_VICTORY'), {
                     fontSize: '48px',
                     color: '#44ff44',
                     fontStyle: 'bold',
@@ -628,14 +628,14 @@ class GatheringScene extends Phaser.Scene {
                 }).setOrigin(0.5));
 
                 // ランク表示
-                c.add(this.add.text(0, 10, `ランク: ${rank}`, {
+                c.add(this.add.text(0, 10, i18n.t('GATHERING_RANK').replace('{0}', rank), {
                     fontSize: '36px',
                     color: '#ffd700',
                     fontStyle: 'bold'
                 }).setOrigin(0.5));
             } else {
                 c.add(this.add.image(0, -120, 'shock').setScale(1.2));
-                c.add(this.add.text(0, -50, '失敗', {
+                c.add(this.add.text(0, -50, i18n.t('GATHERING_DEFEAT'), {
                     fontSize: '48px',
                     color: '#ff5555',
                     fontStyle: 'bold',
@@ -645,13 +645,13 @@ class GatheringScene extends Phaser.Scene {
             }
 
             // タイム表示
-            c.add(this.add.text(-100, 60, 'あなた:', { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
+            c.add(this.add.text(-100, 60, i18n.t('GATHERING_YOU'), { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
             c.add(this.add.text(100, 60, `${this.elapsedTime.toFixed(2)}秒`, {
                 fontSize: '18px',
                 color: isWin ? '#88ff88' : '#ff8888'
             }).setOrigin(1, 0.5));
 
-            c.add(this.add.text(-100, 90, `${this.selectedBoss.name}:`, { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
+            c.add(this.add.text(-100, 90, `${this.selectedBoss.getName()}:`, { fontSize: '18px', color: '#aaa' }).setOrigin(0, 0.5));
             c.add(this.add.text(100, 90, `${this.selectedBoss.targetTime.toFixed(2)}秒`, {
                 fontSize: '18px',
                 color: '#ffdd88'
@@ -680,13 +680,13 @@ class GatheringScene extends Phaser.Scene {
                 return [bg, tx];
             };
 
-            c.add(makeBtn(170, 'もういちど', () => {
+            c.add(makeBtn(170, i18n.t('BTN_AGAIN'), () => {
                 this.cleanupMobileControls();
                 this.children.removeAll(true);
                 this.isInitialized = false;
                 this.showBossSelection();
             }));
-            c.add(makeBtn(220, 'タイトルへ', () => {
+            c.add(makeBtn(220, i18n.t('BTN_TO_TITLE'), () => {
                 this.cleanupMobileControls();
                 this.scene.start('TitleScene');
             }));

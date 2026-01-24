@@ -1,7 +1,7 @@
 {
-  "name": "midnight-meowathon",
+  "name": "cat-zoomies",
   "version": "1.0.0",
-  "description": "Midnight Meowathon - Cat platformer game",
+  "description": "Cat Zoomies - Cat platformer game",
   "scripts": {
     "test": "node tests/run-tests.js"
   },

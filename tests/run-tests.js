@@ -2,7 +2,7 @@
 
 // Node.js ベースのテストランナー - ブラウザ不要
 
-console.log('🧪 Midnight Meowathon - テスト実行中...\n');
+console.log('🧪 Cat Zoomies - テスト実行中...\n');
 
 let totalTests = 0;
 let passedTests = 0;
@@ -206,7 +206,7 @@ test('雷の状態表示が HUDScene にある', () => {
 test('タイトル画面に壁キックのヒントがある', () => {
     const content = fs.readFileSync('js/scenes/TitleScene.js', 'utf8');
     assert(
-        content.includes('壁キック') || content.includes('壁ジャンプ'),
+        content.includes('壁キック') || content.includes('壁ジャンプ') || content.includes('TIP_WALLKICK'),
         'タイトル画面に壁キックのヒントがありません'
     );
 });

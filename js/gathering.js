@@ -4,42 +4,42 @@
 const BOSS_CATS = [
     {
         id: 'kuro',
-        name: 'クロ',
+        getName: () => i18n.t('BOSS_KURO_NAME'),
+        getDescription: () => i18n.t('BOSS_KURO_DESC'),
         difficulty: 1,
         targetTime: 22.5, // 秒（半分に）
-        color: 0x222222,
-        description: '初心者向けの優しい猫\n目標: 22.5秒以内'
+        color: 0x222222
     },
     {
         id: 'shiro',
-        name: 'シロ',
+        getName: () => i18n.t('BOSS_SHIRO_NAME'),
+        getDescription: () => i18n.t('BOSS_SHIRO_DESC'),
         difficulty: 2,
         targetTime: 17.5, // 半分に
-        color: 0xeeeeee,
-        description: '標準的な強さの猫\n目標: 17.5秒以内'
+        color: 0xeeeeee
     },
     {
         id: 'mike',
-        name: 'ミケ',
+        getName: () => i18n.t('BOSS_MIKE_NAME'),
+        getDescription: () => i18n.t('BOSS_MIKE_DESC'),
         difficulty: 3,
         targetTime: 14, // 半分に
-        color: 0xff9933,
-        description: '上級者向けの強い猫\n目標: 14秒以内'
+        color: 0xff9933
     },
     {
         id: 'boss',
-        name: 'ボス猫',
+        getName: () => i18n.t('BOSS_BOSS_NAME'),
+        getDescription: () => i18n.t('BOSS_BOSS_DESC'),
         difficulty: 4,
         targetTime: 11, // 半分に
-        color: 0x8b4513,
-        description: '最強の猫、全てを極めた者\n目標: 11秒以内'
+        color: 0x8b4513
     }
 ];
 
 // ステージレイアウト定義
 const GATHERING_STAGE_LAYOUTS = {
     kuro: {
-        name: '初心者の部屋',
+        getName: () => i18n.t('GSTAGE_BEGINNER'),
         platforms: [
             { x: 400, y: 500, w: 760, h: 10 }, // 床
             { x: 150, y: 400, w: 120, h: 10 }, // 左下棚
@@ -62,7 +62,7 @@ const GATHERING_STAGE_LAYOUTS = {
         ]
     },
     shiro: {
-        name: '階段の部屋',
+        getName: () => i18n.t('GSTAGE_STAIRS'),
         platforms: [
             { x: 400, y: 500, w: 760, h: 10 }, // 床
             { x: 100, y: 450, w: 100, h: 10 }, // 階段1
@@ -91,7 +91,7 @@ const GATHERING_STAGE_LAYOUTS = {
         ]
     },
     mike: {
-        name: '迷路の部屋',
+        getName: () => i18n.t('GSTAGE_MAZE'),
         platforms: [
             { x: 400, y: 500, w: 760, h: 10 }, // 床
             { x: 100, y: 420, w: 80, h: 10 },  // 左下
@@ -123,7 +123,7 @@ const GATHERING_STAGE_LAYOUTS = {
         ]
     },
     boss: {
-        name: 'ボスの城',
+        getName: () => i18n.t('GSTAGE_BOSS'),
         platforms: [
             { x: 400, y: 500, w: 760, h: 10 }, // 床
             { x: 80, y: 450, w: 60, h: 10 },   // 左端1
@@ -164,7 +164,7 @@ class TimeAttackRules {
     constructor(bossId) {
         const boss = BOSS_CATS.find(b => b.id === bossId);
         this.targetTime = boss.targetTime;
-        this.bossName = boss.name;
+        this.bossName = boss.getName();
     }
 
     checkWin(playerTime) {
