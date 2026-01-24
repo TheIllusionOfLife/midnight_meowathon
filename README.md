@@ -2,6 +2,8 @@
 
 **Cat Zoomies** is a cozy yet chaotic roguelite cat simulator. Play as a mischievous cat at midnight, breaking items to relieve stress while trying not to wake up your owner... too much.  
 https://theillusionoflife.itch.io/cat-zoomies
+![cat_zoomies_cover](https://github.com/user-attachments/assets/760935d9-75c0-4147-9f97-c22dce1757d5)
+
 
 ## 🎮 Features
 
