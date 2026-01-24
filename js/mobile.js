@@ -199,7 +199,7 @@ class JumpButton {
         const {
             xPercent = 0.88,
             yPercent = 0.85,
-            radiusPercent = 0.06
+            radiusPercent = 0.09  // Larger touch target for easier tapping
         } = options;
 
         this.xPercent = xPercent;
@@ -218,13 +218,13 @@ class JumpButton {
         this.button.setScrollFactor(0);
         this.button.setVisible(false);
 
-        // 肉球アイコン
-        const iconScale = this.radius / 40; // Scale icon based on button size
+        // 肉球アイコン (larger for better visibility)
+        const iconScale = this.radius / 28; // Bigger icon relative to button
         const icon = scene.add.container(this.x, this.y).setDepth(1001).setScrollFactor(0);
-        const pad = scene.add.ellipse(0, 2 * iconScale, 12 * iconScale, 9 * iconScale, 0xff8866);
-        const toe1 = scene.add.circle(-6 * iconScale, -4 * iconScale, 4 * iconScale, 0xff8866);
-        const toe2 = scene.add.circle(0, -6 * iconScale, 4 * iconScale, 0xff8866);
-        const toe3 = scene.add.circle(6 * iconScale, -4 * iconScale, 4 * iconScale, 0xff8866);
+        const pad = scene.add.ellipse(0, 2 * iconScale, 14 * iconScale, 10 * iconScale, 0xff8866);
+        const toe1 = scene.add.circle(-7 * iconScale, -5 * iconScale, 5 * iconScale, 0xff8866);
+        const toe2 = scene.add.circle(0, -7 * iconScale, 5 * iconScale, 0xff8866);
+        const toe3 = scene.add.circle(7 * iconScale, -5 * iconScale, 5 * iconScale, 0xff8866);
         icon.add([pad, toe1, toe2, toe3]);
         icon.setVisible(false);
         this.icon = icon;
@@ -260,21 +260,21 @@ class JumpButton {
         }
         if (this.icon && this.icon.list) {
             this.icon.setPosition(this.x, this.y);
-            // Update icon scale
-            const iconScale = this.radius / 40;
+            // Update icon scale (larger for better visibility)
+            const iconScale = this.radius / 28;
             this.icon.list.forEach((child, index) => {
                 if (index === 0) { // pad
-                    child.setSize(12 * iconScale, 9 * iconScale);
+                    child.setSize(14 * iconScale, 10 * iconScale);
                     child.setPosition(0, 2 * iconScale);
                 } else if (index === 1) { // toe1
-                    child.setRadius(4 * iconScale);
-                    child.setPosition(-6 * iconScale, -4 * iconScale);
+                    child.setRadius(5 * iconScale);
+                    child.setPosition(-7 * iconScale, -5 * iconScale);
                 } else if (index === 2) { // toe2
-                    child.setRadius(4 * iconScale);
-                    child.setPosition(0, -6 * iconScale);
+                    child.setRadius(5 * iconScale);
+                    child.setPosition(0, -7 * iconScale);
                 } else if (index === 3) { // toe3
-                    child.setRadius(4 * iconScale);
-                    child.setPosition(6 * iconScale, -4 * iconScale);
+                    child.setRadius(5 * iconScale);
+                    child.setPosition(7 * iconScale, -5 * iconScale);
                 }
             });
         }
@@ -283,11 +283,13 @@ class JumpButton {
     setupInput() {
         this.activePointerId = null;
 
-        // Check if pointer is within button bounds
+        // Check if pointer is within button bounds (use larger hit area for easier tapping)
+        const hitMultiplier = 1.5; // Hit area is 1.5x the visual radius
         this.isPointerInButton = (pointer) => {
             const dx = pointer.x - this.x;
             const dy = pointer.y - this.y;
-            return (dx * dx + dy * dy) <= (this.radius * this.radius);
+            const hitRadius = this.radius * hitMultiplier;
+            return (dx * dx + dy * dy) <= (hitRadius * hitRadius);
         };
 
         // Use scene-level input for reliable multi-touch on iOS
