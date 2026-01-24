@@ -283,17 +283,11 @@ class JumpButton {
     setupInput() {
         this.activePointerId = null;
 
-        // Check if pointer is within button's actual rendered bounds
-        // Uses getBounds() to account for camera zoom affecting visual position
+        // Check if pointer is within button bounds
         this.isPointerInButton = (pointer) => {
-            if (!this.button || !this.button.geom) return false;
-            const bounds = this.button.getBounds();
-            const centerX = bounds.centerX;
-            const centerY = bounds.centerY;
-            const radius = bounds.width / 2;
-            const dx = pointer.x - centerX;
-            const dy = pointer.y - centerY;
-            return (dx * dx + dy * dy) <= (radius * radius);
+            const dx = pointer.x - this.x;
+            const dy = pointer.y - this.y;
+            return (dx * dx + dy * dy) <= (this.radius * this.radius);
         };
 
         // Use scene-level input for reliable multi-touch on iOS
